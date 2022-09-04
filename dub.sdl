@@ -1,0 +1,8 @@
+name "newxml"
+description "XML parsing library with DOM implementation"
+authors "Laszlo Szeremi"
+copyright "Copyright © 2022, Laszlo Szeremi"
+license "BSL-1.0"
+configuration "library" {
+    target "library"
+}
