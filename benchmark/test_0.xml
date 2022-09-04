@@ -1,0 +1,9 @@
+<?xml encoding  =  "utf-8" ?>
+<aaa>
+    <bbb>
+        <!-- lol -->
+        Lots of Text!
+        On multiple lines!
+    </bbb>
+    <![CDATA[ Ciaone! ]]>
+</aaa>
