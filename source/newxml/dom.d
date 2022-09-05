@@ -1,5 +1,5 @@
 /*
-*             Copyright Lodovico Giaretta 2016 - .
+*             Copyright László Szerémi 2022 - .
 *  Distributed under the Boost Software License, Version 1.0.
 *      (See accompanying file LICENSE_1_0.txt or copy at
 *            http://www.boost.org/LICENSE_1_0.txt)
@@ -1090,9 +1090,9 @@ interface DOMLocator {
 +   that must be used when the validation of the `Document` is requested.
 +/
 interface DOMConfiguration {
-    void setParameter(string name, UserData value);
-    UserData getParameter(string name);
-    bool canSetParameter(string name, UserData value);
+    void setParameter(string name, UserData value) @trusted;
+    UserData getParameter(string name) @trusted;
+    bool canSetParameter(string name, UserData value) @trusted;
     @property DOMStringList parameterNames();
 }
 

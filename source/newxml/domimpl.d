@@ -1,5 +1,5 @@
 /*
-*             Copyright Lodovico Giaretta 2016 - .
+*             Copyright László Szerémi 2022 - .
 *  Distributed under the Boost Software License, Version 1.0.
 *      (See accompanying file LICENSE_1_0.txt or copy at
 *            http://www.boost.org/LICENSE_1_0.txt)
@@ -10,6 +10,7 @@
 +
 +   Authors:
 +   Lodovico Giaretta
++   László Szerémi
 +
 +   License:
 +   <a href="http://www.boost.org/LICENSE_1_0.txt">Boost License 1.0</a>.
@@ -785,7 +786,7 @@ class DOMImplementation : dom.DOMImplementation
                 Element res = new Element(); //allocator.multiVersionMake!Element(this.outer);
                 res._name = tagName;
                 res._ownerDocument = this;
-                res._attrs = new Element.Map(); //allocator.multiVersionMake!(Element.Map)(res);
+                res._attrs = res.createMap();//new Element.Map(); //allocator.multiVersionMake!(Element.Map)(res);
                 return res;
             }
             Element createElementNS(DOMString namespaceURI, DOMString qualifiedName)
@@ -794,7 +795,7 @@ class DOMImplementation : dom.DOMImplementation
                 res.setQualifiedName(qualifiedName);
                 res._namespaceURI = namespaceURI;
                 res._ownerDocument = this;
-                res._attrs = new Element.Map();//allocator.multiVersionMake!(Element.Map)(res);
+                res._attrs = res.createMap();//res._attrs = new Element.Map();//allocator.multiVersionMake!(Element.Map)(res);
                 return res;
             }
             DocumentFragment createDocumentFragment()
@@ -868,7 +869,7 @@ class DOMImplementation : dom.DOMImplementation
             }
             Element getElementById(DOMString elementId)
             {
-                Element find(dom.Node node)
+                Element find(dom.Node node) @safe
                 {
                     if (node.nodeType == dom.NodeType.element && node.hasAttributes)
                         foreach (attr; node.attributes)
@@ -992,7 +993,7 @@ class DOMImplementation : dom.DOMImplementation
         override
         {
             @property dom.NodeType nodeType() { return dom.NodeType.document; }
-            @property DOMString nodeName() { return "#document"; }
+            @property DOMString nodeName() { return new DOMString("#document"w); }
 
             DOMString lookupPrefix(DOMString namespaceURI)
             {
@@ -1015,7 +1016,7 @@ class DOMImplementation : dom.DOMImplementation
                 if (newChild.nodeType == dom.NodeType.element)
                 {
                     if (_root)
-                        throw DOMException(dom.ExceptionCode.hierarchyRequest);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.hierarchyRequest);
+                        throw new DOMException(dom.ExceptionCode.hierarchyRequest);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.hierarchyRequest);
 
                     auto res = super.insertBefore(newChild, refChild);
                     _root = cast(Element)newChild;
@@ -1274,7 +1275,7 @@ class DOMImplementation : dom.DOMImplementation
             DOMString _data;
 
             // internal method
-            private void performClone(CharacterData dest, bool deep)
+            void performClone(CharacterData dest, bool deep)
             {
                 super.performClone(dest, deep);
                 dest._data = _data;
@@ -1290,10 +1291,10 @@ class DOMImplementation : dom.DOMImplementation
 
             void setQualifiedName(DOMString name)
             {
-                import std.experimental.xml.faststrings : fastIndexOf;
+                import newxml.faststrings : fastIndexOf;
 
                 _name = name;
-                ptrdiff_t i = name.fastIndexOf(':');
+                ptrdiff_t i = name.getDString.fastIndexOf(':');
                 if (i > 0)
                     _colon = i;
             }
@@ -1332,7 +1333,10 @@ class DOMImplementation : dom.DOMImplementation
                 newName[pre.length] = ':';
                 newName[(pre.length + 1) .. $] = localName[];+/
 
-                _name = pre ~ ":" ~ localName;//cast(typeof(_name))newName;
+                //_name = pre ~ ":" ~ localName;
+                _name ~= pre;
+                _name ~= "w";
+                _name ~= localName;
                 _colon = pre.length;
             }
             @property DOMString namespaceURI() { return _namespaceURI; }
@@ -1354,10 +1358,9 @@ class DOMImplementation : dom.DOMImplementation
             /// Implementation of $(LINK2 ../dom/Attr.value, `std.experimental.xml.dom.Attr.value`).
             @property DOMString value()
             {
-                import std.experimental.xml.appender;
 
                 //auto result = Appender!(typeof(_name[0]), typeof(*allocator))(allocator);
-                DOMString result;
+                DOMString result = new DOMString();
                 auto child = rebindable(firstChild);
                 while (child)
                 {
@@ -1439,6 +1442,10 @@ class DOMImplementation : dom.DOMImplementation
     {
         package this() {
 
+        }
+        ///Created as a workaround to a common D compiler bug/artifact.
+        package Map createMap() {
+            return new Map();
         }
         // specific to Element
         override
@@ -1610,7 +1617,7 @@ class DOMImplementation : dom.DOMImplementation
             +/
             ElementsByTagName getElementsByTagName(DOMString tagname)
             {
-                auto res = new ElementsByTagName();//allocator.multiVersionMake!ElementsByTagName;
+                ElementsByTagName res = new ElementsByTagName();//allocator.multiVersionMake!ElementsByTagName;
                 res.root = this;
                 res.tagname = tagname;
                 res.current = res.item(0);
@@ -1622,7 +1629,7 @@ class DOMImplementation : dom.DOMImplementation
             +/
             ElementsByTagNameNS getElementsByTagNameNS(DOMString namespaceURI, DOMString localName)
             {
-                auto res = new ElementsByTagNameNS();//allocator.multiVersionMake!ElementsByTagNameNS;
+                ElementsByTagNameNS res = new ElementsByTagNameNS();//allocator.multiVersionMake!ElementsByTagNameNS;
                 res.root = this;
                 res.namespaceURI = namespaceURI;
                 res.localName = localName;
@@ -1671,7 +1678,7 @@ class DOMImplementation : dom.DOMImplementation
 
             Element cloneNode(bool deep)
             {
-                auto cloned = new Element();//allocator.multiVersionMake!Element(this.outer);
+                Element cloned = new Element();//allocator.multiVersionMake!Element(this.outer);
                 cloned._ownerDocument = ownerDocument;
                 cloned._attrs = new Map();//allocator.multiVersionMake!Map(this);
                 super.performClone(cloned, deep);
@@ -1920,9 +1927,9 @@ class DOMImplementation : dom.DOMImplementation
             +/
             @property bool isElementContentWhitespace()
             {
-                import std.experimental.xml.faststrings: fastIndexOfNeither;
+                import newxml.faststrings: fastIndexOfNeither;
 
-                return _data.fastIndexOfNeither(" \r\n\t") == -1;
+                return _data.getDString.fastIndexOfNeither(" \r\n\t") == -1;
             }
             /// Implementation of $(LINK2 ../dom/Text.wholeText, `std.experimental.xml.dom.Text.wholeText`).
             @property DOMString wholeText()
@@ -1988,10 +1995,10 @@ class DOMImplementation : dom.DOMImplementation
                 while (prev);
                 while (node)
                 {
-                    result.put(node.data);
+                    result ~= node.data;
                     node = findNextText(node);
                 }
-                return result.data;
+                return result;
             }
             /++
             +   Implementation of $(LINK2 ../dom/Text.replaceWholeText,
@@ -2000,7 +2007,7 @@ class DOMImplementation : dom.DOMImplementation
             // the W3C DOM spec explains the details of this
             @property Text replaceWholeText(DOMString newText)
             {
-                bool hasOnlyText(Node reference)
+                bool hasOnlyText(Node reference) @safe
                 {
                     foreach (child; reference.childNodes)
                         switch (child.nodeType) with (dom.NodeType)
@@ -2128,11 +2135,11 @@ class DOMImplementation : dom.DOMImplementation
         override
         {
             @property dom.NodeType nodeType() { return dom.NodeType.text; }
-            @property DOMString nodeName() { return "#text"; }
+            @property DOMString nodeName() { return new DOMString("#text"); }
 
             Text cloneNode(bool deep)
             {
-                auto cloned = new Text();//allocator.multiVersionMake!Text(this.outer);
+                Text cloned = new Text();//allocator.multiVersionMake!Text(this.outer);
                 cloned._ownerDocument = _ownerDocument;
                 super.performClone(cloned, deep);
                 return cloned;
@@ -2149,11 +2156,11 @@ class DOMImplementation : dom.DOMImplementation
         override
         {
             @property dom.NodeType nodeType() { return dom.NodeType.comment; }
-            @property DOMString nodeName() { return "#comment"; }
+            @property DOMString nodeName() { return new DOMString("#comment"); }
 
             Comment cloneNode(bool deep)
             {
-                auto cloned = new Comment();//allocator.multiVersionMake!Comment(this.outer);
+                Comment cloned = new Comment();//allocator.multiVersionMake!Comment(this.outer);
                 cloned._ownerDocument = _ownerDocument;
                 super.performClone(cloned, deep);
                 return cloned;
@@ -2215,11 +2222,11 @@ class DOMImplementation : dom.DOMImplementation
         override
         {
             @property dom.NodeType nodeType() { return dom.NodeType.cdataSection; }
-            @property DOMString nodeName() { return "#cdata-section"; }
+            @property DOMString nodeName() { return new DOMString("#cdata-section"); }
 
             CDATASection cloneNode(bool deep)
             {
-                auto cloned = new CDATASection();//allocator.multiVersionMake!CDATASection(this.outer);
+                CDATASection cloned = new CDATASection();//allocator.multiVersionMake!CDATASection(this.outer);
                 cloned._ownerDocument = _ownerDocument;
                 super.performClone(cloned, deep);
                 return cloned;
@@ -2326,15 +2333,15 @@ class DOMImplementation : dom.DOMImplementation
             }
             Params params;
 
-            /+void assign(string field, string type)(dom.UserData val)
+            void assign(string field, string type)(dom.UserData val) @trusted
             {
                 mixin("if (val.convertsTo!(" ~ type ~ ")) params." ~ field ~ " = val.get!(" ~ type ~ "); \n");
             }
-            bool canSet(string type, string settable)(dom.UserData val)
+            bool canSet(string type, string settable)(dom.UserData val) @trusted
             {
                 mixin("if (val.convertsTo!(" ~ type ~ ")) return " ~ settable ~ "(val.get!(" ~ type ~ ")); \n");
                 return false;
-            }+/
+            }
         }
         // specific to DOMConfiguration
         override
@@ -2343,7 +2350,7 @@ class DOMImplementation : dom.DOMImplementation
             +   Implementation of $(LINK2 ../dom/DOMConfiguration.setParameter,
             +   `std.experimental.xml.dom.DOMConfiguration.setParameter`).
             +/
-            void setParameter(string name, dom.UserData value)
+            void setParameter(string name, dom.UserData value) @trusted
             {
                 switch (name)
                 {
@@ -2360,7 +2367,7 @@ class DOMImplementation : dom.DOMImplementation
             +   Implementation of $(LINK2 ../dom/DOMConfiguration.getParameter,
             +   `std.experimental.xml.dom.DOMConfiguration.getParameter`).
             +/
-            dom.UserData getParameter(string name)
+            dom.UserData getParameter(string name) @trusted
             {
                 switch (name)
                 {
@@ -2377,9 +2384,9 @@ class DOMImplementation : dom.DOMImplementation
             +   Implementation of $(LINK2 ../dom/DOMConfiguration.canSetParameter,
             +   `std.experimental.xml.dom.DOMConfiguration.canSetParameter`).
             +/
-            bool canSetParameter(string name, dom.UserData value)
+            bool canSetParameter(string name, dom.UserData value) @trusted
             {
-                /+switch (name)
+                switch (name)
                 {
                     foreach (field; AliasSeq!(__traits(allMembers, Params)))
                     {
@@ -2390,7 +2397,7 @@ class DOMImplementation : dom.DOMImplementation
                     }
                     default:
                         return false;
-                }+/
+                }
             }
             /++
             +   Implementation of $(LINK2 ../dom/DOMConfiguration.parameterNames,
@@ -2420,7 +2427,7 @@ class DOMImplementation : dom.DOMImplementation
             // specific to DOMStringList
             override
             {
-                DOMString item(size_t index) { return arr[index]; }
+                DOMString item(size_t index) { return new DOMString(arr[index]); }
                 size_t length() { return arr.length; }
 
                 bool contains(DOMString str)
@@ -2438,60 +2445,60 @@ class DOMImplementation : dom.DOMImplementation
 +   Instantiates a `DOMBuilder` specialized for the `DOMImplementation` implemented
 +   in this module.
 +/
-auto domBuilder(CursorType)(auto ref CursorType cursor)
+/+auto domBuilder(CursorType)(auto ref CursorType cursor)
 {
     //import std.experimental.allocator.gc_allocator;//import stdx.allocator.gc_allocator;
     import dompar = std.experimental.xml.domparser;
     return dompar.domBuilder(cursor, new DOMImplementation());//return dompar.domBuilder(cursor, new DOMImplementation!(CursorType.StringType, shared(GCAllocator))());
-}
+}+/
 
 unittest
 {
     
     DOMImplementation impl = new DOMImplementation();
 
-    /+auto doc = impl.createDocument("myNamespaceURI", "myPrefix:myRootElement", null);
+    auto doc = impl.createDocument(new DOMString("myNamespaceURI"), new DOMString("myPrefix:myRootElement"), null);
     auto root = doc.documentElement;
     assert(root.prefix == "myPrefix");
 
-    auto attr = doc.createAttributeNS("myAttrNamespace", "myAttrPrefix:myAttrName");
+    auto attr = doc.createAttributeNS(new DOMString("myAttrNamespace"), new DOMString("myAttrPrefix:myAttrName"));
     root.setAttributeNode(attr);
     assert(root.attributes.length == 1);
-    assert(root.getAttributeNodeNS("myAttrNamespace", "myAttrName") is attr);
+    assert(root.getAttributeNodeNS(new DOMString("myAttrNamespace"), new DOMString("myAttrName")) is attr);
 
-    attr.nodeValue = "myAttrValue";
+    attr.nodeValue = new DOMString("myAttrValue");
     assert(attr.childNodes.length == 1);
     assert(attr.firstChild.nodeType == dom.NodeType.text);
     assert(attr.firstChild.nodeValue == attr.nodeValue);
 
-    auto elem = doc.createElementNS("myOtherNamespace", "myOtherPrefix:myOtherElement");
+    auto elem = doc.createElementNS(new DOMString("myOtherNamespace"), new DOMString("myOtherPrefix:myOtherElement"));
     assert(root.ownerDocument is doc);
     assert(elem.ownerDocument is doc);
     root.appendChild(elem);
     assert(root.firstChild is elem);
     assert(root.firstChild.namespaceURI == "myOtherNamespace");
 
-    auto comm = doc.createComment("myWonderfulComment");
+    auto comm = doc.createComment(new DOMString("myWonderfulComment"));
     doc.insertBefore(comm, root);
     assert(doc.childNodes.length == 2);
     assert(doc.firstChild is comm);
 
     assert(comm.substringData(1, 4) == "yWon");
-    comm.replaceData(0, 2, "your");
+    comm.replaceData(0, 2, new DOMString("your"));
     comm.deleteData(4, 9);
-    comm.insertData(4, "Questionable");
+    comm.insertData(4, new DOMString("Questionable"));
     assert(comm.data == "yourQuestionableComment");
 
-    auto pi = doc.createProcessingInstruction("myPITarget", "myPIData");
+    auto pi = doc.createProcessingInstruction(new DOMString("myPITarget"), new DOMString("myPIData"));
     elem.appendChild(pi);
     assert(elem.lastChild is pi);
-    auto cdata = doc.createCDATASection("mycdataContent");
+    auto cdata = doc.createCDATASection(new DOMString("mycdataContent"));
     elem.replaceChild(cdata, pi);
     assert(elem.lastChild is cdata);
     elem.removeChild(cdata);
     assert(elem.childNodes.length == 0);
 
-    assert(doc.getElementsByTagNameNS("myOtherNamespace", "myOtherElement").item(0) is elem);
+    assert(doc.getElementsByTagNameNS(new DOMString("myOtherNamespace"), new DOMString("myOtherElement")).item(0) is elem);
 
     doc.setUserData("userDataKey1", dom.UserData(3.14), null);
     doc.setUserData("userDataKey2", dom.UserData(new Object()), null);
@@ -2500,21 +2507,21 @@ unittest
     assert(doc.getUserData("userDataKey2").type == typeid(Object));
     assert(doc.getUserData("userDataKey3").peek!long is null);
 
-    assert(elem.lookupNamespaceURI("myOtherPrefix") == "myOtherNamespace");
-    assert(doc.lookupPrefix("myNamespaceURI") == "myPrefix");
+    assert(elem.lookupNamespaceURI(new DOMString("myOtherPrefix")) == "myOtherNamespace");
+    assert(doc.lookupPrefix(new DOMString("myNamespaceURI")) == "myPrefix");
 
     assert(elem.isEqualNode(elem.cloneNode(false)));
     assert(root.isEqualNode(root.cloneNode(true)));
     assert(comm.isEqualNode(comm.cloneNode(false)));
-    assert(pi.isEqualNode(pi.cloneNode(false)));+/
+    assert(pi.isEqualNode(pi.cloneNode(false)));
 }
 
 unittest
 {
-    import std.experimental.xml.lexers;
-    import std.experimental.xml.parser;
-    import std.experimental.xml.cursor;
-    import std.experimental.xml.domparser;
+    import newxml.lexers;
+    import newxml.parser;
+    import newxml.cursor;
+    //import newxml.domparser;
     import std.stdio;
 
     string xml = q"{

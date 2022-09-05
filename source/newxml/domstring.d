@@ -63,7 +63,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
     version (newxml_force_utf8) {
 
     } else {
-        this(const(char)* other) @system nothrow pure {
+        this(const(char)* other) @trusted nothrow pure {
             version (newxml_force_utf32) {
                 buffer = toUTF32(fromStringz(other));
             } else {
@@ -95,8 +95,14 @@ public class DOMString : RandomAccessFinite!XMLCh {
         buffer ~= other.buffer;
         backPos = buffer.length;
     }
-    void appendData(XMLCh[] other) nothrow pure {
-        buffer ~= other;
+    void appendData(T)(T[] other) nothrow pure {
+        version (newxml_force_utf8) {
+            buffer ~= toUTF8(other);
+        } else version (newxml_force_utf32) {
+            buffer ~= toUTF32(other);
+        } else {
+            buffer ~= toUTF16(other);
+        }
         backPos = buffer.length;
     }
     XMLCh charAt(size_t index) @nogc nothrow pure {
@@ -116,12 +122,16 @@ public class DOMString : RandomAccessFinite!XMLCh {
         backPos = buffer.length;
     }
     bool equals(XMLCh* other) @trusted pure const {
-        return fastEqual(buffer, fromStringz(other));
+        auto str = fromStringz(other);
+        if (str.length != buffer.length) return false;
+        return fastEqual(buffer, str);
     }
     bool equals(DOMString other) pure const {
+        if (buffer.length != other.length) return false;
         return fastEqual(buffer, other.buffer);
     }
     bool equals(T)(T other) pure const {
+        if (buffer.length != other.length) return false;
         return fastEqual(buffer, other);
     }
     void insertData(size_t offset, DOMString data) pure nothrow {
