@@ -181,6 +181,15 @@ public class DOMString : RandomAccessFinite!XMLCh {
     dstring transcodeToUTF32() pure nothrow const {
         return toUTF32(buffer);
     }
+    T transcodeTo(T)() pure nothrow const {
+        static if (is(T == string))
+            return transcodeToUTF8;
+        else static if (is(T == wstring))
+            return transcodeToUTF16;
+        else static if (is(T == dstring))
+            return transcodeToUTF32;
+        else static assert(0, "Template parameter `" ~ "` not supported for function `DOMString.transcodeTo(T)()`");
+    }
     //range stuff begins here
     ///
     @property XMLCh front() @nogc nothrow pure {

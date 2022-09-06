@@ -12,7 +12,7 @@
 module newxml.writer;
 
 import newxml.interfaces;
-
+@safe:
 private string ifCompiles(string code)
 {
     return "static if (__traits(compiles, " ~ code ~ ")) " ~ code ~ ";\n";
@@ -120,7 +120,7 @@ struct PrettyPrinters
         void beforeNode(Out)(ref Out output)
         {
             foreach (i; 0..indentation)
-                output.put(tab);
+                output ~= tab;
         }
     }
 }
@@ -175,8 +175,14 @@ struct PrettyPrinters
 +       $(LI `beforePIEnd`, called to obtain a string to be used as spacing between
 +                           the processing instruction data and the closing `?>`)
 +   )
++   Template arguments:
++       _StringType = The type of string to be targeted. The function `writeDOM` will take care of all UTF conversion
++   if necessary.
++       PrettyPrinter = A struct, that will handle any and all formatting.
++       validateTagOrder = If set to `Yes`, then tag order will be validated during writing.
 +/
-struct Writer(_StringType, alias OutRange, alias PrettyPrinter = PrettyPrinters.Minimalizer)
+struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
+    if(is(_StringType == string) || is(_StringType == wstring) || is(_StringType == dstring))
 {
     alias StringType = _StringType;
 
@@ -187,13 +193,8 @@ struct Writer(_StringType, alias OutRange, alias PrettyPrinter = PrettyPrinters.
     else
         static assert(0, "Invalid pretty printer type for string type " ~ StringType.stringof);
 
-    static if (is(OutRange))
-        private OutRange output;
-    else static if (is(OutRange!StringType))
-        private OutRange!StringType output;
-    else
-        static assert(0, "Invalid output range type for string type " ~ StringType.stringof);
-
+    StringType output;
+    
     bool startingTag = false, insideDTD = false;
 
     this(typeof(prettyPrinter) pretty)
@@ -201,17 +202,12 @@ struct Writer(_StringType, alias OutRange, alias PrettyPrinter = PrettyPrinters.
         prettyPrinter = pretty;
     }
 
-    void setSink(ref typeof(output) output)
-    {
-        this.output = output;
-    }
-
     private template expand(string methodName)
     {
         import std.meta : AliasSeq;
         alias expand = AliasSeq!(
             "prettyPrinter." ~ methodName ~ "(output)",
-            "output.put(prettyPrinter." ~ methodName ~ ")"
+            "output ~= prettyPrinter." ~ methodName
         );
     }
     private template formatAttribute(string attribute)
@@ -219,7 +215,7 @@ struct Writer(_StringType, alias OutRange, alias PrettyPrinter = PrettyPrinters.
         import std.meta : AliasSeq;
         alias formatAttribute = AliasSeq!(
             "prettyPrinter.formatAttribute(output, " ~ attribute ~ ")",
-            "output.put(prettyPrinter.formatAttribute(" ~ attribute ~ "))",
+            "output ~= prettyPrinter.formatAttribute(" ~ attribute ~ ")",
             "defaultFormatAttribute(" ~ attribute ~ ", prettyPrinter.attributeDelimiter)",
             "defaultFormatAttribute(" ~ attribute ~ ")"
         );
@@ -228,9 +224,9 @@ struct Writer(_StringType, alias OutRange, alias PrettyPrinter = PrettyPrinters.
     private void defaultFormatAttribute(StringType attribute, StringType delimiter = "'")
     {
         // TODO: delimiter escaping
-        output.put(delimiter);
-        output.put(attribute);
-        output.put(delimiter);
+        output ~= delimiter;
+        output ~= attribute;
+        output ~= delimiter;
     }
 
     /++
@@ -246,73 +242,73 @@ struct Writer(_StringType, alias OutRange, alias PrettyPrinter = PrettyPrinters.
     {
         auto attrs = xmlDeclarationAttributes!StringType(args);
 
-        output.put("<?xml");
+        output ~= "<?xml";
 
         if (attrs[0])
         {
             mixin(ifAnyCompiles(expand!"beforeAttributeName"));
-            output.put("version");
+            output ~= "version";
             mixin(ifAnyCompiles(expand!"afterAttributeName"));
-            output.put("=");
+            output ~= "=";
             mixin(ifAnyCompiles(expand!"beforeAttributeValue"));
             mixin(ifAnyCompiles(formatAttribute!"attrs[0]"));
         }
         if (attrs[1])
         {
             mixin(ifAnyCompiles(expand!"beforeAttributeName"));
-            output.put("encoding");
+            output ~= "encoding";
             mixin(ifAnyCompiles(expand!"afterAttributeName"));
-            output.put("=");
+            output ~= "=";
             mixin(ifAnyCompiles(expand!"beforeAttributeValue"));
             mixin(ifAnyCompiles(formatAttribute!"attrs[1]"));
         }
         if (attrs[2])
         {
             mixin(ifAnyCompiles(expand!"beforeAttributeName"));
-            output.put("standalone");
+            output ~= "standalone";
             mixin(ifAnyCompiles(expand!"afterAttributeName"));
-            output.put("=");
+            output ~= "=";
             mixin(ifAnyCompiles(expand!"beforeAttributeValue"));
             mixin(ifAnyCompiles(formatAttribute!"attrs[2]"));
         }
 
         mixin(ifAnyCompiles(expand!"beforePIEnd"));
-        output.put("?>");
+        output ~= "?>";
         mixin(ifAnyCompiles(expand!"afterNode"));
     }
     void writeXMLDeclaration(StringType version_, StringType encoding, StringType standalone)
     {
-        output.put("<?xml");
+        output ~= "<?xml";
 
         if (version_)
         {
             mixin(ifAnyCompiles(expand!"beforeAttributeName"));
-            output.put("version");
+            output ~= "version";
             mixin(ifAnyCompiles(expand!"afterAttributeName"));
-            output.put("=");
+            output ~= "=";
             mixin(ifAnyCompiles(expand!"beforeAttributeValue"));
             mixin(ifAnyCompiles(formatAttribute!"version_"));
         }
         if (encoding)
         {
             mixin(ifAnyCompiles(expand!"beforeAttributeName"));
-            output.put("encoding");
+            output ~= "encoding";
             mixin(ifAnyCompiles(expand!"afterAttributeName"));
-            output.put("=");
+            output ~= "=";
             mixin(ifAnyCompiles(expand!"beforeAttributeValue"));
             mixin(ifAnyCompiles(formatAttribute!"encoding"));
         }
         if (standalone)
         {
             mixin(ifAnyCompiles(expand!"beforeAttributeName"));
-            output.put("standalone");
+            output ~= "standalone";
             mixin(ifAnyCompiles(expand!"afterAttributeName"));
-            output.put("=");
+            output ~= "=";
             mixin(ifAnyCompiles(expand!"beforeAttributeValue"));
             mixin(ifAnyCompiles(formatAttribute!"standalone"));
         }
 
-        output.put("?>");
+        output ~= "?>";
         mixin(ifAnyCompiles(expand!"afterNode"));
     }
 
@@ -324,16 +320,16 @@ struct Writer(_StringType, alias OutRange, alias PrettyPrinter = PrettyPrinters.
         closeOpenThings;
 
         mixin(ifAnyCompiles(expand!"beforeNode"));
-        output.put("<!--");
+        output ~= "<!--";
         mixin(ifAnyCompiles(expand!"afterCommentStart"));
 
         mixin(ifCompilesElse(
             "prettyPrinter.formatComment(output, comment)",
-            "output.put(comment)"
+            "output ~= comment"
         ));
 
         mixin(ifAnyCompiles(expand!"beforeCommentEnd"));
-        output.put("-->");
+        output ~= "-->";
         mixin(ifAnyCompiles(expand!"afterNode"));
     }
     /++
@@ -347,7 +343,7 @@ struct Writer(_StringType, alias OutRange, alias PrettyPrinter = PrettyPrinters.
         mixin(ifAnyCompiles(expand!"beforeNode"));
         mixin(ifCompilesElse(
             "prettyPrinter.formatText(output, comment)",
-            "output.put(text)"
+            "output ~= text"
         ));
         mixin(ifAnyCompiles(expand!"afterNode"));
     }
@@ -360,9 +356,9 @@ struct Writer(_StringType, alias OutRange, alias PrettyPrinter = PrettyPrinters.
         closeOpenThings;
 
         mixin(ifAnyCompiles(expand!"beforeNode"));
-        output.put("<![CDATA[");
-        output.put(cdata);
-        output.put("]]>");
+        output ~= "<![CDATA[";
+        output ~= cdata;
+        output ~= "]]>";
         mixin(ifAnyCompiles(expand!"afterNode"));
     }
     /++
@@ -373,13 +369,13 @@ struct Writer(_StringType, alias OutRange, alias PrettyPrinter = PrettyPrinters.
         closeOpenThings;
 
         mixin(ifAnyCompiles(expand!"beforeNode"));
-        output.put("<?");
-        output.put(target);
+        output ~= "<?";
+        output ~= target;
         mixin(ifAnyCompiles(expand!"betweenPITargetData"));
-        output.put(data);
+        output ~= data;
 
         mixin(ifAnyCompiles(expand!"beforePIEnd"));
-        output.put("?>");
+        output ~= "?>";
         mixin(ifAnyCompiles(expand!"afterNode"));
     }
 
@@ -388,7 +384,7 @@ struct Writer(_StringType, alias OutRange, alias PrettyPrinter = PrettyPrinters.
         if (startingTag)
         {
             mixin(ifAnyCompiles(expand!"beforeElementEnd"));
-            output.put(">");
+            output ~= ">";
             mixin(ifAnyCompiles(expand!"afterNode"));
             startingTag = false;
             mixin(ifCompiles("prettyPrinter.increaseLevel"));
@@ -400,8 +396,8 @@ struct Writer(_StringType, alias OutRange, alias PrettyPrinter = PrettyPrinters.
         closeOpenThings();
 
         mixin(ifAnyCompiles(expand!"beforeNode"));
-        output.put("<");
-        output.put(tagName);
+        output ~= "<";
+        output ~= tagName;
         startingTag = true;
     }
     void closeElement(StringType tagName)
@@ -415,7 +411,7 @@ struct Writer(_StringType, alias OutRange, alias PrettyPrinter = PrettyPrinters.
         if (selfClose && startingTag)
         {
             mixin(ifAnyCompiles(expand!"beforeElementEnd"));
-            output.put("/>");
+            output ~= "/>";
             startingTag = false;
         }
         else
@@ -424,10 +420,10 @@ struct Writer(_StringType, alias OutRange, alias PrettyPrinter = PrettyPrinters.
 
             mixin(ifCompiles("prettyPrinter.decreaseLevel"));
             mixin(ifAnyCompiles(expand!"beforeNode"));
-            output.put("</");
-            output.put(tagName);
+            output ~= "</";
+            output ~= tagName;
             mixin(ifAnyCompiles(expand!"beforeElementEnd"));
-            output.put(">");
+            output ~= ">";
         }
         mixin(ifAnyCompiles(expand!"afterNode"));
     }
@@ -436,9 +432,9 @@ struct Writer(_StringType, alias OutRange, alias PrettyPrinter = PrettyPrinters.
         assert(startingTag, "Cannot write attribute outside element start");
 
         mixin(ifAnyCompiles(expand!"beforeAttributeName"));
-        output.put(name);
+        output ~= name;
         mixin(ifAnyCompiles(expand!"afterAttributeName"));
-        output.put("=");
+        output ~= "=";
         mixin(ifAnyCompiles(expand!"beforeAttributeValue"));
         mixin(ifAnyCompiles(formatAttribute!"value"));
     }
@@ -448,10 +444,10 @@ struct Writer(_StringType, alias OutRange, alias PrettyPrinter = PrettyPrinters.
         assert(!insideDTD && !startingTag);
 
         mixin(ifAnyCompiles(expand!"beforeNode"));
-        output.put("<!DOCTYPE");
-        output.put(content);
+        output ~= "<!DOCTYPE";
+        output ~= content;
         mixin(ifAnyCompiles(expand!"afterDoctypeId"));
-        output.put("[");
+        output ~= "[";
         insideDTD = true;
         mixin(ifAnyCompiles(expand!"afterNode"));
         mixin(ifCompiles("prettyPrinter.increaseLevel"));
@@ -463,7 +459,7 @@ struct Writer(_StringType, alias OutRange, alias PrettyPrinter = PrettyPrinters.
         mixin(ifCompiles("prettyPrinter.decreaseLevel"));
         insideDTD = false;
         mixin(ifAnyCompiles(expand!"beforeDTDEnd"));
-        output.put("]>");
+        output ~= "]>";
         mixin(ifAnyCompiles(expand!"afterNode"));
     }
     void writeDeclaration(StringType decl, StringType content)
@@ -471,52 +467,35 @@ struct Writer(_StringType, alias OutRange, alias PrettyPrinter = PrettyPrinters.
         //assert(insideDTD);
 
         mixin(ifAnyCompiles(expand!"beforeNode"));
-        output.put("<!");
-        output.put(decl);
-        output.put(content);
-        output.put(">");
+        output ~= "<!";
+        output ~= decl;
+        output ~= content;
+        output ~= ">";
         mixin(ifAnyCompiles(expand!"afterNode"));
     }
 }
 
-/* unittest
+unittest
 {
     import std.array : Appender;
     import std.typecons : refCounted;
 
-    auto app = Appender!string().refCounted;
-    auto writer = Writer!(string, typeof(app))();
-    writer.setSink(app);
+    //string app;
+    auto writer = Writer!(string)();
+    //writer.setSink(app);
 
     writer.writeXMLDeclaration(10, "utf-8", false);
-    assert(app.data == "<?xml version='1.0' encoding='utf-8' standalone='no'?>");
+    assert(writer.output == "<?xml version='1.0' encoding='utf-8' standalone='no'?>", writer.output);
 
-    static assert(isWriter!(typeof(writer)));
-} */
-
-/++
-+   Returns a `Writer` for the given `StringType`, `outRange` and `PrettyPrinter`.
-+/
-auto writerFor(StringType, alias PrettyPrinter = PrettyPrinters.Indenter, OutRange)(auto ref OutRange outRange)
-{
-    auto res = Writer!(StringType, OutRange, PrettyPrinter)();
-    res.setSink(outRange);
-    return res;
-}
-/// ditto
-auto writerFor(StringType, OutRange, PrettyPrinter)(auto ref OutRange outRange, auto ref PrettyPrinter printer)
-{
-    auto res = Writer!(StringType, OutRange, PrettyPrinter)(printer);
-    res.setSink(outRange);
-    return res;
+    //static assert(isWriter!(typeof(writer)));
 }
 
-/* unittest
+unittest
 {
     import std.array : Appender;
     import std.typecons : refCounted;
-    auto app = Appender!string().refCounted;
-    auto writer = app.writerFor!string;
+    
+    auto writer = Writer!(string, PrettyPrinters.Indenter)();
 
     writer.startElement("elem");
     writer.writeAttribute("attr1", "val1");
@@ -530,9 +509,9 @@ auto writerFor(StringType, OutRange, PrettyPrinter)(auto ref OutRange outRange, 
     writer.closeElement("elem");
 
     import std.string : lineSplitter;
-    auto splitter = app.data.lineSplitter;
+    auto splitter = writer.output.lineSplitter;
 
-    assert(splitter.front == "<elem attr1='val1' attr2='val2'>");
+    assert(splitter.front == "<elem attr1='val1' attr2='val2'>", splitter.front);
     splitter.popFront;
     assert(splitter.front == "\t<!--Wonderful comment-->");
     splitter.popFront;
@@ -548,16 +527,16 @@ auto writerFor(StringType, OutRange, PrettyPrinter)(auto ref OutRange outRange, 
     splitter.popFront;
     assert(splitter.empty);
 }
- */
+
 import dom = newxml.dom;
 
 /++
 +   Outputs the entire DOM tree rooted at `node` using the given `writer`.
 +/
-void writeDOM(WriterType, NodeType)(auto ref WriterType writer, NodeType node)
-    if (is(NodeType: dom.Node!(WriterType.StringType)))
+void writeDOM(WriterType)(auto ref WriterType writer, Node node)
 {
     import std.traits : ReturnType;
+    import newxml.faststrings;
     alias Document = typeof(node.ownerDocument);
     alias Element = ReturnType!(Document.documentElement);
 
@@ -565,28 +544,30 @@ void writeDOM(WriterType, NodeType)(auto ref WriterType writer, NodeType node)
     {
         case document:
             auto doc = cast(Document)node;
-            writer.writeXMLDeclaration(doc.xmlVersion, doc.xmlEncoding, doc.xmlStandalone);
+            writer.writeXMLDeclaration(doc.xmlVersion.transcodeTo!writer.StringType, 
+                    doc.xmlEncoding.transcodeTo!writer.StringType, doc.xmlStandalone);
             foreach (child; doc.childNodes)
                 writer.writeDOM(child);
             break;
         case element:
             auto elem = cast(Element)node;
-            writer.startElement(elem.tagName);
+            writer.startElement(elem.tagName.transcodeTo!writer.StringType);
             if (elem.hasAttributes)
                 foreach (attr; elem.attributes)
-                    writer.writeAttribute(attr.nodeName, attr.nodeValue);
+                    writer.writeAttribute(attr.nodeName.transcodeTo!writer.StringType, 
+                            xmlEscape(attr.nodeValue.transcodeTo!writer.StringType));
             foreach (child; elem.childNodes)
                 writer.writeDOM(child);
-            writer.closeElement(elem.tagName);
+            writer.closeElement(elem.tagName.transcodeTo!writer.StringType);
             break;
         case text:
-            writer.writeText(node.nodeValue);
+            writer.writeText(xmlEscape(node.nodeValue.transcodeTo!writer.StringType));
             break;
         case cdataSection:
-            writer.writeCDATA(node.nodeValue);
+            writer.writeCDATA(xmlEscape(node.nodeValue.transcodeTo!writer.StringType));
             break;
         case comment:
-            writer.writeComment(node.nodeValue);
+            writer.writeComment(node.nodeValue.transcodeTo!writer.StringType);
             break;
         default:
             break;
@@ -610,7 +591,7 @@ auto writeCursor(Flag!"useFiber" useFiber = No.useFiber, WriterType, CursorType)
                 (auto ref WriterType writer, auto ref CursorType cursor)
 {
     alias StringType = WriterType.StringType;
-    void inspectOneLevel()
+    void inspectOneLevel() @safe
     {
         do
         {
@@ -703,11 +684,12 @@ auto writeCursor(Flag!"useFiber" useFiber = No.useFiber, WriterType, CursorType)
         inspectOneLevel();
 }
 
-/* unittest
+unittest
 {
     import std.array : Appender;
     import newxml.parser;
     import newxml.cursor;
+    import newxml.lexers;
     import std.typecons : refCounted;
 
     string xml =
@@ -720,18 +702,16 @@ auto writeCursor(Flag!"useFiber" useFiber = No.useFiber, WriterType, CursorType)
     "\t<!I_SAID_NO_CHECKS_AT_ALL_BY_DEFAULT>\n" ~
     "]>\n";
 
-    auto cursor = xml.parser.cursor;
+    auto cursor = xml.lexer.parser.cursor;
     cursor.setSource(xml);
 
-    auto app = Appender!string().refCounted;
-    auto writer = Writer!(string, typeof(app), PrettyPrinters.Indenter)();
+    auto writer = Writer!(string, PrettyPrinters.Indenter)();
 
-    writer.setSink(app);
     writer.writeCursor(cursor);
 
-    assert(app.data == xml);
+    assert(writer.output == xml);
 }
- */
+
 /++
 +   A wrapper around a writer that, before forwarding every write operation, validates
 +   the input given by the user using a chain of validating cursors.
@@ -945,17 +925,15 @@ struct CheckedWriter(WriterType, CursorType = void)
     }
 }
 
-unittest
+/+unittest
 {
-    import std.array : Appender;
     import newxml.validation;
     import std.typecons : refCounted;
 
-    
+    string app;
 
-    auto app = Appender!string().refCounted;
     auto writer =
-         Writer!(string, typeof(app), PrettyPrinters.Indenter)();
+         Writer!(string, PrettyPrinters.Indenter)();
     writer.setSink(app);
 
     writer.writeXMLDeclaration(10, "utf-8", false);
@@ -967,4 +945,4 @@ unittest
     writer.writeText("a nice text");
     writer.writeCDATA("a nice cdata");
     writer.closeElement("aabb");
-}
+}+/

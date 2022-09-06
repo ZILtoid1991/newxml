@@ -40,7 +40,7 @@ public class CursorException : XMLException {
         super(msg, file, line, nextInChain);
     }
 }
-
+@safe:
 package struct Attribute(StringType)
 {
     StringType value;
@@ -457,7 +457,7 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
     +   (`prefix`, `name`, `value`); if the current node is the document node, return the _attributes
     +   of the xml declaration (encoding, version, ...); otherwise, returns an empty array.
     +/
-    auto attributes()
+    auto attributes() @trusted
     {
         struct AttributesRange
         {
@@ -466,13 +466,13 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
             private Cursor* cursor;
             private bool error;
 
-            private this(StringType str, ref Cursor cur)
+            private this(StringType str, ref Cursor cur) @system nothrow
             {
                 content = str;
                 cursor = &cur;
             }
 
-            bool empty()
+            bool empty() @safe
             {
                 if (error)
                     return true;
@@ -486,7 +486,7 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
                 return true;
             }
 
-            auto front()
+            auto front() @safe
             {
                 if (attr == attr.init)
                 {
@@ -604,7 +604,7 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
                 return attr;
             }
 
-            auto popFront()
+            auto popFront() @safe
             {
                 front();
                 attr = attr.init;
@@ -877,7 +877,7 @@ unittest
 +   Advancing the range returned by this function also advances `cursor`. It is thus
 +   not recommended to interleave usage of this function with raw usage of `cursor`.
 +/
-auto children(T)(ref T cursor)
+auto children(T)(ref T cursor) @trusted
     if (isCursor!T)
 {
     struct XMLRange
@@ -891,7 +891,10 @@ auto children(T)(ref T cursor)
 
         ~this() { cursor.exit; }
     }
-    return XMLRange(&cursor, cursor.enter);
+    auto workaround() @system {
+        return XMLRange(&cursor, cursor.enter);    
+    }
+    return workaround();
 }
 
 unittest
@@ -1068,7 +1071,7 @@ struct CopyingCursor(CursorType, Flag!"intern" intern = No.intern)
         Rebindable!(immutable StringType)[const StringType] interned;
     }
 
-    private auto copy(StringType str)
+    private auto copy(StringType str) @system
     {
         static if (intern == Yes.intern)
         {
@@ -1095,28 +1098,28 @@ struct CopyingCursor(CursorType, Flag!"intern" intern = No.intern)
         return cp;
     }
 
-    auto name()
+    auto name() @trusted
     {
         return copy(cursor.name);
     }
-    auto localName()
+    auto localName() @trusted
     {
         return copy(cursor.localName);
     }
-    auto prefix()
+    auto prefix() @trusted
     {
         return copy(cursor.prefix);
     }
-    auto content()
+    auto content() @trusted
     {
         return copy(cursor.content);
     }
-    auto wholeContent()
+    auto wholeContent() @trusted
     {
         return copy(cursor.wholeContent);
     }
 
-    auto attributes()
+    auto attributes() @trusted
     {
         struct CopyRange
         {

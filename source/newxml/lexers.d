@@ -51,7 +51,7 @@ public class LexerException : Exception {
         super(msg, file, line, nextInChain);
     }
 }
-
+@safe:
 /++
 +   A lexer that takes a sliceable input.
 +
@@ -779,7 +779,7 @@ version(unittest)
 
 unittest
 {
-    void testLexer(T)(T.InputType delegate(string) conv)
+    void testLexer(T)(T.InputType delegate(string) @safe conv) @safe
     {
         string xml = q{
         <?xml encoding = "utf-8" ?>

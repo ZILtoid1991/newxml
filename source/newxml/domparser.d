@@ -73,7 +73,7 @@ struct DOMBuilder(T)
                 switch (attr.name)
                 {
                     case "version":
-                        document.xmlVersion = attr.value;
+                        document.xmlVersion = new DOMString(attr.value);
                         break;
                     case "standalone":
                         document.xmlStandalone = attr.value == "yes";
@@ -217,27 +217,26 @@ struct DOMBuilder(T)
 /++
 +   Instantiates a suitable `DOMBuilder` on top of the given `cursor` and `DOMImplementation`.
 +/
-auto domBuilder(CursorType)(auto ref CursorType cursor)
+auto domBuilder(CursorType)(auto ref CursorType cursor, DOMImplementation domimpl)
     if (isCursor!CursorType)
 {
-    auto res = DOMBuilder!(CursorType, DOMImplementation)();
+    auto res = DOMBuilder!(CursorType)(domimpl);
     res.cursor = cursor;
-    res.domImpl = impl;
+    //res.domImpl = impl;
     res.initialize;
     return res;
 }
 
-/* unittest
+unittest
 {
     import std.stdio;
 
     import newxml.lexers;
     import newxml.parser;
     import newxml.cursor;
-    import std.experimental.allocator.gc_allocator; //import stdx.allocator.gc_allocator;
     import domimpl = newxml.domimpl;
 
-    alias DOMImplType = domimpl.DOMImplementation!string;
+    alias DOMImplType = domimpl.DOMImplementation;
 
     string xml = q{
     <?xml encoding = "utf-8" ?>
@@ -257,15 +256,15 @@ auto domBuilder(CursorType)(auto ref CursorType cursor)
         .lexer
         .parser
         .cursor
-        .copyingCursor
+        //.copyingCursor
         .domBuilder(new DOMImplType());
 
     builder.setSource(xml);
     builder.buildRecursive;
     auto doc = builder.getDocument;
 
-    assert(doc.getElementsByTagName("ccc").length == 1);
-    assert(doc.documentElement.getAttribute("xmlns:myns") == "something");
+    assert(doc.getElementsByTagName(new DOMString("ccc")).length == 1);
+    assert(doc.documentElement.getAttribute(new DOMString("xmlns:myns")) == "something");
 }
 
 unittest
@@ -273,10 +272,9 @@ unittest
     import newxml.lexers;
     import newxml.parser;
     import newxml.cursor;
-    import std.experimental.allocator.gc_allocator; //import stdx.allocator.gc_allocator;
     import domimpl = newxml.domimpl;
 
-    alias DOMImplType = domimpl.DOMImplementation!string;
+    alias DOMImplType = domimpl.DOMImplementation;
 
     auto xml = `<?xml version="1.0" encoding="UTF-8"?><tag></tag>`;
     auto builder =
@@ -292,4 +290,4 @@ unittest
     auto doc = builder.getDocument;
 
     assert(doc.childNodes.length == 1);
-} */
+}

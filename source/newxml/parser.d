@@ -41,6 +41,7 @@ public class ParserException : XMLException {
         super(msg, file, line, nextInChain);
     }
 }
+@safe:
 /++
 +   A low level XML parser.
 +
