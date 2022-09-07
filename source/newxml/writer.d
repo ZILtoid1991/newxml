@@ -529,49 +529,73 @@ unittest
 }
 
 import dom = newxml.dom;
+import newxml.domstring;
 
 /++
 +   Outputs the entire DOM tree rooted at `node` using the given `writer`.
 +/
-void writeDOM(WriterType)(auto ref WriterType writer, Node node)
+void writeDOM(WriterType)(auto ref WriterType writer, dom.Node node)
 {
     import std.traits : ReturnType;
     import newxml.faststrings;
     alias Document = typeof(node.ownerDocument);
     alias Element = ReturnType!(Document.documentElement);
+    alias StringType = writer.StringType;
 
     switch (node.nodeType) with (dom.NodeType)
     {
         case document:
             auto doc = cast(Document)node;
-            writer.writeXMLDeclaration(doc.xmlVersion.transcodeTo!writer.StringType, 
-                    doc.xmlEncoding.transcodeTo!writer.StringType, doc.xmlStandalone);
+            DOMString xmlVersion = doc.xmlVersion, xmlEncoding = doc.xmlEncoding;
+            writer.writeXMLDeclaration(xmlVersion ? xmlVersion.transcodeTo!StringType() : null, 
+                    xmlEncoding ? xmlEncoding.transcodeTo!StringType() : null, doc.xmlStandalone);
             foreach (child; doc.childNodes)
                 writer.writeDOM(child);
             break;
         case element:
             auto elem = cast(Element)node;
-            writer.startElement(elem.tagName.transcodeTo!writer.StringType);
+            writer.startElement(elem.tagName.transcodeTo!StringType);
             if (elem.hasAttributes)
                 foreach (attr; elem.attributes)
-                    writer.writeAttribute(attr.nodeName.transcodeTo!writer.StringType, 
-                            xmlEscape(attr.nodeValue.transcodeTo!writer.StringType));
+                    writer.writeAttribute(attr.nodeName.transcodeTo!StringType, 
+                            xmlEscape(attr.nodeValue.transcodeTo!StringType));
             foreach (child; elem.childNodes)
                 writer.writeDOM(child);
-            writer.closeElement(elem.tagName.transcodeTo!writer.StringType);
+            writer.closeElement(elem.tagName.transcodeTo!StringType);
             break;
         case text:
-            writer.writeText(xmlEscape(node.nodeValue.transcodeTo!writer.StringType));
+            writer.writeText(xmlEscape(node.nodeValue.transcodeTo!StringType));
             break;
         case cdataSection:
-            writer.writeCDATA(xmlEscape(node.nodeValue.transcodeTo!writer.StringType));
+            writer.writeCDATA(xmlEscape(node.nodeValue.transcodeTo!StringType));
             break;
         case comment:
-            writer.writeComment(node.nodeValue.transcodeTo!writer.StringType);
+            writer.writeComment(node.nodeValue.transcodeTo!StringType);
             break;
         default:
             break;
     }
+}
+
+unittest
+{
+    import newxml.domimpl;
+    Writer!(string, PrettyPrinters.Minimalizer) wrt = Writer!(string)(PrettyPrinters.Minimalizer!string());
+
+    dom.DOMImplementation domimpl = new DOMImplementation;
+    dom.Document doc = domimpl.createDocument(null, new DOMString("doc"), null);
+    dom.Element e0 = doc.createElement(new DOMString("text"));
+    doc.firstChild.appendChild(e0);
+    e0.setAttribute(new DOMString("something"), new DOMString("other thing"));
+    e0.appendChild(doc.createTextNode(new DOMString("Some text ")));
+    dom.Element e1 = doc.createElement(new DOMString("b"));
+    e1.appendChild(doc.createTextNode(new DOMString("with")));
+    e0.appendChild(e1);
+    e0.appendChild(doc.createTextNode(new DOMString(" markup.")));
+    
+    wrt.writeDOM(doc);
+
+    assert(wrt.output == "<?xml version='1.0' standalone='no'?><doc><text something='other thing'>Some text <b>with</b> markup.</text></doc>", wrt.output);
 }
 
 import std.typecons : Flag, No, Yes;
