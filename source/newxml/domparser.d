@@ -256,7 +256,6 @@ unittest
         .lexer
         .parser
         .cursor
-        //.copyingCursor
         .domBuilder(new DOMImplType());
 
     builder.setSource(xml);

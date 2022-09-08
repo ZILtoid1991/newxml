@@ -98,6 +98,157 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
     Flag!"processBadDocument" processBadDocument = No.processBadDocument)
     if (isLowLevelParser!P)
 {
+    struct AttributesRange
+    {
+        private StringType content;
+        private Attribute!StringType attr;
+        private Cursor* cursor;
+        private bool error;
+
+        private this(StringType str, ref Cursor cur) @system nothrow
+        {
+            content = str;
+            cursor = &cur;
+        }
+
+        bool empty() @safe
+        {
+            if (error)
+                return true;
+
+            auto i = content.fastIndexOfNeither(" \r\n\t");
+            if (i >= 0)
+            {
+                content = content[i..$];
+                return false;
+            }
+            return true;
+        }
+
+        auto front() @safe
+        {
+            if (attr == attr.init)
+            {
+                auto i = content.fastIndexOfNeither(" \r\n\t");
+                assert(i >= 0, "No more attributes...");
+                content = content[i..$];
+
+                auto sep = fastIndexOf(content[0..$], '=');
+                if (sep == -1)
+                {
+                    // attribute without value???
+                    static if (processBadDocument == No.processBadDocument) 
+                    {
+                        throw new CursorException("Invalid attribute syntax!");
+                    }
+                    else 
+                    {
+                        error = true;
+                        return attr.init;
+                    }
+                }
+
+                auto name = content[0..sep];
+                
+                
+                auto delta = fastIndexOfAny(name, " \r\n\t");
+                if (delta >= 0)
+                {
+                    auto j = name[delta..$].fastIndexOfNeither(" \r\n\t");
+                    if (j != -1)
+                    {
+                        // attribute name contains spaces???
+                        static if (processBadDocument == No.processBadDocument) 
+                        {
+                            throw new CursorException("Invalid attribute syntax!");
+                        } 
+                        else 
+                        {
+                            error = true;
+                            return attr.init;
+                        }
+                    }
+                    name = name[0..delta];
+                }
+                if (!isValidXMLName(name)) 
+                {
+                    static if (processBadDocument == No.processBadDocument)
+                    {
+                        throw new CursorException("Invalid attribute name!");
+                    }
+                    else 
+                    {
+                        error = true;
+                    }
+                }
+                attr.name = name;
+
+                size_t attEnd;
+                size_t quote;
+                delta = (sep + 1 < content.length) ? fastIndexOfNeither(content[sep + 1..$], " \r\n\t") : -1;
+                if (delta >= 0)
+                {
+                    quote = sep + 1 + delta;
+                    if (content[quote] == '"' || content[quote] == '\'')
+                    {
+                        delta = fastIndexOf(content[(quote + 1)..$], content[quote]);
+                        if (delta == -1)
+                        {
+                            // attribute quotes never closed???
+                            static if (processBadDocument == No.processBadDocument) 
+                            {
+                                throw new CursorException("Invalid attribute syntax!");
+                            } 
+                            else 
+                            {
+                                error = true;
+                                return attr.init;
+                            }
+                        }
+                        attEnd = quote + 1 + delta;
+                    }
+                    else
+                    {
+                        static if (processBadDocument == No.processBadDocument) 
+                        {
+                            throw new CursorException("Invalid attribute syntax!");
+                        } 
+                        else 
+                        {
+                            error = true;
+                            return attr.init;
+                        }
+                    }
+                }
+                else
+                {
+                    // attribute without value???
+                    static if (processBadDocument == No.processBadDocument) 
+                    {
+                        throw new CursorException("Invalid attribute syntax!");
+                    } 
+                    else 
+                    {
+                        error = true;
+                        return attr.init;
+                    }
+                }
+                //attr.value = content[(quote + 1)..attEnd];
+                static if (processBadDocument == No.processBadDocument) 
+                    attr.value = xmlUnescape(content[(quote + 1)..attEnd], cursor.parser.chrEntities);
+                else
+                    attr.value = xmlUnescape!No.strict(content[(quote + 1)..attEnd], cursor.parser.chrEntities);
+                content = content[attEnd+1..$];
+            }
+            return attr;
+        }
+
+        auto popFront() @safe
+        {
+            front();
+            attr = attr.init;
+        }
+    }
     /++ The type of characters in the input, as returned by the underlying low level parser. +/
     alias CharacterType = P.CharacterType;
 
@@ -136,6 +287,7 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
     {   
         return _xmlDeclNotFound;
     }
+    /+
     /** 
      * Preprocesses the document, mainly the declaration (sets document version and encoding) and the Document type.
      * NOTE: Does not want to process anything beyond the first processing instruction (`<?xml [...] ?>`) for unknown
@@ -200,7 +352,7 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
         while (next);
         exitloop:
         exit();
-    }
+    }+/
 
     private bool advanceInput()
     {
@@ -459,157 +611,7 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
     +/
     auto attributes() @trusted
     {
-        struct AttributesRange
-        {
-            private StringType content;
-            private Attribute!StringType attr;
-            private Cursor* cursor;
-            private bool error;
-
-            private this(StringType str, ref Cursor cur) @system nothrow
-            {
-                content = str;
-                cursor = &cur;
-            }
-
-            bool empty() @safe
-            {
-                if (error)
-                    return true;
-
-                auto i = content.fastIndexOfNeither(" \r\n\t");
-                if (i >= 0)
-                {
-                    content = content[i..$];
-                    return false;
-                }
-                return true;
-            }
-
-            auto front() @safe
-            {
-                if (attr == attr.init)
-                {
-                    auto i = content.fastIndexOfNeither(" \r\n\t");
-                    assert(i >= 0, "No more attributes...");
-                    content = content[i..$];
-
-                    auto sep = fastIndexOf(content[0..$], '=');
-                    if (sep == -1)
-                    {
-                        // attribute without value???
-                        static if (processBadDocument == No.processBadDocument) 
-                        {
-                            throw new CursorException("Invalid attribute syntax!");
-                        }
-                        else 
-                        {
-                            error = true;
-                            return attr.init;
-                        }
-                    }
-
-                    auto name = content[0..sep];
-                    
-                    
-                    auto delta = fastIndexOfAny(name, " \r\n\t");
-                    if (delta >= 0)
-                    {
-                        auto j = name[delta..$].fastIndexOfNeither(" \r\n\t");
-                        if (j != -1)
-                        {
-                            // attribute name contains spaces???
-                            static if (processBadDocument == No.processBadDocument) 
-                            {
-                                throw new CursorException("Invalid attribute syntax!");
-                            } 
-                            else 
-                            {
-                                error = true;
-                                return attr.init;
-                            }
-                        }
-                        name = name[0..delta];
-                    }
-                    if (!isValidXMLName(name)) 
-                    {
-                        static if (processBadDocument == No.processBadDocument)
-                        {
-                            throw new CursorException("Invalid attribute name!");
-                        }
-                        else 
-                        {
-                            error = true;
-                        }
-                    }
-                    attr.name = name;
-
-                    size_t attEnd;
-                    size_t quote;
-                    delta = (sep + 1 < content.length) ? fastIndexOfNeither(content[sep + 1..$], " \r\n\t") : -1;
-                    if (delta >= 0)
-                    {
-                        quote = sep + 1 + delta;
-                        if (content[quote] == '"' || content[quote] == '\'')
-                        {
-                            delta = fastIndexOf(content[(quote + 1)..$], content[quote]);
-                            if (delta == -1)
-                            {
-                                // attribute quotes never closed???
-                                static if (processBadDocument == No.processBadDocument) 
-                                {
-                                    throw new CursorException("Invalid attribute syntax!");
-                                } 
-                                else 
-                                {
-                                    error = true;
-                                    return attr.init;
-                                }
-                            }
-                            attEnd = quote + 1 + delta;
-                        }
-                        else
-                        {
-                            static if (processBadDocument == No.processBadDocument) 
-                            {
-                                throw new CursorException("Invalid attribute syntax!");
-                            } 
-                            else 
-                            {
-                                error = true;
-                                return attr.init;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // attribute without value???
-                        static if (processBadDocument == No.processBadDocument) 
-                        {
-                            throw new CursorException("Invalid attribute syntax!");
-                        } 
-                        else 
-                        {
-                            error = true;
-                            return attr.init;
-                        }
-                    }
-                    //attr.value = content[(quote + 1)..attEnd];
-                    static if (processBadDocument == No.processBadDocument) 
-                        attr.value = xmlUnescape(content[(quote + 1)..attEnd], cursor.parser.chrEntities);
-                    else
-                        attr.value = xmlUnescape!No.strict(content[(quote + 1)..attEnd], cursor.parser.chrEntities);
-                    content = content[attEnd+1..$];
-                }
-                return attr;
-            }
-
-            auto popFront() @safe
-            {
-                front();
-                attr = attr.init;
-            }
-        }
+        
 
         auto kind = currentNode.kind;
         if (kind == XMLKind.elementStart || kind == XMLKind.elementEmpty || kind == XMLKind.processingInstruction)
@@ -839,36 +841,6 @@ unittest
 
     assert(cursor.documentEnd);
     assert(!cursor.atBeginning);
-}
-
-unittest 
-{
-    import newxml.lexers;
-    import newxml.parser;
-    import std.conv : to;
-    string xml = q"{
-        <?xml encoding = "utf-8" ?>
-        <!DOCTYPE mydoc [
-            <!ENTITY example "this is a replacement text">
-            <!ENTITY macro "this is a replacement text <a>with</a> inlined elements">
-        ]>
-        <doc>
-            &example;
-            &macro;
-        </doc>
-    }";
-
-    auto cursor = xml.lexer.parser.cursor;
-
-    assert(cursor.atBeginning);
-
-    cursor.preprocess();
-
-    //assert(!cursor.atBeginning, to!string(cursor.kind) ~ "; " ~ cursor.name);
-
-    assert(cursor.encoding == "utf-8", cursor.encoding);
-    //assert(cursor.docType == " mydoc ", cursor.docType);
-    //assert(cursor.parser.chrEntities["example"] == "this is a replacement text");
 }
 
 /++
