@@ -84,3 +84,8 @@ Although very uncomfortable to use compared to its higher-level counterparts, th
 parsing XML. e.g. you really need that extra memory and speed.
 
 # To do list
+
+* Implement missing DOM functions.
+* Improve error handling.
+* Write even more testcases.
+* gather input on library and adjust things accordingly.
