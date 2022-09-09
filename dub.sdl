@@ -4,5 +4,10 @@ authors "Laszlo Szeremi"
 copyright "Copyright © 2022, Laszlo Szeremi"
 license "BSL-1.0"
 configuration "library" {
-    target "library"
+    targetType "library"
+}
+configuration "test" {
+    targetType "executable"
+    sourcePaths "source/"
+    sourceFiles "testsource/test.d"
 }
