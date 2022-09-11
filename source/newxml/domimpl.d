@@ -1882,7 +1882,7 @@ class DOMImplementation : dom.DOMImplementation
             auto opIndex(size_t i) { return item(i); }
 
             // range interface
-            auto opSlice()
+            /+auto opSlice()
             {
                 struct Range
                 {
@@ -1893,7 +1893,7 @@ class DOMImplementation : dom.DOMImplementation
                     bool empty() { return currentAttr is null; }
                 }
                 return Range(firstAttr);
-            }
+            }+/
         }
     }
     /// Implementation of $(LINK2 ../dom/Text, `std.experimental.xml.dom.Text`)

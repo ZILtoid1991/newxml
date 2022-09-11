@@ -23,3 +23,6 @@ docs/
 
 # Code coverage
 *.lst
+
+*.ps1
+*.log

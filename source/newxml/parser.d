@@ -82,7 +82,7 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
     public bool processBadDocument;
     ///if set to `true` (which is default), then the parser will test for invalid characters, and will throw an 
     ///exception on errors. Turning it off can speed up parsing.
-    public bool testTextValidity;
+    public bool testTextValidity = true;
     public XMLVersion xmlVersion;
     private XMLToken next;
     ///Contains character and text entities. Text entities might contain additional nodes and elements.
