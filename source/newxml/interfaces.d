@@ -479,7 +479,7 @@ template isSaveableCursor(CursorType)
 }
 
 // WRITERS
-/++ 
+/++
  + Tests whether the given type is a writer.
  +/
 template isWriter(WriterType)
@@ -525,7 +525,7 @@ template needSource(T)
 +/
 class XMLException : Exception
 {
-    @nogc @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__, 
+    @nogc @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__,
             Throwable nextInChain = null)
     {
         super(msg, file, line, nextInChain);
@@ -537,7 +537,7 @@ class XMLException : Exception
     }
 }
 
-/** 
+/**
  * Defines the document's XML version.
  */
 enum XMLVersion {

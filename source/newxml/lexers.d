@@ -39,7 +39,7 @@ import std.string;
 
 import std.typecons : Flag, Yes;
 
-/** 
+/**
  * Thrown on lexing errors.
  */
 public class LexerException : Exception {
@@ -125,7 +125,9 @@ struct SliceLexer(T)
     void dropWhile(string s)
     {
         while (pos < input.length && indexOf(s, input[pos]) != -1)
+        {
             pos++;
+        }
     }
 
     /// ditto
@@ -173,13 +175,16 @@ struct SliceLexer(T)
 
         ptrdiff_t res;
         while ((res = indexOf(s, input[pos])) == -1)
-		{
+        {
             enforce!LexerException(++pos < input.length
-					, "No more characters are found!");
-		}
+                    , "No more characters are found!");
+        }
 
         if (included)
+        {
             pos++;
+        }
+
         return res;
     }
 }
@@ -280,7 +285,9 @@ struct RangeLexer(T)
     void dropWhile(string s)
     {
         while (!input.empty && indexOf(s, input.front) != -1)
+        {
             input.popFront();
+        }
     }
 
     /// ditto
@@ -309,6 +316,7 @@ struct RangeLexer(T)
             enforce!LexerException(!input.empty
                 , "No more characters are found!");//handler();
         }
+
         if (included)
         {
             buffer ~= input.front;//app.put(input.front);
@@ -329,6 +337,7 @@ struct RangeLexer(T)
             enforce!LexerException(!input.empty
                 , "No more characters are found!");//handler();
         }
+
         if (included)
         {
             buffer ~= input.front;// app.put(input.front);
@@ -438,7 +447,9 @@ struct ForwardLexer(T)
     void dropWhile(string s)
     {
         while (!input.empty && indexOf(s, input.front) != -1)
+        {
             input.popFront();
+        }
         input_start = input.save;
     }
 
@@ -595,7 +606,9 @@ struct BufferedLexer(T)
         if (pos + 1 >= buffer.length)
         {
             if (onEdge)
+            {
                 outBuf ~= buffer[pos];//app.put(buffer[pos]);
+            }
             else
             {
                 outBuf ~= buffer[begin..$];//app.put(buffer[begin..$]);
@@ -606,21 +619,29 @@ struct BufferedLexer(T)
             pos = 0;
         }
         else if (onEdge)
+        {
             outBuf ~= buffer[pos++];//app.put(buffer[pos++]);
+        }
         else
+        {
             pos++;
+        }
     }
     private void advance(ptrdiff_t n)
     {
         foreach(i; 0..n)
+        {
             advance();
+        }
     }
     private void advanceNextBuffer()
     {
         enforce!LexerException(!empty
             , "No more characters are found!");
         if (onEdge)
+        {
             outBuf ~= buffer[pos..$]; //app.put(buffer[pos..$]);
+        }
         else
         {
             outBuf ~= buffer[begin..$];//app.put(buffer[begin..$]);
@@ -638,13 +659,19 @@ struct BufferedLexer(T)
     CharacterType[] get() const
     {
         if (onEdge)
+        {
             return outBuf;//app.data;
+        }
         else
         {
             static if (is(typeof(representation!CharacterType(""))))
+            {
                 return cast(CharacterType[])buffer[begin..pos];
+            }
             else
+            {
                 return buffer[begin..pos];
+            }
         }
     }
 
@@ -652,7 +679,9 @@ struct BufferedLexer(T)
     void dropWhile(string s)
     {
         while (!empty && indexOf(s, buffer[pos]) != -1)
+        {
             advance();
+        }
     }
 
     /// ditto
@@ -664,6 +693,7 @@ struct BufferedLexer(T)
             advance();
             return true;
         }
+
         return false;
     }
 
@@ -679,7 +709,9 @@ struct BufferedLexer(T)
         advance(adv);
 
         if (included)
+        {
             advance();
+        }
     }
 
     /// ditto
@@ -691,8 +723,11 @@ struct BufferedLexer(T)
         {
             advance();
         }
+
         if (included)
+        {
             advance();
+        }
         return res;
     }
 }
@@ -722,8 +757,13 @@ auto chooseLexer(Input)()
         auto res = RangeLexer!(Input)();
         return res;
     }
-    else static assert(0);
-   
+    else
+    {
+        // TODO it would be good to know here why non of the three
+        // lexer types could be chosen
+        static assert(0);
+    }
+
 }
 
 template lexer()

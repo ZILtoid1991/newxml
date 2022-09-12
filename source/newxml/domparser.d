@@ -69,7 +69,9 @@ struct DOMBuilder(T)
         document = domImpl.createDocument(null, null, null);
 
         if (cursor.kind == XMLKind.document)
+        {
             foreach (attr; cursor.attributes)
+            {
                 switch (attr.name)
                 {
                     case "version":
@@ -81,6 +83,8 @@ struct DOMBuilder(T)
                     default:
                         break;
                 }
+            }
+        }
 
         currentNode = document;
     }
@@ -101,10 +105,14 @@ struct DOMBuilder(T)
     bool enter()
     {
         if (cursor.atBeginning)
+        {
             return cursor.enter;
+        }
 
         if (cursor.kind != XMLKind.elementStart)
+        {
             return false;
+        }
 
         if (!already_built)
         {
@@ -123,6 +131,7 @@ struct DOMBuilder(T)
             currentNode = currentNode.lastChild;
             return true;
         }
+
         return false;
     }
 
@@ -132,7 +141,10 @@ struct DOMBuilder(T)
     void exit()
     {
         if (currentNode)
+        {
             currentNode = currentNode.parentNode;
+        }
+
         already_built = false;
         cursor.exit;
     }
@@ -153,7 +165,9 @@ struct DOMBuilder(T)
     void build()
     {
         if (already_built || cursor.atBeginning)
+        {
             return;
+        }
 
         auto cur = createCurrent;
         if (cur)
@@ -169,15 +183,19 @@ struct DOMBuilder(T)
     +/
     bool buildRecursive()
     {
-        if (enter)
+        if (enter())
         {
-            while (buildRecursive) {}
-            exit;
+            while (buildRecursive())
+            {
+            }
+            exit();
         }
         else
-            build;
+        {
+            build();
+        }
 
-        return next;
+        return next();
     }
 
     private NodeType createCurrent()

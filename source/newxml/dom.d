@@ -211,7 +211,7 @@ abstract class DOMException: XMLException
     @property ExceptionCode code();
 
     ///
-    @nogc @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__, 
+    @nogc @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__,
             Throwable nextInChain = null)
     {
         super(msg, file, line, nextInChain);
@@ -430,7 +430,7 @@ interface Document : Node {
     +/
     Node importNode(Node importedNode, bool deep);
     /++
-    +   Moves node from another document, and returns it. Throws "NotSupportedError" DOMException if node is a 
+    +   Moves node from another document, and returns it. Throws "NotSupportedError" DOMException if node is a
     +   document, or a "HierarchyRequestError" DOMException if node is a shadow root.
     +/
     Node adoptNode(Node source);
@@ -712,7 +712,10 @@ interface NodeList {
         for (size_t i = 0; i < length; i++)
         {
             auto result = foreachBody(item(i));
-            if (result) return result;
+            if (result)
+            {
+                return result;
+            }
         }
         return 0;
     }
@@ -746,7 +749,10 @@ interface NamedNodeMap {
         for (size_t i = 0; i < length; i++)
         {
             auto result = foreachBody(item(i));
-            if (result) return result;
+            if (result)
+            {
+                return result;
+            }
         }
         return 0;
     }
@@ -887,7 +893,7 @@ interface Attr : Node {
     +/
     @property bool isId();
 }
-/** 
+/**
  * Elements are the main building block of an XML document. They have a name, an associated namespace, attributes,
  * text, and child elements.
  */

@@ -16,9 +16,9 @@ version (newxml_force_utf8) {
 } else {
     alias XMLCh = immutable(wchar);
 }
-/** 
+/**
  * Proper DOMString implementation, with some added range capabilities.
- * Authors: 
+ * Authors:
  *  László Szerémi
  * Contains UTF-16 strings by default, but can be configured to either UTF-8 or UTF-32 with version labels.
  */
@@ -34,7 +34,10 @@ public class DOMString : RandomAccessFinite!XMLCh {
     int opApply(scope int delegate(XMLCh) deleg) {
         for (size_t i ; i < buffer.length ; i++) {
             int result = deleg(buffer[i]);
-            if (result) return result;
+            if (result)
+            {
+                return result;
+            }
         }
         return 0;
     }
@@ -43,12 +46,15 @@ public class DOMString : RandomAccessFinite!XMLCh {
     int opApply(scope int delegate(size_t, XMLCh) deleg) {
         for (size_t i ; i < buffer.length ; i++) {
             int result = deleg(i, buffer[i]);
-            if (result) return result;
+            if (result)
+            {
+                return result;
+            }
         }
         return 0;
     }
 @safe:
-    /** 
+    /**
      * Default constructor for DOMString. The resulting DOMString object refers to no string at all
      * Difference from C++ implementation: Does not compare with 0
      */
@@ -65,7 +71,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
         buffer = fromStringz(other);
         backPos = buffer.length;
     }
-    /** 
+    /**
      * Constructor to build a DOMString from a character array of given length.
      * Params:
      *   other = The character array to be imported into the DOMString
@@ -78,7 +84,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
     version (newxml_force_utf8) {
 
     } else {
-        /** 
+        /**
          * Constructor to build a DOMString from an 8 bit character array.
          * Params:
          *   other = The character array to be imported into the DOMString
@@ -103,7 +109,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
         }
         backPos = buffer.length;
     }
-    /** 
+    /**
      * Append a null-terminated XMLCh * (Unicode) string to this string.
      * Params:
      *   other = The object to be appended
@@ -112,7 +118,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
         buffer ~= fromStringz(other);
         backPos = buffer.length;
     }
-    /** 
+    /**
      * Append a single Unicode character to this string.
      * Params:
      *   ch = The single character to be appended
@@ -121,7 +127,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
         buffer ~= ch;
         backPos = buffer.length;
     }
-    /** 
+    /**
      * Appends the content of another DOMString to this string.
      * Params:
      *   other = The object to be appended
@@ -130,7 +136,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
         buffer ~= other.buffer;
         backPos = buffer.length;
     }
-    /** 
+    /**
      * Appends a D string to this string.
      * Params:
      *   other = The D string (string/wstring/dstring) as an array
@@ -145,7 +151,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
         }
         backPos = buffer.length;
     }
-    /** 
+    /**
      * Returns the character at the specified position.
      * Params:
      *   index = The position at which the character is being requested
@@ -154,7 +160,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
     XMLCh charAt(size_t index) @nogc nothrow pure {
         return buffer[index];
     }
-    /** 
+    /**
      * Makes a clone of a the DOMString.
      * Returns: The object to be cloned.
      */
@@ -165,30 +171,29 @@ public class DOMString : RandomAccessFinite!XMLCh {
     int compareString(DOMString other) {
         return int.init;
     }
-    /** 
+    /**
      * Clears the data of this DOMString.
      * Params:
-     *   offset = The position from the beginning from which the data must be deleted 
-     *   count = The count of characters from the offset that must be deleted 
+     *   offset = The position from the beginning from which the data must be deleted
+     *   count = The count of characters from the offset that must be deleted
      */
     void deleteData(size_t offset, size_t count) pure {
-		enforce!XMLException(offset + count <= buffer.length
+        enforce!XMLException(offset + count <= buffer.length
             , "offset + count larger than buffer length!");
         buffer = buffer[0..offset] ~ buffer[offset+count..$];
         backPos = buffer.length;
     }
-    /** 
-     * Compare a DOMString with a null-terminated raw 16-bit character string. 
+    /**
+     * Compare a DOMString with a null-terminated raw 16-bit character string.
      * Params:
-     *   other = The character string to be compared with. 
-     * Returns: True if the strings are the same, false otherwise. 
+     *   other = The character string to be compared with.
+     * Returns: True if the strings are the same, false otherwise.
      */
     bool equals(XMLCh* other) @trusted pure const {
         auto str = fromStringz(other);
-        if (str.length != buffer.length) return false;
         return equal(buffer, str);
     }
-    /** 
+    /**
      * Tells if a DOMString contains the same character data as another.
      * Params:
      *   other = The DOMString to be compared with.
@@ -197,7 +202,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
     bool equals(DOMString other) pure const {
         return equal(buffer, other.buffer);
     }
-    /** 
+    /**
      * Compares the content of a D string against a DOMString.
      * Params:
      *   other = The D string to be compared with.
@@ -206,33 +211,39 @@ public class DOMString : RandomAccessFinite!XMLCh {
     bool equals(T)(T other) pure const {
         XMLCh[] o;
         version (newxml_force_utf8)
+        {
             o = toUTF8(other);
+        }
         else version (newxml_force_utf32)
+        {
             o = toUTF32(other);
+        }
         else
+        {
             o = toUTF16(other);
+        }
 
         return equal(buffer, o);
     }
-    /** 
+    /**
      * Inserts a string within the existing DOMString at an arbitrary position.
      * Params:
-     *   offset = The offset from the beginning at which the insertion needs to be done in this object 
+     *   offset = The offset from the beginning at which the insertion needs to be done in this object
      *   data = The DOMString containing the data that needs to be inserted
      */
     void insertData(size_t offset, DOMString data) pure nothrow {
         buffer = buffer[0..offset] ~ data.buffer ~ buffer[offset..$];
     }
-    /** 
+    /**
      * Inserts a string of type XMLCh within the existing DOMString at an arbitrary position
      * Params:
-     *   offset = The offset from the beginning at which the insertion needs to be done in this object 
+     *   offset = The offset from the beginning at which the insertion needs to be done in this object
      *   other = The DOMString containing the data that needs to be inserted
      */
     void insertData(size_t offset, XMLCh[] other) pure nothrow {
         buffer = buffer[0..offset] ~ other ~ buffer[offset..$];
     }
-    /** 
+    /**
      * Compares the string against various other types or itself using the `==` and `!=` operators.
      * Params:
      *   other = The instance of the type to be tested against.
@@ -250,7 +261,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
             return transcodeToUTF32;
         }
     }
-    /** 
+    /**
      * Implements easy array appending with operator overloading.
      * Params:
      *   rhs = The data to be appended to the string.
@@ -260,7 +271,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
             appendData(rhs);
         }
     }
-    ///Dumps the DOMString on the console. 
+    ///Dumps the DOMString on the console.
     void print() const {
         import std.stdio;
         write(buffer);
@@ -279,8 +290,8 @@ public class DOMString : RandomAccessFinite!XMLCh {
     XMLCh[] getDString() @nogc nothrow pure const {
         return buffer;
     }
-    /** 
-     * Preallocate storage in the string to hold a given number of characters. A DOMString will grow its buffer on 
+    /**
+     * Preallocate storage in the string to hold a given number of characters. A DOMString will grow its buffer on
      * demand, as characters are added, but it can be more efficient to allocate once in advance, if the size is known.
      * Params:
      *   size = The number of characters to reserve.
@@ -288,7 +299,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
     void reserve(size_t size) nothrow pure {
         buffer.reserve(size);
     }
-    /** 
+    /**
      * Returns a sub-string of the DOMString starting at a specified position.
      * Params:
      *   offset = The offset from the beginning from which the sub-string is being requested.
@@ -298,31 +309,31 @@ public class DOMString : RandomAccessFinite!XMLCh {
     DOMString substringData(size_t offset, size_t count) nothrow pure const {
         return new DOMString(buffer[offset..offset + count]);
     }
-    /** 
-     * Returns a copy of the string, transcoded to the local code page. The caller owns the (char *) string that is 
+    /**
+     * Returns a copy of the string, transcoded to the local code page. The caller owns the (char *) string that is
      * returned, and is responsible for deleting it.
-     * Returns: A pointer to a newly allocated buffer of char elements, which represents the original string, but in 
+     * Returns: A pointer to a newly allocated buffer of char elements, which represents the original string, but in
      * the local encoding.
      * Note: This function is using the `toStringz` function, and rules of that apply here too.
      */
     immutable(char)* transcode() @trusted pure nothrow const {
         return toStringz(toUTF8(buffer));
     }
-    /** 
+    /**
      * Transcodes the string as a UTF-8 string
      * Returns: The content of this string as UTF-8 data.
      */
     string transcodeToUTF8() pure nothrow const {
         return toUTF8(buffer);
     }
-    /** 
+    /**
      * Transcodes the string as a UTF-16 string
      * Returns: The content of this string as UTF-16 data.
      */
     wstring transcodeToUTF16() pure nothrow const {
         return toUTF16(buffer);
     }
-    /** 
+    /**
      * Transcodes the string as a UTF-32 string
      * Returns: The content of this string as UTF-32 data.
      */
@@ -332,32 +343,47 @@ public class DOMString : RandomAccessFinite!XMLCh {
     ///Templated transcoder.
     T transcodeTo(T)() pure nothrow const {
         static if (is(T == string))
+        {
             return transcodeToUTF8;
+        }
         else static if (is(T == wstring))
+        {
             return transcodeToUTF16;
+        }
         else static if (is(T == dstring))
+        {
             return transcodeToUTF32;
-        else static assert(0, "Template parameter `" ~ "` not supported for function `DOMString.transcodeTo(T)()`");
+        }
+        else
+        {
+            static assert(false, "Template parameter `" ~ T.stringof ~ "` not "
+                    ~ "supported for function `DOMString.transcodeTo(T)()`");
+        }
     }
     //range stuff begins here
     ///Returns the front element of the range.
     @property XMLCh front() @nogc nothrow pure {
         return buffer[frontPos];
-        
+
     }
     /**Calls $(REF moveFront, std, range, primitives) on the wrapped range, if
      * possible. Otherwise, throws an $(LREF UnsupportedRangeMethod) exception.
      */
     XMLCh moveFront() {
         if (frontPos + 1 < backPos)
+        {
             frontPos++;
+        }
+
         return buffer[frontPos];
     }
 
     ///Moves the front pointer up by one.
     void popFront() {
         if (frontPos + 1 < backPos)
+        {
             frontPos++;
+        }
     }
 
     ///Returns true if all content of the string have been consumed.
@@ -374,13 +400,17 @@ public class DOMString : RandomAccessFinite!XMLCh {
      */
     XMLCh moveBack() {
         if (backPos > 1)
+        {
             backPos--;
+        }
         return buffer[backPos];
     }
     ///Moves the back pointer down by one.
     void popBack() {
         if (backPos > 1)
+        {
             backPos--;
+        }
     }
     ///Returns a copy of the DOMString.
     @property RandomAccessFinite!XMLCh save() {
@@ -390,7 +420,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
     XMLCh opIndex(size_t index) @nogc nothrow pure const {
         return buffer[index];
     }
-    /** 
+    /**
      * Returns a slice of the string.
      * Params:
      *   from = The beginning point.
@@ -414,7 +444,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
     alias opDollar = length;
 }
 unittest {
-    DOMString test0 = new DOMString("Hello World!"), test1 = new DOMString("Hello World!"w), 
+    DOMString test0 = new DOMString("Hello World!"), test1 = new DOMString("Hello World!"w),
             test2 = new DOMString("Hello World!"d);
     assert(test0 == "Hello World!"w);
     assert(test1 == "Hello World!"w);
