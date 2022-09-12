@@ -23,12 +23,9 @@ package bool checkStringBeforeChr(T, S)(T[] haysack, S[] needle, S before) @nogc
     for (sizediff_t i ; i < haysack.length ; i++) {
         if (haysack[i] == needle[0])
         {
-            if (cast(sizediff_t)(haysack.length) - i > needle.length) 
-            {
-                return equal(haysack[i..i + needle.length], needle);
-            }
-            else
-                return false;
+            return (cast(sizediff_t)(haysack.length) - i > needle.length) 
+                ? equal(haysack[i..i + needle.length], needle)
+                : false;
         }
         else if (haysack[i] == before)
             return false;

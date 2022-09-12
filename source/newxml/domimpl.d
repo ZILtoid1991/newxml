@@ -121,10 +121,9 @@ class DOMImplementation : dom.DOMImplementation
         +/
         DOMImplementation getFeature(string feature, string version_)
         {
-            if (hasFeature(feature, version_))
-                return this;
-            else
-                return null;
+            return hasFeature(feature, version_)
+                ? this
+                : null;
         }
     }
     
@@ -250,10 +249,9 @@ class DOMImplementation : dom.DOMImplementation
             +/
             Node getFeature(string feature, string version_)
             {
-                if (isSupported(feature, version_))
-                    return this;
-                else
-                    return null;
+                return isSupported(feature, version_)
+                    ? this
+                    : null;
             }
 
             /++
@@ -308,10 +306,9 @@ class DOMImplementation : dom.DOMImplementation
 
                 if (root1 !is root2) with (dom.DocumentPosition)
                 {
-                    if (cast(void*)root1 < cast(void*)root2)
-                        return Ret!disconnected | Ret!implementationSpecific | Ret!preceding;
-                    else
-                        return Ret!disconnected | Ret!implementationSpecific | Ret!following;
+                    return (cast(void*)root1 < cast(void*)root2)
+                        ? Ret!disconnected | Ret!implementationSpecific | Ret!preceding
+                        : Ret!disconnected | Ret!implementationSpecific | Ret!following;
                 }
 
                 bool swapped = depth1 < depth2;
@@ -328,10 +325,9 @@ class DOMImplementation : dom.DOMImplementation
                 }
                 if (node1 is node2) with (dom.DocumentPosition)
                 {
-                    if (swapped)
-                        return Ret!contains | Ret!preceding;
-                    else
-                        return Ret!containedBy | Ret!following;
+                    return swapped
+                        ? Ret!contains | Ret!preceding
+                        : Ret!containedBy | Ret!following;
                 }
                 while(true)
                 {
@@ -895,10 +891,10 @@ class DOMImplementation : dom.DOMImplementation
                 {
                     case attribute:
                         Attr result;
-                        if (node.prefix)
-                            result = createAttributeNS(node.namespaceURI, node.nodeName);
-                        else
-                            result = createAttribute(node.nodeName);
+                        result = node.prefix
+                            ? createAttributeNS(node.namespaceURI, node.nodeName)
+                            : createAttribute(node.nodeName);
+
                         auto children = node.childNodes;
                         foreach (i; 0..children.length)
                             result.appendChild(importNode(children.item(i), true));
@@ -914,10 +910,10 @@ class DOMImplementation : dom.DOMImplementation
                         return result;
                     case element:
                         Element result;
-                        if (node.prefix)
-                            result = createElementNS(node.namespaceURI, node.nodeName);
-                        else
-                            result = createElement(node.nodeName);
+						result = node.prefix
+                            ? createElementNS(node.namespaceURI, node.nodeName)
+                            : createElement(node.nodeName);
+
                         if (node.hasAttributes)
                         {
                             auto attributes = node.attributes;
@@ -1155,10 +1151,9 @@ class DOMImplementation : dom.DOMImplementation
             {
                 auto item = node.nextSibling;
 
-                if (check(item))
-                    return cast(Element)item;
-                else
-                    return findNext(item);
+                return check(item)
+                    ? cast(Element)item
+                    : findNext(item);
             }
             else if (node.parentNode && node.parentNode !is node.ownerDocument)
                 return findNextBack(node.parentNode);
@@ -1312,9 +1307,9 @@ class DOMImplementation : dom.DOMImplementation
 
             @property DOMString localName()
             {
-                if (!_colon)
-                    return null;
-                return _name[(_colon+1)..$];
+                return !_colon
+                    ? null
+                	: _name[(_colon+1)..$];
             }
             @property DOMString prefix()
             {
@@ -1418,21 +1413,21 @@ class DOMImplementation : dom.DOMImplementation
 
             DOMString lookupPrefix(DOMString namespaceURI)
             {
-                if (ownerElement)
-                    return ownerElement.lookupPrefix(namespaceURI);
-                return null;
+                return ownerElement
+                    ? ownerElement.lookupPrefix(namespaceURI)
+                	: null;
             }
             DOMString lookupNamespaceURI(DOMString prefix)
             {
-                if (ownerElement)
-                    return ownerElement.lookupNamespaceURI(prefix);
-                return null;
+                return ownerElement
+                    ? ownerElement.lookupNamespaceURI(prefix)
+                	: null;
             }
             bool isDefaultNamespace(DOMString namespaceURI)
             {
-                if (ownerElement)
-                    return ownerElement.isDefaultNamespace(namespaceURI);
-                return false;
+                return ownerElement
+                    ? ownerElement.isDefaultNamespace(namespaceURI)
+                	: false;
             }
         }
     }
@@ -1943,10 +1938,9 @@ class DOMImplementation : dom.DOMImplementation
                                 case cdataSection:
                                     return cast(Text) node.previousSibling;
                                 case entityReference:
-                                    if (cast(Text)(node.previousSibling.lastChild))
-                                        return cast(Text) node.previousSibling.lastChild;
-                                    else
-                                        return null;
+                                    return cast(Text)(node.previousSibling.lastChild)
+                                        ? cast(Text) node.previousSibling.lastChild
+                                        : null;
                                 default:
                                     return null;
                             }
@@ -1967,10 +1961,9 @@ class DOMImplementation : dom.DOMImplementation
                                 case cdataSection:
                                     return cast(Text) node.nextSibling;
                                 case entityReference:
-                                    if (cast(Text)(node.nextSibling.firstChild))
-                                        return cast(Text) node.nextSibling.firstChild;
-                                    else
-                                        return null;
+                                    return cast(Text)(node.nextSibling.firstChild)
+                                        ? cast(Text) node.nextSibling.firstChild
+                                        : null;
                                 default:
                                     return null;
                             }

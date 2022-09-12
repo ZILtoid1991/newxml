@@ -194,7 +194,6 @@ public class DOMString : RandomAccessFinite!XMLCh {
      * Returns: True if the two DOMStrings are same, false otherwise.
      */
     bool equals(DOMString other) pure const {
-        if (buffer.length != other.length) return false;
         return equal(buffer, other.buffer);
     }
     /** 
@@ -211,7 +210,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
             o = toUTF32(other);
         else
             o = toUTF16(other);
-        if (buffer.length != o.length) return false;
+
         return equal(buffer, o);
     }
     /** 

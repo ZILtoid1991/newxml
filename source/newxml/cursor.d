@@ -62,10 +62,9 @@ package struct Attribute(StringType)
     {
         this._name = _name;
         auto i = _name.indexOf(':');
-        if (i > 0)
-            colon = i;
-        else
-            colon = 0;
+		colon = i > 0
+			? i
+			: 0;
     }
     @property auto prefix() inout
     {
@@ -73,10 +72,9 @@ package struct Attribute(StringType)
     }
     @property StringType localName()
     {
-        if (colon)
-            return name[colon+1..$];
-        else
-            return name;
+		return colon
+			? name[colon+1..$]
+			: name;
     }
     StringType toString() {
         return name ~ " = \"" ~ value ~ "\"";
@@ -559,11 +557,13 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
                 {
                     ptrdiff_t i, j;
                     if ((j = indexOfNeither(currentNode.content, " \r\n\t")) >= 0)
+					{
                         nameBegin = j;
-                    if ((i = indexOfAny(currentNode.content[nameBegin..$], " \r\n\t")) >= 0)
-                        nameEnd = i + nameBegin;
-                    else
-                        nameEnd = currentNode.content.length;
+					}
+
+					nameEnd = ((i = indexOfAny(currentNode.content[nameBegin..$], " \r\n\t")) >= 0)
+                        ? i + nameBegin
+                        : currentNode.content.length;
                 }
                 return currentNode.content[nameBegin..nameEnd];
         }
@@ -597,10 +597,9 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
             if (colon == colon.max)
                 colon = indexOf(name, ':');
 
-            if (colon >= 0)
-                return name[0..colon];
-            else
-                return [];
+            return colon >= 0
+                ? name[0..colon]
+                : [];
         }
         return [];
     }
@@ -617,7 +616,7 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
         auto kind = currentNode.kind;
         if (kind == XMLKind.elementStart || kind == XMLKind.elementEmpty || kind == XMLKind.processingInstruction)
         {
-            name;
+            name();
             return AttributesRange(currentNode.content[nameEnd..$], this);
         }
         else
@@ -636,10 +635,9 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
             sizediff_t e = lastIndexOf(currentNode.content[nameEnd..$], currentNode.content[b + nameEnd]);
             if (b > 0 && e > 0)
             {
-                if (b + 1 <= e)
-                    return currentNode.content[nameEnd + b + 1..nameEnd + e];
-                else
-                    return null;
+                return b + 1 <= e
+                    ? currentNode.content[nameEnd + b + 1..nameEnd + e]
+                    : null;
             }
             else
             {
