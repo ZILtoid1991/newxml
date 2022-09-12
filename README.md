@@ -25,7 +25,27 @@ Please read the official DOM manual (https://dom.spec.whatwg.org/) before using 
 same thing at this point, only a few functions might not work yet (see chapter "To do list"). It's also used for other
 languages, so there's a good chance you already used it in C++, Python, Java, etc.
 
-First, you should create the builder, then you can get the document built with it for further processing:
+The *just give me an Document function* aka. `Document parseXMLString(string)` can be used like this:
+
+```d
+import std.format;
+
+string xml = q"{
+<!DOCTYPE mydoc https://myUri.org/bla [
+    <!ELEMENT myelem ANY>
+    <!ENTITY   myent    "replacement text">
+    <!ATTLIST myelem foo cdata #REQUIRED >
+    <!NOTATION PUBLIC 'h'>
+    <!FOODECL asdffdsa >
+]>
+}";
+
+Document doc = parseXMLString(xml);
+assert(doc !is null);
+```
+
+If you want to do this step by step, you should create the builder, then you can 
+get the document built with it for further processing:
 
 ```d
 import newxml;                                  //imports the whole library
