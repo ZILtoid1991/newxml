@@ -187,10 +187,10 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
         {
             lexer.advanceUntil('<', false);
             next.kind = XMLKind.text;
-            if (!processBadDocument)
-                next.content = xmlUnescape(fetchContent(), chrEntities);
-            else
-                next.content = xmlUnescape!(No.strict)(fetchContent(), chrEntities);
+			next.content = !processBadDocument
+                ? xmlUnescape(fetchContent(), chrEntities)
+                : xmlUnescape!(No.strict)(fetchContent(), chrEntities);
+
             if (testTextValidity)
             {
                 if (xmlVersion == XMLVersion.XML1_0)

@@ -778,10 +778,9 @@ struct CheckedWriter(WriterType, CursorType = void)
                 import newxml.faststrings;
                 _name = name;
                 auto i = name.indexOf(':');
-                if (i > 0)
-                    colon = i;
-                else
-                    colon = 0;
+				colon = (i > 0)
+                    ? i
+                    : 0;
             }
             void _addAttribute(StringType name, StringType value)
             {
@@ -808,10 +807,9 @@ struct CheckedWriter(WriterType, CursorType = void)
             auto attributes() { return attrs[]; }
             StringType localName()
             {
-                if (colon)
-                    return _name[colon+1..$];
-                else
-                    return [];
+                return colon
+                    ? _name[colon+1..$]
+                    : [];
             }
 
             bool enter()

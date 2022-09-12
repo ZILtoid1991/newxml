@@ -745,17 +745,15 @@ version(unittest)
 
         void popFront() @nogc
         {
-            if (content.length > chunk_size)
-                content = content[chunk_size..$];
-            else
-                content = [];
+            content = content.length > chunk_size
+                ? content[chunk_size..$]
+                : [];
         }
         string front() const @nogc
         {
-            if (content.length >= chunk_size)
-                return content[0..chunk_size];
-            else
-                return content[0..$];
+            return content.length >= chunk_size
+                ? content[0..chunk_size]
+                : content[0..$];
         }
         bool empty() const @nogc
         {
