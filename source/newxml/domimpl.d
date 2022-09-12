@@ -62,7 +62,7 @@ class DOMImplementation : dom.DOMImplementation
         +/
         DocumentType createDocumentType(DOMString qualifiedName, DOMString publicId, DOMString systemId)
         {
-            DocumentType res = new DocumentType();
+            DocumentType res = new DocumentType();//allocator.multiVersionMake!DocumentType(this);
             res._name = qualifiedName;
             res._publicId = publicId;
             res._systemId = systemId;
@@ -78,10 +78,10 @@ class DOMImplementation : dom.DOMImplementation
             enforce!DOMException(!(_doctype && !doctype),
                     dom.ExceptionCode.wrongDocument);
 
-            Document doc = new Document();
+            Document doc = new Document();//allocator.multiVersionMake!Document(this);
             doc._ownerDocument = doc;
             doc._doctype = doctype;
-            doc._config = new DOMConfiguration();
+            doc._config = new DOMConfiguration();//allocator.multiVersionMake!DOMConfiguration(this);
 
             if (namespaceURI)
             {
@@ -89,9 +89,7 @@ class DOMImplementation : dom.DOMImplementation
                 doc.appendChild(doc.createElementNS(namespaceURI, qualifiedName));
             }
             else if (qualifiedName)
-            {
                 doc.appendChild(doc.createElement(qualifiedName));
-            }
 
             return doc;
         }
@@ -138,7 +136,7 @@ class DOMImplementation : dom.DOMImplementation
         }
         @nogc @safe pure nothrow this(string msg, Throwable nextInChain, string file = __FILE__, size_t line = __LINE__)
         {
-            super(msg, file, line, nextInChain);
+        super(msg, file, line, nextInChain);
         }
         /// Implementation of $(LINK2 ../dom/DOMException.code, `std.experimental.xml.dom.DOMException.code`).
         override @property dom.ExceptionCode code()
@@ -371,6 +369,7 @@ class DOMImplementation : dom.DOMImplementation
                     node1 = node1.parentNode;
                     node2 = node2.parentNode;
                 }
+                assert(0, "Control flow should never reach this...\nPlease file an issue");
             }
         }
         private
@@ -2067,7 +2066,7 @@ class DOMImplementation : dom.DOMImplementation
             auto opIndex(size_t i) { return item(i); }
 
             // range interface
-            auto opSlice()
+            /+auto opSlice() TODO this block makes LDC crash
             {
                 struct Range
                 {
@@ -2078,7 +2077,7 @@ class DOMImplementation : dom.DOMImplementation
                     bool empty() { return currentAttr is null; }
                 }
                 return Range(firstAttr);
-            }
+            }+/
         }
     }
     /// Implementation of $(LINK2 ../dom/Text, `std.experimental.xml.dom.Text`)
