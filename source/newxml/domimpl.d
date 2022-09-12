@@ -136,7 +136,7 @@ class DOMImplementation : dom.DOMImplementation
         }
         @nogc @safe pure nothrow this(string msg, Throwable nextInChain, string file = __FILE__, size_t line = __LINE__)
         {
-        super(msg, file, line, nextInChain);
+            super(msg, file, line, nextInChain);
         }
         /// Implementation of $(LINK2 ../dom/DOMException.code, `std.experimental.xml.dom.DOMException.code`).
         override @property dom.ExceptionCode code()
