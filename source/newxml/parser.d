@@ -28,6 +28,7 @@ import newxml.interfaces;
 import newxml.faststrings;
 import newxml.validation;
 
+import std.algorithm.comparison : equal;
 import std.typecons : Flag, Yes, No;
 
 public class ParserException : XMLException {
@@ -250,11 +251,11 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
         {
             lexer.advanceUntil('[', true);
             // cdata
-            if (lexer.get.length == 9 && fastEqual(lexer.get()[3..$], "CDATA["))
+            if (lexer.get.length == 9 && equal(lexer.get()[3..$], "CDATA["))
             {
                 do
                     lexer.advanceUntil('>', true);
-                while (!fastEqual(lexer.get()[($-3)..$], "]]>"));
+                while (!equal(lexer.get()[($-3)..$], "]]>"));
                 next.content = fetchContent(9, 3);
                 next.kind = XMLKind.cdata;
             }
@@ -281,7 +282,7 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
             lexer.testAndAdvance('-'); // second '-'
             do
                 lexer.advanceUntil('>', true);
-            while (!fastEqual(lexer.get()[($-3)..$], "-->"));
+            while (!equal(lexer.get()[($-3)..$], "-->"));
             next.content = fetchContent(4, 3);
             next.kind = XMLKind.comment;
         }
@@ -296,7 +297,7 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
                     lexer.advanceUntil('\'', true);
 
             // doctype
-            if (lexer.get.length>= 9 && fastEqual(lexer.get()[2..9], "DOCTYPE"))
+            if (lexer.get.length>= 9 && equal(lexer.get()[2..9], "DOCTYPE"))
             {
                 next.content = fetchContent(9, 1);
                 if (c == 2)
@@ -319,22 +320,22 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
                             lexer.advanceUntil('\'', true);
                 }
                 auto len = lexer.get().length;
-                if (len > 8 && fastEqual(lexer.get()[2..9], "ATTLIST"))
+                if (len > 8 && equal(lexer.get()[2..9], "ATTLIST"))
                 {
                     next.content = fetchContent(9, 1);
                     next.kind = XMLKind.attlistDecl;
                 }
-                else if (len > 8 && fastEqual(lexer.get()[2..9], "ELEMENT"))
+                else if (len > 8 && equal(lexer.get()[2..9], "ELEMENT"))
                 {
                     next.content = fetchContent(9, 1);
                     next.kind = XMLKind.elementDecl;
                 }
-                else if (len > 9 && fastEqual(lexer.get()[2..10], "NOTATION"))
+                else if (len > 9 && equal(lexer.get()[2..10], "NOTATION"))
                 {
                     next.content = fetchContent(10, 1);
                     next.kind = XMLKind.notationDecl;
                 }
-                else if (len > 7 && fastEqual(lexer.get()[2..8], "ENTITY"))
+                else if (len > 7 && equal(lexer.get()[2..8], "ENTITY"))
                 {
                     next.content = fetchContent(8, 1);
                     next.kind = XMLKind.entityDecl;
