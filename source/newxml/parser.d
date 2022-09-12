@@ -29,6 +29,7 @@ import newxml.faststrings;
 import newxml.validation;
 
 import std.algorithm.comparison : equal;
+import std.exception : enforce;
 import std.typecons : Flag, Yes, No;
 
 public class ParserException : XMLException {
@@ -174,10 +175,8 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
         if (insideDTD && lexer.testAndAdvance(']'))
         {
             lexer.dropWhile(" \r\n\t");
-            if (!lexer.testAndAdvance('>'))
-            {
-                throw new ParserException("No \">\" character have been found after an \"<\"!");//handler();
-            }
+            enforce!ParserException(lexer.testAndAdvance('>')
+                , "No \">\" character have been found after an \"<\"!");
             next.kind = XMLKind.dtdEnd;
             next.content = null;
             insideDTD = false;
@@ -196,13 +195,13 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
             {
                 if (xmlVersion == XMLVersion.XML1_0)
                 {
-                    if (!isValidXMLText10(next.content))
-                        throw new ParserException("Text contains invalid characters!");
+                    enforce!ParserException(isValidXMLText10(next.content)
+                        , "Text contains invalid characters!");
                 }
                 else
                 {
-                    if (!isValidXMLText11(next.content))
-                        throw new ParserException("Text contains invalid characters!");
+                    enforce!ParserException(isValidXMLText11(next.content)
+                        , "Text contains invalid characters!");
                 }
             }
         }

@@ -26,6 +26,7 @@ import newxml.validation;
 
 import std.algorithm.comparison : equal;
 import std.meta : staticIndexOf;
+import std.exception : enforce;
 import std.range.primitives;
 import std.typecons;
 import std.string;
@@ -510,8 +511,8 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
             }
             static if (processBadDocument == No.processBadDocument)
             {
-                if (count != 0 || currName != name)
-                    throw new CursorException("Document is malformed!");
+				enforce!CursorException(count == 0 && currName == name,
+						"Document is malformed!");
             }
         }
         if (!advanceInput || currentNode.kind == XMLKind.elementEnd || currentNode.kind == XMLKind.dtdEnd)

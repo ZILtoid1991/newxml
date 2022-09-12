@@ -23,6 +23,7 @@ module newxml.domimpl;
 
 import newxml.interfaces;
 import newxml.domstring;
+
 import dom = newxml.dom;
 import std.typecons : rebindable, Flag, BitFlags;
 //import std.experimental.allocator;//import stdx.allocator;
@@ -59,6 +60,14 @@ class DOMImplementation : dom.DOMImplementation
     this() @nogc @safe pure nothrow {
         
     }
+
+	void enforce(Ex,T)(T cond, dom.ExceptionCode ec) {
+		if(!cond)
+		{
+			throw new Ex(ec);
+		}
+	}
+		
     override
     {
         /++
@@ -80,8 +89,8 @@ class DOMImplementation : dom.DOMImplementation
         Document createDocument(DOMString namespaceURI, DOMString qualifiedName, dom.DocumentType _doctype)
         {
             DocumentType doctype = cast(DocumentType)_doctype;
-            if (_doctype && !doctype)
-                throw new DOMException(dom.ExceptionCode.wrongDocument);//allocator.multiVersionMake!DOMException(this, dom.ExceptionCode.wrongDocument);
+            enforce!DOMException(!(_doctype && !doctype),
+                    dom.ExceptionCode.wrongDocument);
 
             Document doc = new Document();//allocator.multiVersionMake!Document(this);
             doc._ownerDocument = doc;
@@ -90,8 +99,7 @@ class DOMImplementation : dom.DOMImplementation
 
             if (namespaceURI)
             {
-                if (!qualifiedName)
-                    throw new DOMException(dom.ExceptionCode.namespace);//allocator.multiVersionMake!DOMException(this, dom.ExceptionCode.namespace);
+                enforce!DOMException(qualifiedName, dom.ExceptionCode.namespace);
                 doc.appendChild(doc.createElementNS(namespaceURI, qualifiedName));
             }
             else if (qualifiedName)
@@ -605,19 +613,25 @@ class DOMImplementation : dom.DOMImplementation
 
             Node insertBefore(dom.Node _newChild, dom.Node _refChild)
             {
-                if (readonly)
-                    throw new DOMException(dom.ExceptionCode.noModificationAllowed); //allocator.multiVersionMake!DOMException(this.outer,dom.ExceptionCode.noModificationAllowed);
+                enforce!DOMException(!readonly, dom.ExceptionCode.noModificationAllowed);
                 if (!_refChild)
                     return appendChild(_newChild);
 
                 Node newChild = cast(Node)_newChild;
                 Node refChild = cast(Node)_refChild;
-                if (!newChild || !refChild || newChild.ownerDocument !is ownerDocument)
-                    throw new DOMException(dom.ExceptionCode.wrongDocument); //allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.wrongDocument);
-                if (this is newChild || newChild.isAncestor(this) || newChild is refChild)
-                    throw new DOMException(dom.ExceptionCode.hierarchyRequest);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.hierarchyRequest);
-                if (refChild.parentNode !is this)
-                    throw new DOMException(dom.ExceptionCode.notFound);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.notFound);
+
+                enforce!DOMException(!(!newChild || !refChild 
+							|| newChild.ownerDocument !is ownerDocument)
+                    , dom.ExceptionCode.wrongDocument); 
+                enforce!DOMException(!(this is newChild || newChild.isAncestor(this) 
+                            || newChild is refChild)
+                    , dom.ExceptionCode.hierarchyRequest); 
+                enforce!DOMException(!(refChild.parentNode !is this)
+                    , dom.ExceptionCode.notFound); 
+                enforce!DOMException(!(this is newChild || newChild.isAncestor(this) || newChild is refChild)
+                    , dom.ExceptionCode.hierarchyRequest); 
+                enforce!DOMException(!(refChild.parentNode !is this)
+                    , dom.ExceptionCode.notFound); 
 
                 if (newChild.nodeType == dom.NodeType.documentFragment)
                 {
@@ -647,11 +661,12 @@ class DOMImplementation : dom.DOMImplementation
             }
             Node removeChild(dom.Node _oldChild)
             {
-                if (readonly)
-                    throw new DOMException(dom.ExceptionCode.noModificationAllowed);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.noModificationAllowed);
+				enforce!DOMException(!readonly, dom.ExceptionCode.noModificationAllowed);
                 Node oldChild = cast(Node)_oldChild;
                 if (!oldChild || oldChild.parentNode !is this)
-                    throw new DOMException(dom.ExceptionCode.notFound);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.notFound);
+					enforce!DOMException(!(!oldChild 
+								|| oldChild.parentNode !is this)
+							, dom.ExceptionCode.noModificationAllowed);
 
                 if (oldChild is firstChild)
                     _firstChild = oldChild.nextSibling;
@@ -670,13 +685,12 @@ class DOMImplementation : dom.DOMImplementation
             }
             Node appendChild(dom.Node _newChild)
             {
-                if (readonly)
-                    throw new DOMException(dom.ExceptionCode.noModificationAllowed);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.noModificationAllowed);
+				enforce!DOMException(!readonly, dom.ExceptionCode.noModificationAllowed);
                 Node newChild = cast(Node)_newChild;
-                if (!newChild || newChild.ownerDocument !is ownerDocument)
-                    throw new DOMException(dom.ExceptionCode.wrongDocument);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.wrongDocument);
-                if (this is newChild || newChild.isAncestor(this))
-                    throw new DOMException(dom.ExceptionCode.hierarchyRequest);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.hierarchyRequest);
+				enforce!DOMException(!(!newChild || newChild.ownerDocument !is ownerDocument)
+						, dom.ExceptionCode.wrongDocument);
+				enforce!DOMException(!(this is newChild || newChild.isAncestor(this))
+						, dom.ExceptionCode.hierarchyRequest);
                 if (newChild.parentNode !is null)
                     newChild.parentNode.removeChild(newChild);
 
@@ -731,8 +745,8 @@ class DOMImplementation : dom.DOMImplementation
             }
             @property void textContent(DOMString newVal)
             {
-                if (readonly)
-                    throw new DOMException(dom.ExceptionCode.noModificationAllowed);// allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.noModificationAllowed);
+				enforce!DOMException(readonly
+						, dom.ExceptionCode.noModificationAllowed);
 
                 while (firstChild)
                     removeChild(firstChild);
@@ -969,12 +983,13 @@ class DOMImplementation : dom.DOMImplementation
             Node renameNode(dom.Node n, DOMString namespaceURI, DOMString qualifiedName)
             {
                 auto node = cast(Node)n;
-                if (!node || node.ownerDocument !is this)
-                    throw new DOMException(dom.ExceptionCode.wrongDocument);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.wrongDocument);
+				enforce!DOMException(!(!node || node.ownerDocument !is this)
+							, dom.ExceptionCode.wrongDocument);
 
                 auto type = node.nodeType;
-                if (type != dom.NodeType.element && type != dom.NodeType.attribute)
-                    throw new DOMException(dom.ExceptionCode.notSupported);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.notSupported);
+				enforce!DOMException(!(type != dom.NodeType.element 
+							&& type != dom.NodeType.attribute)
+						, dom.ExceptionCode.notSupported);
 
                 auto withNs = (cast(NodeWithNamespace)node);
                 withNs.setQualifiedName(qualifiedName);
@@ -1016,8 +1031,8 @@ class DOMImplementation : dom.DOMImplementation
             {
                 if (newChild.nodeType == dom.NodeType.element)
                 {
-                    if (_root)
-                        throw new DOMException(dom.ExceptionCode.hierarchyRequest);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.hierarchyRequest);
+                    enforce!DOMException(!_root
+							, dom.ExceptionCode.hierarchyRequest);
 
                     auto res = super.insertBefore(newChild, refChild);
                     _root = cast(Element)newChild;
@@ -1025,8 +1040,8 @@ class DOMImplementation : dom.DOMImplementation
                 }
                 else if (newChild.nodeType == dom.NodeType.documentType)
                 {
-                    if (_doctype)
-                        throw new DOMException(dom.ExceptionCode.hierarchyRequest);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.hierarchyRequest);
+                    enforce!DOMException(!_doctype
+							, dom.ExceptionCode.hierarchyRequest);
 
                     auto res = super.insertBefore(newChild, refChild);
                     _doctype = cast(DocumentType)newChild;
@@ -1042,8 +1057,8 @@ class DOMImplementation : dom.DOMImplementation
             {
                 if (newChild.nodeType == dom.NodeType.element)
                 {
-                    if (oldChild !is _root)
-                        throw new DOMException(dom.ExceptionCode.hierarchyRequest);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.hierarchyRequest);
+                    enforce!DOMException(!(oldChild !is _root)
+                        , dom.ExceptionCode.hierarchyRequest);
 
                     auto res = super.replaceChild(newChild, oldChild);
                     _root = cast(Element)newChild;
@@ -1051,8 +1066,8 @@ class DOMImplementation : dom.DOMImplementation
                 }
                 else if (newChild.nodeType == dom.NodeType.documentType)
                 {
-                    if (oldChild !is _doctype)
-                        throw new DOMException(dom.ExceptionCode.hierarchyRequest);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.hierarchyRequest);
+                    enforce!DOMException(!(oldChild !is _doctype)
+                        , dom.ExceptionCode.hierarchyRequest);
 
                     auto res = super.replaceChild(newChild, oldChild);
                     _doctype = cast(DocumentType)newChild;
@@ -1085,8 +1100,8 @@ class DOMImplementation : dom.DOMImplementation
             {
                 if (newChild.nodeType == dom.NodeType.element)
                 {
-                    if (_root)
-                        throw new DOMException(dom.ExceptionCode.hierarchyRequest);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.hierarchyRequest);
+                    enforce!DOMException(!(_root)
+                        , dom.ExceptionCode.hierarchyRequest);
 
                     auto res = super.appendChild(newChild);
                     _root = cast(Element)newChild;
@@ -1094,8 +1109,8 @@ class DOMImplementation : dom.DOMImplementation
                 }
                 else if (newChild.nodeType == dom.NodeType.documentType)
                 {
-                    if (_doctype)
-                        throw new DOMException(dom.ExceptionCode.hierarchyRequest);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.hierarchyRequest);
+                    enforce!DOMException(!(_doctype)
+                        , dom.ExceptionCode.hierarchyRequest);
 
                     auto res = super.appendChild(newChild);
                     _doctype = cast(DocumentType)newChild;
@@ -1212,8 +1227,8 @@ class DOMImplementation : dom.DOMImplementation
 
             DOMString substringData(size_t offset, size_t count)
             {
-                if (offset > length)
-                    throw new DOMException(dom.ExceptionCode.indexSize);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.indexSize);
+                enforce!DOMException(!(offset > length)
+                    , dom.ExceptionCode.indexSize);
 
                 import std.algorithm : min;
                 return _data[offset..min(offset + count, length)];
@@ -1230,8 +1245,8 @@ class DOMImplementation : dom.DOMImplementation
             {
                 import std.traits : Unqual;
 
-                if (offset > length)
-                    throw new DOMException(dom.ExceptionCode.indexSize);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.indexSize);
+                enforce!DOMException(!(offset > length)
+                    , dom.ExceptionCode.indexSize);
 
                 //auto newData = allocator.makeArray!(Unqual!(typeof(_data[0])))(_data.length + arg.length);
                 /+CharType[] newData;
@@ -1259,15 +1274,15 @@ class DOMImplementation : dom.DOMImplementation
             @property DOMString nodeValue() { return data; }
             @property void nodeValue(DOMString newVal)
             {
-                if (readonly)
-                    throw new DOMException(dom.ExceptionCode.noModificationAllowed);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.noModificationAllowed);
+                enforce!DOMException(!(readonly)
+                    , dom.ExceptionCode.noModificationAllowed);
                 data = newVal;
             }
             @property DOMString textContent() { return data; }
             @property void textContent(DOMString newVal)
             {
-                if (readonly)
-                    throw new DOMException(dom.ExceptionCode.noModificationAllowed);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.noModificationAllowed);
+                enforce!DOMException(!(readonly)
+                    , dom.ExceptionCode.noModificationAllowed);
                 data = newVal;
             }
         }
@@ -1322,8 +1337,8 @@ class DOMImplementation : dom.DOMImplementation
             }
             @property void prefix(DOMString pre)
             {
-                if (readonly)
-                    throw new DOMException(dom.ExceptionCode.noModificationAllowed);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.noModificationAllowed);
+                enforce!DOMException(!(readonly)
+                    , dom.ExceptionCode.noModificationAllowed);
 
                 import std.traits : Unqual;
 
@@ -1398,8 +1413,8 @@ class DOMImplementation : dom.DOMImplementation
             @property DOMString nodeValue() { return value; }
             @property void nodeValue(DOMString newVal)
             {
-                if (readonly)
-                    throw new DOMException(dom.ExceptionCode.noModificationAllowed);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.noModificationAllowed);
+                enforce!DOMException(!(readonly)
+                    , dom.ExceptionCode.noModificationAllowed);
                 value = newVal;
             }
 
@@ -1763,12 +1778,12 @@ class DOMImplementation : dom.DOMImplementation
                 }
                 Attr setNamedItem(dom.Node arg)
                 {
-                    if (arg.ownerDocument !is this.outer.ownerDocument)
-                        throw new DOMException(dom.ExceptionCode.wrongDocument);//allocator.multiVersionMake!DOMException(this.outer.outer, dom.ExceptionCode.wrongDocument);
+                    enforce!DOMException(!(arg.ownerDocument !is this.outer.ownerDocument)
+                        , dom.ExceptionCode.wrongDocument);
 
                     Attr attr = cast(Attr)arg;
-                    if (!attr)
-                        throw new DOMException(dom.ExceptionCode.hierarchyRequest);//allocator.multiVersionMake!DOMException(this.outer.outer, dom.ExceptionCode.hierarchyRequest);
+                    enforce!DOMException(!(!attr)
+                        , dom.ExceptionCode.hierarchyRequest);
 
                     if (attr._previousAttr)
                         attr._previousAttr._nextSibling = attr._nextAttr;
@@ -1822,12 +1837,12 @@ class DOMImplementation : dom.DOMImplementation
                 }
                 Attr setNamedItemNS(dom.Node arg)
                 {
-                    if (arg.ownerDocument !is this.outer.ownerDocument)
-                        throw new DOMException(dom.ExceptionCode.wrongDocument);//allocator.multiVersionMake!DOMException(this.outer.outer, dom.ExceptionCode.wrongDocument);
+                    enforce!DOMException(!(arg.ownerDocument !is this.outer.ownerDocument)
+                        , dom.ExceptionCode.wrongDocument);
 
                     Attr attr = cast(Attr)arg;
-                    if (!attr)
-                        throw new DOMException(dom.ExceptionCode.hierarchyRequest);//allocator.multiVersionMake!DOMException(this.outer.outer, dom.ExceptionCode.hierarchyRequest);
+                    enforce!DOMException(!(!attr)
+                        , dom.ExceptionCode.hierarchyRequest);
 
                     if (attr._previousAttr)
                         attr._previousAttr._nextSibling = attr._nextAttr;
@@ -1907,8 +1922,8 @@ class DOMImplementation : dom.DOMImplementation
             /// Implementation of $(LINK2 ../dom/Text.splitText, `std.experimental.xml.dom.Text.splitText`).
             Text splitText(size_t offset)
             {
-                if (offset > data.length)
-                    throw new DOMException(dom.ExceptionCode.indexSize);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.indexSize);
+                enforce!DOMException(!(offset > data.length)
+                    , dom.ExceptionCode.indexSize);
                 auto second = ownerDocument.createTextNode(data[offset..$]);
                 data = data[0..offset];
                 if (parentNode)
@@ -2057,8 +2072,8 @@ class DOMImplementation : dom.DOMImplementation
                     while (current.parentNode && current.parentNode.nodeType == dom.NodeType.entityReference)
                         current = current.parentNode;
 
-                    if (!hasOnlyText(current))
-                        throw new DOMException(dom.ExceptionCode.noModificationAllowed);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.noModificationAllowed);
+                    enforce!DOMException(!(!hasOnlyText(current))
+                        , dom.ExceptionCode.noModificationAllowed);
                 }
                 else if (readonly)
                     throw new DOMException(dom.ExceptionCode.noModificationAllowed);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.noModificationAllowed);
@@ -2073,8 +2088,8 @@ class DOMImplementation : dom.DOMImplementation
                     {
                         if (endsWithText(node))
                         {
-                            if (!hasOnlyText(node))
-                                throw new DOMException(dom.ExceptionCode.noModificationAllowed);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.noModificationAllowed);
+                            enforce!DOMException(!(!hasOnlyText(node))
+                                , dom.ExceptionCode.noModificationAllowed);
                         }
                         else break;
                     }
@@ -2091,8 +2106,8 @@ class DOMImplementation : dom.DOMImplementation
                     {
                         if (startsWithText(node))
                         {
-                            if (!hasOnlyText(node))
-                                throw new DOMException(dom.ExceptionCode.noModificationAllowed);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.noModificationAllowed);
+                            enforce!DOMException(!(!hasOnlyText(node))
+                                , dom.ExceptionCode.noModificationAllowed);
                         }
                         else break;
                     }
@@ -2261,16 +2276,16 @@ class DOMImplementation : dom.DOMImplementation
             @property DOMString nodeValue() { return _data; }
             @property void nodeValue(DOMString newVal)
             {
-                if (readonly)
-                    throw new DOMException(dom.ExceptionCode.noModificationAllowed);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.noModificationAllowed);
+                enforce!DOMException(!(readonly)
+                    , dom.ExceptionCode.noModificationAllowed);
                 _data = newVal;
             }
 
             @property DOMString textContent() { return _data; }
             @property void textContent(DOMString newVal)
             {
-                if (readonly)
-                    throw new DOMException(dom.ExceptionCode.noModificationAllowed);//allocator.multiVersionMake!DOMException(this.outer, dom.ExceptionCode.noModificationAllowed);
+                enforce!DOMException(!(readonly)
+                    , dom.ExceptionCode.noModificationAllowed);
                 _data = newVal;
             }
 
