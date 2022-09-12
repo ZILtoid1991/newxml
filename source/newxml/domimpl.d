@@ -28,6 +28,7 @@ import std.typecons : rebindable, Flag, BitFlags;
 //import std.experimental.allocator;//import stdx.allocator;
 //import std.experimental.allocator.gc_allocator;//import stdx.allocator.gc_allocator;
 import std.range.primitives;
+import std.string;
 
 /* // this is needed because compilers up to at least DMD 2.071.1 suffer from issue 16319
 private auto multiVersionMake(Type, Args...)(auto ref Args args)
@@ -1291,10 +1292,8 @@ class DOMImplementation : dom.DOMImplementation
 
             void setQualifiedName(DOMString name)
             {
-                import newxml.faststrings : fastIndexOf;
-
                 _name = name;
-                ptrdiff_t i = name.getDString.fastIndexOf(':');
+                ptrdiff_t i = name.getDString.indexOf(':');
                 if (i > 0)
                     _colon = i;
             }
@@ -1927,9 +1926,7 @@ class DOMImplementation : dom.DOMImplementation
             +/
             @property bool isElementContentWhitespace()
             {
-                import newxml.faststrings: fastIndexOfNeither;
-
-                return _data.getDString.fastIndexOfNeither(" \r\n\t") == -1;
+                return _data.getDString.indexOfNeither(" \r\n\t") == -1;
             }
             /// Implementation of $(LINK2 ../dom/Text.wholeText, `std.experimental.xml.dom.Text.wholeText`).
             @property DOMString wholeText()

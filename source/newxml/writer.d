@@ -31,6 +31,8 @@ private string ifAnyCompiles(string code, string[] codes...)
 }
 
 import std.typecons : tuple;
+import std.string;
+
 private auto xmlDeclarationAttributes(StringType, Args...)(Args args)
 {
     static assert(Args.length <= 3, "Too many arguments for xml declaration");
@@ -775,7 +777,7 @@ struct CheckedWriter(WriterType, CursorType = void)
             {
                 import newxml.faststrings;
                 _name = name;
-                auto i = name.fastIndexOf(':');
+                auto i = name.indexOf(':');
                 if (i > 0)
                     colon = i;
                 else

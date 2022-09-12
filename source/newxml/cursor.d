@@ -24,10 +24,11 @@ import newxml.faststrings;
 
 import newxml.validation;
 
+import std.algorithm.comparison : equal;
 import std.meta : staticIndexOf;
 import std.range.primitives;
 import std.typecons;
-
+import std.string;
 
 public class CursorException : XMLException {
     @nogc @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable nextInChain = null)
@@ -60,7 +61,7 @@ package struct Attribute(StringType)
     @property void name(StringType _name)
     {
         this._name = _name;
-        auto i = _name.fastIndexOf(':');
+        auto i = _name.indexOf(':');
         if (i > 0)
             colon = i;
         else
@@ -116,7 +117,7 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
             if (error)
                 return true;
 
-            auto i = content.fastIndexOfNeither(" \r\n\t");
+            auto i = content.indexOfNeither(" \r\n\t");
             if (i >= 0)
             {
                 content = content[i..$];
@@ -129,11 +130,11 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
         {
             if (attr == attr.init)
             {
-                auto i = content.fastIndexOfNeither(" \r\n\t");
+                auto i = content.indexOfNeither(" \r\n\t");
                 assert(i >= 0, "No more attributes...");
                 content = content[i..$];
 
-                auto sep = fastIndexOf(content[0..$], '=');
+                auto sep = indexOf(content[0..$], '=');
                 if (sep == -1)
                 {
                     // attribute without value???
@@ -151,10 +152,10 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
                 auto name = content[0..sep];
                 
                 
-                auto delta = fastIndexOfAny(name, " \r\n\t");
+                auto delta = indexOfAny(name, " \r\n\t");
                 if (delta >= 0)
                 {
-                    auto j = name[delta..$].fastIndexOfNeither(" \r\n\t");
+                    auto j = name[delta..$].indexOfNeither(" \r\n\t");
                     if (j != -1)
                     {
                         // attribute name contains spaces???
@@ -185,13 +186,13 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
 
                 size_t attEnd;
                 size_t quote;
-                delta = (sep + 1 < content.length) ? fastIndexOfNeither(content[sep + 1..$], " \r\n\t") : -1;
+                delta = (sep + 1 < content.length) ? indexOfNeither(content[sep + 1..$], " \r\n\t") : -1;
                 if (delta >= 0)
                 {
                     quote = sep + 1 + delta;
                     if (content[quote] == '"' || content[quote] == '\'')
                     {
-                        delta = fastIndexOf(content[(quote + 1)..$], content[quote]);
+                        delta = indexOf(content[(quote + 1)..$], content[quote]);
                         if (delta == -1)
                         {
                             // attribute quotes never closed???
@@ -399,7 +400,7 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
         {
             if (parser.front.kind == XMLKind.processingInstruction &&
                 parser.front.content.length >= 3 &&
-                fastEqual(parser.front.content[0..3], "xml"))
+                equal(parser.front.content[0..3], "xml"))
             {
                 currentNode = parser.front;
             }
@@ -557,9 +558,9 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
                 if (!nameEnd)
                 {
                     ptrdiff_t i, j;
-                    if ((j = fastIndexOfNeither(currentNode.content, " \r\n\t")) >= 0)
+                    if ((j = indexOfNeither(currentNode.content, " \r\n\t")) >= 0)
                         nameBegin = j;
-                    if ((i = fastIndexOfAny(currentNode.content[nameBegin..$], " \r\n\t")) >= 0)
+                    if ((i = indexOfAny(currentNode.content[nameBegin..$], " \r\n\t")) >= 0)
                         nameEnd = i + nameBegin;
                     else
                         nameEnd = currentNode.content.length;
@@ -578,7 +579,7 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
         if (currentNode.kind == XMLKind.elementStart || currentNode.kind == XMLKind.elementEnd)
         {
             if (colon == colon.max)
-                colon = fastIndexOf(name, ':');
+                colon = indexOf(name, ':');
             return name[(colon+1)..$];
         }
         return name;
@@ -594,7 +595,7 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
         {
             auto name = name;
             if (colon == colon.max)
-                colon = fastIndexOf(name, ':');
+                colon = indexOf(name, ':');
 
             if (colon >= 0)
                 return name[0..colon];
@@ -631,8 +632,8 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
     {
         if (currentNode.kind == XMLKind.entityDecl) 
         {
-            sizediff_t b = fastIndexOfAny(currentNode.content[nameEnd..$], "\"\'");
-            sizediff_t e = fastLastIndexOf(currentNode.content[nameEnd..$], currentNode.content[b + nameEnd]);
+            sizediff_t b = indexOfAny(currentNode.content[nameEnd..$], "\"\'");
+            sizediff_t e = lastIndexOf(currentNode.content[nameEnd..$], currentNode.content[b + nameEnd]);
             if (b > 0 && e > 0)
             {
                 if (b + 1 <= e)
@@ -650,10 +651,10 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
         }
         /* else if (currentNode.kind == XMLKind.dtdStart || currentNode.kind == XMLKind.dtdEmpty)
         {
-            sizediff_t b = fastLastIndexOfAny(currentNode.content[nameEnd..$], " \r\n\t");
+            sizediff_t b = lastIndexOfAny(currentNode.content[nameEnd..$], " \r\n\t");
             if (b == -1)
                 return null;
-            sizediff_t e = fastIndexOfAny(currentNode.content[nameEnd + b..$], " \r\n\t");
+            sizediff_t e = indexOfAny(currentNode.content[nameEnd + b..$], " \r\n\t");
             if (e == -1)
                 return currentNode.content[nameEnd + b + 1..$];
             else

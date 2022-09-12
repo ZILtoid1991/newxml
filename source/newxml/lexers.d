@@ -31,6 +31,7 @@ import newxml.faststrings;
 
 import std.range.primitives;
 import std.traits : isArray, isSomeFunction;
+import std.string;
 
 //import std.experimental.allocator;//import stdx.allocator;
 //import std.experimental.allocator.gc_allocator;//import stdx.allocator.gc_allocator;
@@ -122,7 +123,7 @@ struct SliceLexer(T)
     /// ditto
     void dropWhile(string s)
     {
-        while (pos < input.length && fastIndexOf(s, input[pos]) != -1)
+        while (pos < input.length && indexOf(s, input[pos]) != -1)
             pos++;
     }
 
@@ -144,7 +145,7 @@ struct SliceLexer(T)
     {
         if (empty) throw new LexerException("No more characters are found!");
             //handler();
-        auto adv = fastIndexOf(input[pos..$], c);
+        auto adv = indexOf(input[pos..$], c);
         if (adv != -1)
         {
             pos += adv;
@@ -171,7 +172,7 @@ struct SliceLexer(T)
             //handler();
 
         ptrdiff_t res;
-        while ((res = fastIndexOf(s, input[pos])) == -1)
+        while ((res = indexOf(s, input[pos])) == -1)
             if (++pos >= input.length) throw new LexerException("No more characters are found!");
                 //handler();
         if (included)
@@ -275,7 +276,7 @@ struct RangeLexer(T)
     /// ditto
     void dropWhile(string s)
     {
-        while (!input.empty && fastIndexOf(s, input.front) != -1)
+        while (!input.empty && indexOf(s, input.front) != -1)
             input.popFront();
     }
 
@@ -318,7 +319,7 @@ struct RangeLexer(T)
         if (input.empty)
             throw new LexerException("No more characters are found!");//handler();
         size_t res;
-        while ((res = fastIndexOf(s, input.front)) == -1)
+        while ((res = indexOf(s, input.front)) == -1)
         {
             buffer ~= input.front;//app.put(input.front);
             input.popFront;
@@ -433,7 +434,7 @@ struct ForwardLexer(T)
     /// ditto
     void dropWhile(string s)
     {
-        while (!input.empty && fastIndexOf(s, input.front) != -1)
+        while (!input.empty && indexOf(s, input.front) != -1)
             input.popFront();
         input_start = input.save;
     }
@@ -477,7 +478,7 @@ struct ForwardLexer(T)
         if (input.empty)
             throw new LexerException("No more characters are found!");
         size_t res;
-        while ((res = fastIndexOf(s, input.front)) == -1)
+        while ((res = indexOf(s, input.front)) == -1)
         {
             count++;
             input.popFront;
@@ -531,24 +532,11 @@ struct BufferedLexer(T)
     private CharacterType[] outBuf;//private Appender!(CharacterType, Alloc) app;
     private bool onEdge;
 
-    import std.string: representation, assumeUTF;
-    static if (is(typeof(representation!CharacterType(""))))
+    private BufferType buffer;
+    void popBuffer()
     {
-        private typeof(representation!CharacterType("")) buffer;
-        void popBuffer()
-        {
-            buffer = buffers.front.representation;
-            buffers.popFront;
-        }
-    }
-    else
-    {
-        private BufferType buffer;
-        void popBuffer()
-        {
-            buffer = buffers.front;
-            buffers.popFront;
-        }
+        buffer = buffers.front;
+        buffers.popFront;
     }
 
     /++
@@ -661,7 +649,7 @@ struct BufferedLexer(T)
     /// ditto
     void dropWhile(string s)
     {
-        while (!empty && fastIndexOf(s, buffer[pos]) != -1)
+        while (!empty && indexOf(s, buffer[pos]) != -1)
             advance();
     }
 
@@ -684,7 +672,7 @@ struct BufferedLexer(T)
         if (empty)
             throw new LexerException("No data found!");
         ptrdiff_t adv;
-        while ((adv = fastIndexOf(buffer[pos..$], c)) == -1)
+        while ((adv = indexOf(buffer[pos..$], c)) == -1)
         {
             advanceNextBuffer();
         }
@@ -700,7 +688,7 @@ struct BufferedLexer(T)
         if (empty)
             throw new LexerException("No data found!");
         ptrdiff_t res;
-        while ((res = fastIndexOf(s, buffer[pos])) == -1)
+        while ((res = indexOf(s, buffer[pos])) == -1)
         {
             advance();
         }

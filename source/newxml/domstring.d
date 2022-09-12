@@ -3,6 +3,7 @@ module newxml.domstring;
 import std.range;
 import std.string;
 import std.utf;
+import std.algorithm.comparison : equal;
 
 import newxml.faststrings;
 import newxml.interfaces;
@@ -184,7 +185,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
     bool equals(XMLCh* other) @trusted pure const {
         auto str = fromStringz(other);
         if (str.length != buffer.length) return false;
-        return fastEqual(buffer, str);
+        return equal(buffer, str);
     }
     /** 
      * Tells if a DOMString contains the same character data as another.
@@ -194,7 +195,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
      */
     bool equals(DOMString other) pure const {
         if (buffer.length != other.length) return false;
-        return fastEqual(buffer, other.buffer);
+        return equal(buffer, other.buffer);
     }
     /** 
      * Compares the content of a D string against a DOMString.
@@ -211,7 +212,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
         else
             o = toUTF16(other);
         if (buffer.length != o.length) return false;
-        return fastEqual(buffer, o);
+        return equal(buffer, o);
     }
     /** 
      * Inserts a string within the existing DOMString at an arbitrary position.
