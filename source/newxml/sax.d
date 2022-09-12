@@ -28,7 +28,7 @@ import newxml.cursor;
 +   A SAX parser built on top of a cursor.
 +
 +   Delegates are called when certain events are encountered, then it passes the necessary data to process the
-+   element. 
++   element.
 +/
 struct SAXParser(T)
     if (isCursor!T)
@@ -115,7 +115,7 @@ struct SAXParser(T)
                     if (onCDataSection !is null)
                         onCDataSection(cursor.content);
                     break;
-                
+
                 default: break;
             }
 
@@ -123,12 +123,15 @@ struct SAXParser(T)
             {
             }
             else if (!cursor.next)
+            {
                 cursor.exit;
+            }
         }
     }
     protected StringType[StringType] createAArray(AttrRange source) {
         StringType[StringType] result;
-        foreach (key; source) {
+        foreach (key; source)
+        {
             result[key.name] = key.value;
         }
         return result;
@@ -176,7 +179,9 @@ unittest
             total_invocations++;
             current_nesting++;
             if (current_nesting > max_nesting)
+            {
                 max_nesting = current_nesting;
+            }
         }
         void onElementEnd(dstring name)
         {

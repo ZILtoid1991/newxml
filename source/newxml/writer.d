@@ -11,7 +11,12 @@
 
 module newxml.writer;
 
+import std.typecons : tuple;
+import std.exception : enforce;
+import std.string;
+
 import newxml.interfaces;
+
 @safe:
 private string ifCompiles(string code)
 {
@@ -24,14 +29,15 @@ private string ifCompilesElse(string code, string fallback)
 private string ifAnyCompiles(string code, string[] codes...)
 {
     if (codes.length == 0)
+    {
         return "static if (__traits(compiles, " ~ code ~ ")) " ~ code ~ ";";
+    }
     else
+    {
         return "static if (__traits(compiles, " ~ code ~ ")) " ~ code ~
                 "; else " ~ ifAnyCompiles(codes[0], codes[1..$]);
+    }
 }
-
-import std.typecons : tuple;
-import std.string;
 
 private auto xmlDeclarationAttributes(StringType, Args...)(Args args)
 {
@@ -81,7 +87,8 @@ private auto xmlDeclarationAttributes(StringType, Args...)(Args args)
 
     // catch other erroneous parameters
     static assert(typeof(args3).length == 0,
-                  "Unrecognized attribute type for xml declaration: " ~ typeof(args3[0]).stringof);
+                  "Unrecognized attribute type for xml declaration: "
+                  ~ typeof(args3[0]).stringof);
 
     return tuple(versionString, encodingString, standaloneString);
 }
@@ -122,7 +129,9 @@ struct PrettyPrinters
         void beforeNode(Out)(ref Out output)
         {
             foreach (i; 0..indentation)
+            {
                 output ~= tab;
+            }
         }
     }
 }
@@ -189,14 +198,20 @@ struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
     alias StringType = _StringType;
 
     static if (is(PrettyPrinter))
+    {
         private PrettyPrinter prettyPrinter;
+    }
     else static if (is(PrettyPrinter!StringType))
+    {
         private PrettyPrinter!StringType prettyPrinter;
+    }
     else
+    {
         static assert(0, "Invalid pretty printer type for string type " ~ StringType.stringof);
+    }
 
     StringType output;
-    
+
     bool startingTag = false, insideDTD = false;
 
     this(typeof(prettyPrinter) pretty)
@@ -496,7 +511,7 @@ unittest
 {
     import std.array : Appender;
     import std.typecons : refCounted;
-    
+
     auto writer = Writer!(string, PrettyPrinters.Indenter)();
 
     writer.startElement("elem");
@@ -549,20 +564,28 @@ void writeDOM(WriterType)(auto ref WriterType writer, dom.Node node)
         case document:
             auto doc = cast(Document)node;
             DOMString xmlVersion = doc.xmlVersion, xmlEncoding = doc.xmlEncoding;
-            writer.writeXMLDeclaration(xmlVersion ? xmlVersion.transcodeTo!StringType() : null, 
+            writer.writeXMLDeclaration(xmlVersion ? xmlVersion.transcodeTo!StringType() : null,
                     xmlEncoding ? xmlEncoding.transcodeTo!StringType() : null, doc.xmlStandalone);
             foreach (child; doc.childNodes)
+            {
                 writer.writeDOM(child);
+            }
             break;
         case element:
             auto elem = cast(Element)node;
             writer.startElement(elem.tagName.transcodeTo!StringType);
             if (elem.hasAttributes)
+            {
                 foreach (attr; elem.attributes)
-                    writer.writeAttribute(attr.nodeName.transcodeTo!StringType, 
+                {
+                    writer.writeAttribute(attr.nodeName.transcodeTo!StringType,
                             xmlEscape(attr.nodeValue.transcodeTo!StringType));
+                }
+            }
             foreach (child; elem.childNodes)
+            {
                 writer.writeDOM(child);
+            }
             writer.closeElement(elem.tagName.transcodeTo!StringType);
             break;
         case text:
@@ -594,10 +617,12 @@ unittest
     e1.appendChild(doc.createTextNode(new DOMString("with")));
     e0.appendChild(e1);
     e0.appendChild(doc.createTextNode(new DOMString(" markup.")));
-    
+
     wrt.writeDOM(doc);
 
-    assert(wrt.output == "<?xml version='1.0' standalone='no'?><doc><text something='other thing'>Some text <b>with</b> markup.</text></doc>", wrt.output);
+    assert(wrt.output == "<?xml version='1.0' standalone='no'?><doc><text "
+            ~ "something='other thing'>Some text <b>with</b> markup.</text></doc>"
+            , wrt.output);
 }
 
 import std.typecons : Flag, No, Yes;
@@ -624,14 +649,24 @@ auto writeCursor(Flag!"useFiber" useFiber = No.useFiber, WriterType, CursorType)
             switch (cursor.kind) with (XMLKind)
             {
                 case document:
-                    StringType version_, encoding, standalone;
+                    StringType version_;
+                    StringType encoding;
+                    StringType standalone;
                     foreach (attr; cursor.attributes)
+                    {
                         if (attr.name == "version")
+                        {
                             version_ = attr.value;
+                        }
                         else if (attr.name == "encoding")
+                        {
                             encoding = attr.value;
+                        }
                         else if (attr.name == "standalone")
+                        {
                             standalone = attr.value;
+                        }
+                    }
                     writer.writeXMLDeclaration(version_, encoding, standalone);
                     if (cursor.enter)
                     {
@@ -778,7 +813,7 @@ struct CheckedWriter(WriterType, CursorType = void)
                 import newxml.faststrings;
                 _name = name;
                 auto i = name.indexOf(':');
-				colon = (i > 0)
+                colon = (i > 0)
                     ? i
                     : 0;
             }
@@ -797,7 +832,9 @@ struct CheckedWriter(WriterType, CursorType = void)
             auto kind()
             {
                 if (!initialized)
+                {
                     Fiber.yield;
+                }
 
                 return _kind;
             }
@@ -819,8 +856,11 @@ struct CheckedWriter(WriterType, CursorType = void)
                     Fiber.yield;
                     return true;
                 }
+
                 if (_kind != XMLKind.elementStart)
+                {
                     return false;
+                }
 
                 Fiber.yield;
                 return _kind != XMLKind.elementEnd;
@@ -840,11 +880,11 @@ struct CheckedWriter(WriterType, CursorType = void)
             alias InputType = void*;
             StringType wholeContent()
             {
-                assert(0, "Cannot call wholeContent on this type of cursor");
+                enforce(false, "Cannot call wholeContent on this type of cursor");
             }
             void setSource(InputType)
             {
-                assert(0, "Cannot set the source of this type of cursor");
+                enforce(false, "Cannot set the source of this type of cursor");
             }
         }
         Cursor cursor;
@@ -859,22 +899,34 @@ struct CheckedWriter(WriterType, CursorType = void)
         auto attrs = xmlDeclarationAttributes!StringType(args);
         cursor._setKind(XMLKind.document);
         if (attrs[0])
+        {
             cursor._addAttribute("version", attrs[0]);
+        }
         if (attrs[1])
+        {
             cursor._addAttribute("encoding", attrs[1]);
+        }
         if (attrs[2])
+        {
             cursor._addAttribute("standalone", attrs[2]);
+        }
         fiber.call;
     }
     void writeXMLDeclaration(StringType version_, StringType encoding, StringType standalone)
     {
         cursor._setKind(XMLKind.document);
         if (version_)
+        {
             cursor._addAttribute("version", version_);
+        }
         if (encoding)
+        {
             cursor._addAttribute("encoding", encoding);
+        }
         if (standalone)
+        {
             cursor._addAttribute("standalone", standalone);
+        }
         fiber.call;
     }
     void writeComment(StringType text)
@@ -925,7 +977,9 @@ struct CheckedWriter(WriterType, CursorType = void)
     void startElement(StringType tag)
     {
         if (startingTag)
+        {
             fiber.call;
+        }
 
         startingTag = true;
         cursor._setKind(XMLKind.elementStart);
@@ -949,7 +1003,8 @@ struct CheckedWriter(WriterType, CursorType = void)
     }
 }
 
-/+unittest
+/+
+unittest
 {
     import newxml.validation;
     import std.typecons : refCounted;
@@ -969,4 +1024,5 @@ struct CheckedWriter(WriterType, CursorType = void)
     writer.writeText("a nice text");
     writer.writeCDATA("a nice cdata");
     writer.closeElement("aabb");
-}+/
+}
++/

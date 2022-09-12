@@ -63,9 +63,9 @@ package struct Attribute(StringType)
     {
         this._name = _name;
         auto i = _name.indexOf(':');
-		colon = i > 0
-			? i
-			: 0;
+        colon = i > 0
+            ? i
+            : 0;
     }
     @property auto prefix() inout
     {
@@ -73,9 +73,9 @@ package struct Attribute(StringType)
     }
     @property StringType localName()
     {
-		return colon
-			? name[colon+1..$]
-			: name;
+        return colon
+            ? name[colon+1..$]
+            : name;
     }
     StringType toString() {
         return name ~ " = \"" ~ value ~ "\"";
@@ -85,19 +85,27 @@ package struct Attribute(StringType)
 /++
 +   An implementation of the $(LINK2 ../interfaces/isCursor, `isCursor`) trait.
 +
-+   This is the only provided cursor that builds on top of a parser (and not on top of another cursor), so it is part 
++   This is the only provided cursor that builds on top of a parser (and not on top of another cursor), so it is part
 +   of virtually every parsing chain. All documented methods are implementations of the specifications dictated by
 +   $(LINK2 ../interfaces/isCursor, `isCursor`).
 +   Parameters:
 +       P = The parser.
-+       conflateCData = 
-+       processBadDocument = If set to `Yes` (default is `No`), then it'll ignore errors as long as it can still 
++       conflateCData =
++       processBadDocument = If set to `Yes` (default is `No`), then it'll ignore errors as long as it can still
 +   process the document. Otherwise it'll throw an appropriate exception if an error is encountered.
 +/
 struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
     Flag!"processBadDocument" processBadDocument = No.processBadDocument)
     if (isLowLevelParser!P)
 {
+    class AttributeException : XMLException {
+        @nogc @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__,
+                Throwable nextInChain = null)
+        {
+            super(msg, file, line, nextInChain);
+        }
+    }
+
     struct AttributesRange
     {
         private StringType content;
@@ -114,7 +122,9 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
         bool empty() @safe
         {
             if (error)
+            {
                 return true;
+            }
 
             auto i = content.indexOfNeither(" \r\n\t");
             if (i >= 0)
@@ -130,18 +140,18 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
             if (attr == attr.init)
             {
                 auto i = content.indexOfNeither(" \r\n\t");
-                assert(i >= 0, "No more attributes...");
+                enforce!AttributeException(i >= 0, "No more attributes...");
                 content = content[i..$];
 
                 auto sep = indexOf(content[0..$], '=');
                 if (sep == -1)
                 {
                     // attribute without value???
-                    static if (processBadDocument == No.processBadDocument) 
+                    static if (processBadDocument == No.processBadDocument)
                     {
                         throw new CursorException("Invalid attribute syntax!");
                     }
-                    else 
+                    else
                     {
                         error = true;
                         return attr.init;
@@ -149,8 +159,8 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
                 }
 
                 auto name = content[0..sep];
-                
-                
+
+
                 auto delta = indexOfAny(name, " \r\n\t");
                 if (delta >= 0)
                 {
@@ -158,11 +168,11 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
                     if (j != -1)
                     {
                         // attribute name contains spaces???
-                        static if (processBadDocument == No.processBadDocument) 
+                        static if (processBadDocument == No.processBadDocument)
                         {
                             throw new CursorException("Invalid attribute syntax!");
-                        } 
-                        else 
+                        }
+                        else
                         {
                             error = true;
                             return attr.init;
@@ -170,13 +180,13 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
                     }
                     name = name[0..delta];
                 }
-                if (!isValidXMLName(name)) 
+                if (!isValidXMLName(name))
                 {
                     static if (processBadDocument == No.processBadDocument)
                     {
                         throw new CursorException("Invalid attribute name!");
                     }
-                    else 
+                    else
                     {
                         error = true;
                     }
@@ -195,11 +205,11 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
                         if (delta == -1)
                         {
                             // attribute quotes never closed???
-                            static if (processBadDocument == No.processBadDocument) 
+                            static if (processBadDocument == No.processBadDocument)
                             {
                                 throw new CursorException("Invalid attribute syntax!");
-                            } 
-                            else 
+                            }
+                            else
                             {
                                 error = true;
                                 return attr.init;
@@ -209,11 +219,11 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
                     }
                     else
                     {
-                        static if (processBadDocument == No.processBadDocument) 
+                        static if (processBadDocument == No.processBadDocument)
                         {
                             throw new CursorException("Invalid attribute syntax!");
-                        } 
-                        else 
+                        }
+                        else
                         {
                             error = true;
                             return attr.init;
@@ -223,21 +233,25 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
                 else
                 {
                     // attribute without value???
-                    static if (processBadDocument == No.processBadDocument) 
+                    static if (processBadDocument == No.processBadDocument)
                     {
                         throw new CursorException("Invalid attribute syntax!");
-                    } 
-                    else 
+                    }
+                    else
                     {
                         error = true;
                         return attr.init;
                     }
                 }
                 //attr.value = content[(quote + 1)..attEnd];
-                static if (processBadDocument == No.processBadDocument) 
+                static if (processBadDocument == No.processBadDocument)
+                {
                     attr.value = xmlUnescape(content[(quote + 1)..attEnd], cursor.parser.chrEntities);
+                }
                 else
+                {
                     attr.value = xmlUnescape!No.strict(content[(quote + 1)..attEnd], cursor.parser.chrEntities);
+                }
                 content = content[attEnd+1..$];
             }
             return attr;
@@ -284,11 +298,11 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
     }
     ///Returns true if XML declaration was not found.
     public @property bool xmlDeclNotFound() @nogc @safe pure nothrow
-    {   
+    {
         return _xmlDeclNotFound;
     }
     /+
-    /** 
+    /**
      * Preprocesses the document, mainly the declaration (sets document version and encoding) and the Document type.
      * NOTE: Does not want to process anything beyond the first processing instruction (`<?xml [...] ?>`) for unknown
      * reasons, and I cannot get the debugger to find the reason.
@@ -329,7 +343,7 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
                     /+if (!enter())
                         goto exitloop;+/
                     break;
-                case XMLKind.dtdStart: 
+                case XMLKind.dtdStart:
                     docType = content();
                     if (!enter())
                         goto exitloop;
@@ -345,7 +359,7 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
                 case XMLKind.attlistDecl, XMLKind.elementDecl, XMLKind.notationDecl, XMLKind.declaration:
                     break;
                 default:
-                    goto exitloop;   
+                    goto exitloop;
             }
 
         }
@@ -415,7 +429,9 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
             _documentEnd = false;
         }
         else
+        {
             _documentEnd = true;
+        }
     }
 
     /++ Returns whether the cursor is at the end of the document. +/
@@ -446,7 +462,9 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
         {
             starting = false;
             if (currentNode.content is parser.front.content)
+            {
                 return advanceInput();
+            }
             else
             {
                 nameEnd = 0;
@@ -465,14 +483,20 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
             return advanceInput() && currentNode.kind != XMLKind.dtdEnd;
         }
         else
+        {
             return false;
+        }
     }
 
     /++ Advances to the end of the parent of the current node. +/
     void exit()
     {
         if (!nextFailed)
-            while (next()) {}
+        {
+            while (next())
+            {
+            }
+        }
 
         nextFailed = false;
     }
@@ -485,32 +509,44 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
     bool next()
     {
         if (parser.empty || starting || nextFailed)
+        {
             return false;
+        }
         else if (currentNode.kind == XMLKind.dtdStart)
         {
-            /+while (advanceInput && currentNode.kind != XMLKind.dtdEnd) 
+            /+while (advanceInput && currentNode.kind != XMLKind.dtdEnd)
             {
-                
+
             }+/
         }
         else if (currentNode.kind == XMLKind.elementStart)
         {
             int count = 1;
             static if (processBadDocument == No.processBadDocument)
+            {
                 StringType currName = name;
+            }
+
             while (count > 0 && !parser.empty)
             {
                 if (!advanceInput)
+                {
                     return false;
+                }
+
                 if (currentNode.kind == XMLKind.elementStart)
+                {
                     count++;
+                }
                 else if (currentNode.kind == XMLKind.elementEnd)
+                {
                     count--;
+                }
             }
             static if (processBadDocument == No.processBadDocument)
             {
-				enforce!CursorException(count == 0 && currName == name,
-						"Document is malformed!");
+                enforce!CursorException(count == 0 && currName == name,
+                        "Document is malformed!");
             }
         }
         if (!advanceInput || currentNode.kind == XMLKind.elementEnd || currentNode.kind == XMLKind.dtdEnd)
@@ -525,11 +561,17 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
     XMLKind kind() const
     {
         if (starting)
+        {
             return XMLKind.document;
+        }
 
         static if (conflateCDATA == Yes.conflateCDATA)
+        {
             if (currentNode.kind == XMLKind.cdata)
+            {
                 return XMLKind.text;
+            }
+        }
 
         return currentNode.kind;
     }
@@ -558,11 +600,11 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
                 {
                     ptrdiff_t i, j;
                     if ((j = indexOfNeither(currentNode.content, " \r\n\t")) >= 0)
-					{
+                    {
                         nameBegin = j;
-					}
+                    }
 
-					nameEnd = ((i = indexOfAny(currentNode.content[nameBegin..$], " \r\n\t")) >= 0)
+                    nameEnd = ((i = indexOfAny(currentNode.content[nameBegin..$], " \r\n\t")) >= 0)
                         ? i + nameBegin
                         : currentNode.content.length;
                 }
@@ -580,7 +622,9 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
         if (currentNode.kind == XMLKind.elementStart || currentNode.kind == XMLKind.elementEnd)
         {
             if (colon == colon.max)
+            {
                 colon = indexOf(name, ':');
+            }
             return name[(colon+1)..$];
         }
         return name;
@@ -596,7 +640,9 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
         {
             auto name = name;
             if (colon == colon.max)
+            {
                 colon = indexOf(name, ':');
+            }
 
             return colon >= 0
                 ? name[0..colon]
@@ -612,7 +658,7 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
     +/
     auto attributes() @trusted
     {
-        
+
 
         auto kind = currentNode.kind;
         if (kind == XMLKind.elementStart || kind == XMLKind.elementEmpty || kind == XMLKind.processingInstruction)
@@ -621,7 +667,9 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
             return AttributesRange(currentNode.content[nameEnd..$], this);
         }
         else
+        {
             return AttributesRange();
+        }
     }
 
     /++
@@ -630,7 +678,7 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
     +/
     StringType content()
     {
-        if (currentNode.kind == XMLKind.entityDecl) 
+        if (currentNode.kind == XMLKind.entityDecl)
         {
             sizediff_t b = indexOfAny(currentNode.content[nameEnd..$], "\"\'");
             sizediff_t e = lastIndexOf(currentNode.content[nameEnd..$], currentNode.content[b + nameEnd]);
@@ -643,24 +691,19 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
             else
             {
                 static if (processBadDocument == No.processBadDocument)
+                {
                     throw new CursorException("Entity content not found!");
+                }
                 else
+                {
                     return null;
+                }
             }
         }
-        /* else if (currentNode.kind == XMLKind.dtdStart || currentNode.kind == XMLKind.dtdEmpty)
-        {
-            sizediff_t b = lastIndexOfAny(currentNode.content[nameEnd..$], " \r\n\t");
-            if (b == -1)
-                return null;
-            sizediff_t e = indexOfAny(currentNode.content[nameEnd + b..$], " \r\n\t");
-            if (e == -1)
-                return currentNode.content[nameEnd + b + 1..$];
-            else
-                return currentNode.content[nameEnd + b + 1..nameEnd + e];
-        } */
         else
+        {
             return currentNode.content[nameEnd..$];
+        }
     }
 
     /++ Returns the entire text of the current node. +/
@@ -864,7 +907,7 @@ auto children(T)(ref T cursor) @trusted
         ~this() { cursor.exit; }
     }
     auto workaround() @system {
-        return XMLRange(&cursor, cursor.enter);    
+        return XMLRange(&cursor, cursor.enter);
     }
     return workaround();
 }
@@ -902,7 +945,7 @@ unittest
 
     //auto handler = () { assert(0, "Some problem here..."); };
     auto lexer = RangeLexer!(string)();
-    
+
     auto cursor = lexer.parser.cursor!(Yes.conflateCDATA)();
     assert(cursor.documentEnd);
     cursor.setSource(xml);
@@ -1008,7 +1051,7 @@ unittest
         assert(range2.front.name == "BBB");
         auto range3 = range2.front.attributes();
         assertThrown!XMLException(range3.front());
-    
+
     }
 }
 
@@ -1049,7 +1092,9 @@ struct CopyingCursor(CursorType, Flag!"intern" intern = No.intern)
         {
             auto match = str in interned;
             if (match)
+            {
                 return *match;
+            }
         }
 
         import std.traits : Unqual;
@@ -1127,7 +1172,7 @@ unittest
 {
     import newxml.lexers;
     import newxml.parser;
-    
+
 
     wstring xml = q{
     <?xml encoding = "utf-8" ?>

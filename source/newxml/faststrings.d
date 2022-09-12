@@ -22,19 +22,22 @@ import newxml.interfaces : XMLException;
 
 package bool checkStringBeforeChr(T, S)(T[] haysack, S[] needle, S before) @nogc @safe pure nothrow
 {
-    for (sizediff_t i ; i < haysack.length ; i++) {
+    for (sizediff_t i ; i < haysack.length ; i++)
+    {
         if (haysack[i] == needle[0])
         {
-            return (cast(sizediff_t)(haysack.length) - i > needle.length) 
+            return (cast(sizediff_t)(haysack.length) - i > needle.length)
                 ? equal(haysack[i..i + needle.length], needle)
                 : false;
         }
         else if (haysack[i] == before)
+        {
             return false;
+        }
     }
     return false;
 }
-unittest 
+unittest
 {
     assert(checkStringBeforeChr("extentity SYSTEM \"someexternalentity.file\"", "SYSTEM", '"'));
     assert(!checkStringBeforeChr("extentity SYST", "SYSTEM", '"'));
@@ -80,15 +83,25 @@ void xmlEscapedWrite(Out, T)(ref Out output, T[] str)
         output ~= str[0..i];
 
         if (str[i] == '&')
+        {
             output ~= amp;
+        }
         else if (str[i] == '<')
+        {
             output ~= lt;
+        }
         else if (str[i] == '>')
+        {
             output ~= gt;
+        }
         else if (str[i] == '\'')
+        {
             output ~= apos;
+        }
         else if (str[i] == '"')
+        {
             output ~= quot;
+        }
 
         str = str[i+1..$];
     }
@@ -103,7 +116,7 @@ auto xmlPredefinedEntities(T)() {
     result["gt"] = ">";
     result["apos"] = "'";
     result["quot"] = "\"";
-    
+
     return result;
 }
 
@@ -166,9 +179,12 @@ void xmlUnescapedWrite(Flag!"strict" strict = Yes.strict, Out, T, U)
         {
             enforce!XMLException(j >= 0, "Missing ';' ending XML entity!");
         }
-        else 
+        else
         {
-            if (j < 0) continue;
+            if (j < 0)
+            {
+                continue;
+            }
         }
         auto ent = str[(i+1)..(i+j+1)];
         static if (strict == Yes.strict)
@@ -177,7 +193,10 @@ void xmlUnescapedWrite(Flag!"strict" strict = Yes.strict, Out, T, U)
         }
         else
         {
-            if (!ent.length) continue;
+            if (!ent.length)
+            {
+                continue;
+            }
         }
 
         // character entities
@@ -189,22 +208,35 @@ void xmlUnescapedWrite(Flag!"strict" strict = Yes.strict, Out, T, U)
             if (ent.length > 2 && ent[1] == 'x')
             {
                 static if (strict == Yes.strict)
-					enforce!XMLException(ent.length <= 10
-							, "Number escape value is too large!");
+                {
+                    enforce!XMLException(ent.length <= 10
+                            , "Number escape value is too large!");
+                }
+                // TODO this should likely be a call to some phobos function
                 foreach(digit; ent[2..$])
                 {
                     if ('0' <= digit && digit <= '9')
+                    {
                         num = (num << 4) + (digit - '0');
+                    }
                     else if ('a' <= digit && digit <= 'f')
+                    {
                         num = (num << 4) + (digit - 'a' + 10);
+                    }
                     else if ('A' <= digit && digit <= 'F')
+                    {
                         num = (num << 4) + (digit - 'A' + 10);
+                    }
                     else
                     {
                         static if (strict == Yes.strict)
+                        {
                             throw new XMLException("Wrong character encountered within hexadecimal number!");
+                        }
                         else
+                        {
                             break;
+                        }
                     }
                 }
             }
@@ -212,7 +244,10 @@ void xmlUnescapedWrite(Flag!"strict" strict = Yes.strict, Out, T, U)
             else
             {
                 static if (strict == Yes.strict)
+                {
                     enforce!XMLException(ent.length <= 12, "Number escape value is too large!");
+                }
+                // TODO this should likely be a call to some phobos function
                 foreach(digit; ent[1..$])
                 {
                     if ('0' <= digit && digit <= '9')
@@ -220,15 +255,23 @@ void xmlUnescapedWrite(Flag!"strict" strict = Yes.strict, Out, T, U)
                         num = (num * 10) + (digit - '0');
                     }
                     else
+                    {
                         static if (strict == Yes.strict)
+                        {
                             throw new XMLException("Wrong character encountered within decimal number!");
+                        }
                         else
+                        {
                             break;
+                        }
+                    }
                 }
             }
             static if (strict == Yes.strict)
-				enforce!XMLException(num <= 0x10FFFF
-						, "Number escape value is too large!");
+            {
+                enforce!XMLException(num <= 0x10FFFF
+                        , "Number escape value is too large!");
+            }
 
             output ~= cast(dchar)num;
         }
@@ -239,7 +282,7 @@ void xmlUnescapedWrite(Flag!"strict" strict = Yes.strict, Out, T, U)
             static if (strict == Yes.strict)
             {
                 enforce!XMLException(repl
-						, "Character replacement entity not found!");
+                        , "Character replacement entity not found!");
             }
             else
             {

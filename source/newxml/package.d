@@ -12,7 +12,7 @@ public import newxml.parser;
 
 /++ This function parses a string `input`
 + into `Document`
-+ 
++
 + Params:
 +   input = The `string` to parse
 +
@@ -21,21 +21,21 @@ public import newxml.parser;
 +/
 Document parseXMLString(string input)
 {
-	auto builder =
-	         input
-	        .lexer
-	        .parser
-	        .cursor
-	        .domBuilder(new domimpl.DOMImplementation());
-	
-	builder.setSource(input);
-	builder.buildRecursive();
-	return builder.getDocument; 
+    auto builder =
+             input
+            .lexer
+            .parser
+            .cursor
+            .domBuilder(new domimpl.DOMImplementation());
+
+    builder.setSource(input);
+    builder.buildRecursive();
+    return builder.getDocument;
 }
 
 ///
 unittest {
-	import std.format;
+    import std.format;
 
     string xml = q"{
     <!DOCTYPE mydoc https://myUri.org/bla [
@@ -47,6 +47,6 @@ unittest {
     ]>
     }";
 
-	Document doc = parseXMLString(xml);
-	assert(doc !is null);
+    Document doc = parseXMLString(xml);
+    assert(doc !is null);
 }

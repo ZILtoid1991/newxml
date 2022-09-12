@@ -44,7 +44,7 @@ pure nothrow @nogc @safe bool isValidXMLCharacter11(dchar c)
         || (0xE000 <= c && c <= 0xFFFD)
         || (0x10000 <= c && c <= 0x10FFFF);
 }
-/** 
+/**
  * Checks whether a text contains invalid characters for an XML 1.0 document.
  * Params:
  *   input = The text to test for.
@@ -52,13 +52,13 @@ pure nothrow @nogc @safe bool isValidXMLCharacter11(dchar c)
  */
 pure nothrow @nogc @safe bool isValidXMLText10(T)(T[] input)
 {
-    foreach (elem; input) 
+    foreach (elem; input)
     {
         if (!isValidXMLCharacter10(elem)) return false;
     }
     return true;
 }
-/** 
+/**
  * Checks whether a text contains invalid characters for an XML 1.1 document.
  * Params:
  *   input = The text to test for.
@@ -66,7 +66,7 @@ pure nothrow @nogc @safe bool isValidXMLText10(T)(T[] input)
  */
 pure nothrow @nogc @safe bool isValidXMLText11(T)(T[] input)
 {
-    foreach (elem; input) 
+    foreach (elem; input)
     {
         if (!isValidXMLCharacter11(elem)) return false;
     }
@@ -107,17 +107,30 @@ pure nothrow @nogc @safe bool isValidXMLNameChar(dchar c)
         || (0x203F <= c && c <= 2040);
 }
 
-/** 
+/**
  * Checks whether a name is a valid XML name or not.
  * Params:
  *   input = The input string.
  * Returns: True if XML name is valid.
  */
 pure nothrow @nogc @safe bool isValidXMLName(T)(T[] input) {
-    if (!input.length) return false;
-    if (!isValidXMLNameStart(input[0])) return false;
+    if (!input.length)
+    {
+        return false;
+    }
+    if (!isValidXMLNameStart(input[0]))
+    {
+        return false;
+    }
+
     for (sizediff_t i = 1 ; i < input.length; i++)
-        if (!isValidXMLNameChar(input[i])) return false;
+    {
+        if (!isValidXMLNameChar(input[i]))
+        {
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -144,22 +157,22 @@ unittest
     assert(isValidXMLName("foo:bar"));
 }
 
-/** 
+/**
  * A simple document validation stack.
- * Node names on every non-empty starting nodes are pushed here, then on every ending node the top is popped then 
+ * Node names on every non-empty starting nodes are pushed here, then on every ending node the top is popped then
  * compared with the name.
  */
 struct ValidationStack(StringType)
 {
     StringType[] stack;
-    /** 
+    /**
      * Pushes a name to the top.
      */
     void push(StringType input) @safe pure nothrow
     {
         stack ~= input;
     }
-    /** 
+    /**
      * Pops a name from the top, then compared with the input.
      * Params:
      *   input = the string that is being compared with the input.
@@ -173,7 +186,7 @@ struct ValidationStack(StringType)
             stack = stack[0..$-1];
             return top == input;
         }
-        else 
+        else
         {
             return false;
         }

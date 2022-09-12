@@ -52,7 +52,7 @@ public class ParserException : XMLException {
 +
 +   Params:
 +       L = the underlying lexer type
-+       preserveWhitespace = if set to `Yes` (default is `No`), the parser will not remove element content whitespace 
++       preserveWhitespace = if set to `Yes` (default is `No`), the parser will not remove element content whitespace
 +   (i.e. the whitespace that separates tags), but will report it as text.
 +/
 struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhitespace)
@@ -82,7 +82,7 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
     ///if set to `true` (default is `false`), the parser will try to parse any and all badly formed document as long as
     ///it can be processed.
     public bool processBadDocument;
-    ///if set to `true` (which is default), then the parser will test for invalid characters, and will throw an 
+    ///if set to `true` (which is default), then the parser will test for invalid characters, and will throw an
     ///exception on errors. Turning it off can speed up parsing.
     public bool testTextValidity = true;
     public XMLVersion xmlVersion;
@@ -103,6 +103,7 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
         lexer = L(args);
         chrEntities = xmlPredefinedEntities!CharacterType();
     }
+
     static if (needSource!L)
     {
         alias InputType = L.InputType;
@@ -151,7 +152,10 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
     auto front()
     {
         if (!ready)
+        {
             fetchNext();
+        }
+
         return next;
     }
 
@@ -165,7 +169,9 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
     private void fetchNext()
     {
         if (!preserveWhitespace || insideDTD)
+        {
             lexer.dropWhile(" \r\n\t");
+        }
 
         assert(!lexer.empty);
 
@@ -181,13 +187,11 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
             next.content = null;
             insideDTD = false;
         }
-
-        // text element
-        else if (!lexer.testAndAdvance('<'))
+        else if (!lexer.testAndAdvance('<')) // text element
         {
             lexer.advanceUntil('<', false);
             next.kind = XMLKind.text;
-			next.content = !processBadDocument
+            next.content = !processBadDocument
                 ? xmlUnescape(fetchContent(), chrEntities)
                 : xmlUnescape!(No.strict)(fetchContent(), chrEntities);
 
@@ -205,32 +209,36 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
                 }
             }
         }
-
-        // tag end
-        else if (lexer.testAndAdvance('/'))
+        else if (lexer.testAndAdvance('/')) // tag end
         {
             lexer.advanceUntil('>', true);
             next.content = fetchContent(2, 1);
             next.kind = XMLKind.elementEnd;
         }
-        // processing instruction
-        else if (lexer.testAndAdvance('?'))
+        else if (lexer.testAndAdvance('?')) // processing instruction
         {
             do
+            {
                 lexer.advanceUntil('?', true);
+            }
             while (!lexer.testAndAdvance('>'));
             next.content = fetchContent(2, 2);
             next.kind = XMLKind.processingInstruction;
         }
-        // tag start
-        else if (!lexer.testAndAdvance('!'))
+        else if (!lexer.testAndAdvance('!')) // tag start
         {
             size_t c;
             while ((c = lexer.advanceUntilAny("\"'/>", true)) < 2)
+            {
                 if (c == 0)
+                {
                     lexer.advanceUntil('"', true);
+                }
                 else
+                {
                     lexer.advanceUntil('\'', true);
+                }
+            }
 
             if (c == 2)
             {
@@ -244,56 +252,65 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
                 next.kind = XMLKind.elementStart;
             }
         }
-
-        // cdata or conditional
-        else if (lexer.testAndAdvance('['))
+        else if (lexer.testAndAdvance('[')) // cdata or conditional
         {
             lexer.advanceUntil('[', true);
             // cdata
             if (lexer.get.length == 9 && equal(lexer.get()[3..$], "CDATA["))
             {
                 do
+                {
                     lexer.advanceUntil('>', true);
+                }
                 while (!equal(lexer.get()[($-3)..$], "]]>"));
                 next.content = fetchContent(9, 3);
                 next.kind = XMLKind.cdata;
             }
-            // conditional
-            else
+            else // conditional
             {
                 int count = 1;
                 do
                 {
                     lexer.advanceUntilAny("[>", true);
                     if (lexer.get()[($-3)..$] == "]]>")
+                    {
                         count--;
+                    }
                     else if (lexer.get()[($-3)..$] == "<![")
+                    {
                         count++;
+                    }
                 }
                 while (count > 0);
                 next.content = fetchContent(3, 3);
                 next.kind = XMLKind.conditional;
             }
         }
-        // comment
-        else if (lexer.testAndAdvance('-'))
+        else if (lexer.testAndAdvance('-')) // comment
         {
             lexer.testAndAdvance('-'); // second '-'
             do
+            {
                 lexer.advanceUntil('>', true);
+            }
             while (!equal(lexer.get()[($-3)..$], "-->"));
             next.content = fetchContent(4, 3);
             next.kind = XMLKind.comment;
         }
-        // declaration or doctype
-        else
+        else // declaration or doctype
         {
             size_t c;
             while ((c = lexer.advanceUntilAny("\"'[>", true)) < 2)
+            {
                 if (c == 0)
+                {
                     lexer.advanceUntil('"', true);
+                }
                 else
+                {
                     lexer.advanceUntil('\'', true);
+                }
+            }
 
             // doctype
             if (lexer.get.length>= 9 && equal(lexer.get()[2..9], "DOCTYPE"))
@@ -304,19 +321,27 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
                     next.kind = XMLKind.dtdStart;
                     insideDTD = true;
                 }
-                else next.kind = XMLKind.dtdEmpty;
+                else
+                {
+                    next.kind = XMLKind.dtdEmpty;
+                }
             }
-            // declaration
-            else
+            else // declaration
             {
                 if (c == 2)
                 {
                     size_t cc;
                     while ((cc = lexer.advanceUntilAny("\"'>", true)) < 2)
+                    {
                         if (cc == 0)
+                        {
                             lexer.advanceUntil('"', true);
+                        }
                         else
+                        {
                             lexer.advanceUntil('\'', true);
+                        }
+                    }
                 }
                 auto len = lexer.get().length;
                 if (len > 8 && equal(lexer.get()[2..9], "ATTLIST"))
@@ -370,14 +395,6 @@ auto parser(Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhitespace
     parser.lexer = lexer;
     return parser;
 }
-/* ///Ditto
-auto parser(Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhitespace, T)(auto ref T input)
-{
-    auto lx = input.lexer;
-    auto parser = Parser!(typeof(lx), preserveWhitespace)(lx);
-    //parser.errorHandler = handler;
-    return parser;
-} */
 
 import newxml.lexers;
 import std.experimental.allocator.gc_allocator;//import stdx.allocator.gc_allocator;
