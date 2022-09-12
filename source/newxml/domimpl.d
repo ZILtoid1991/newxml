@@ -2065,11 +2065,11 @@ class DOMImplementation : dom.DOMImplementation
             }
             // better methods
             auto opIndex(size_t i) { return item(i); }
-
+            
             // range interface
             auto opSlice()
             {
-                struct Range
+                static struct Range
                 {
                     Attr currentAttr;
 
