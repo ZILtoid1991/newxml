@@ -62,7 +62,7 @@ class DOMImplementation : dom.DOMImplementation
         +/
         DocumentType createDocumentType(DOMString qualifiedName, DOMString publicId, DOMString systemId)
         {
-            DocumentType res = new DocumentType();//allocator.multiVersionMake!DocumentType(this);
+            DocumentType res = new DocumentType();
             res._name = qualifiedName;
             res._publicId = publicId;
             res._systemId = systemId;
@@ -78,10 +78,10 @@ class DOMImplementation : dom.DOMImplementation
             enforce!DOMException(!(_doctype && !doctype),
                     dom.ExceptionCode.wrongDocument);
 
-            Document doc = new Document();//allocator.multiVersionMake!Document(this);
+            Document doc = new Document();
             doc._ownerDocument = doc;
             doc._doctype = doctype;
-            doc._config = new DOMConfiguration();//allocator.multiVersionMake!DOMConfiguration(this);
+            doc._config = new DOMConfiguration();
 
             if (namespaceURI)
             {
@@ -782,9 +782,7 @@ class DOMImplementation : dom.DOMImplementation
 
             @property DOMString textContent()
             {
-                //import std.experimental.xml.appender;
                 DOMString result;
-                //auto result = Appender!(typeof(this.textContent()[0]), typeof(*allocator))(allocator);
                 for (auto child = rebindable(firstChild); child !is null; child = child.nextSibling)
                 {
                     if (child.nodeType != dom.NodeType.comment &&
@@ -1336,8 +1334,6 @@ class DOMImplementation : dom.DOMImplementation
             {
                 import std.traits : Unqual;
 
-                //auto newData = allocator.makeArray!(Unqual!(typeof(_data[0])))(_data.length + arg.length);
-
                 _data ~= arg;
             }
             void insertData(size_t offset, DOMString arg)
@@ -1465,8 +1461,6 @@ class DOMImplementation : dom.DOMImplementation
             /// Implementation of $(LINK2 ../dom/Attr.value, `std.experimental.xml.dom.Attr.value`).
             @property DOMString value()
             {
-
-                //auto result = Appender!(typeof(_name[0]), typeof(*allocator))(allocator);
                 DOMString result = new DOMString();
                 auto child = rebindable(firstChild);
                 while (child)
