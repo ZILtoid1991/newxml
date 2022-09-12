@@ -76,6 +76,14 @@ struct DOMBuilder(T)
                 {
                     case "version":
                         document.xmlVersion = new DOMString(attr.value);
+                        switch (attr.value) {
+                            case "1.1":
+                                cursor.parser.xmlVersion = XMLVersion.XML1_1;
+                                break;
+                            default:
+                                cursor.parser.xmlVersion = XMLVersion.XML1_0;
+                                break;
+                        }
                         break;
                     case "standalone":
                         document.xmlStandalone = attr.value == "yes";
@@ -253,8 +261,9 @@ unittest
     import newxml.parser;
     import newxml.cursor;
     import domimpl = newxml.domimpl;
+    
 
-    alias DOMImplType = domimpl.DOMImplementation;
+    alias DOMImpl = domimpl.DOMImplementation;
 
     string xml = q{
     <?xml encoding = "utf-8" ?>
@@ -274,14 +283,24 @@ unittest
         .lexer
         .parser
         .cursor
-        .domBuilder(new DOMImplType());
+        .domBuilder(new DOMImpl());
 
     builder.setSource(xml);
     builder.buildRecursive;
-    auto doc = builder.getDocument;
+    dom.Document doc = builder.getDocument;
 
     assert(doc.getElementsByTagName(new DOMString("ccc")).length == 1);
     assert(doc.documentElement.getAttribute(new DOMString("xmlns:myns")) == "something");
+    dom.Element e1 = cast(dom.Element)doc.firstChild;
+    assert(e1.nodeName == "aaa");
+    dom.Element e2 = cast(dom.Element)e1.firstChild();
+    assert(e2.nodeName == "myns:bbb");
+    dom.Comment c1 = cast(dom.Comment)e2.firstChild;
+    assert(c1.data == " lol ");
+    dom.Text t1 = cast(dom.Text)e2.lastChild;
+    //Issue: Extra whitespace isn't dropped between and after words when dropWhiteSpace is enabled in 
+    //assert(t1.data == "Lots of Text! On multiple lines!", t1.data.transcodeToUTF8);
+
 }
 
 unittest

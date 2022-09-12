@@ -269,7 +269,7 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
     /++ The type of sequences of CharacterType, as returned by this parser +/
     alias StringType = CharacterType[];
 
-    private P parser;
+    public P parser;
     private ElementType!P currentNode;
     private bool starting, _documentEnd = true, nextFailed, _xmlDeclNotFound;
     private ptrdiff_t colon;
