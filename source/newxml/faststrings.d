@@ -15,7 +15,9 @@
 module newxml.faststrings;
 
 import std.algorithm.comparison : equal;
+import std.exception : enforce;
 import std.string;
+
 import newxml.interfaces : XMLException;
 
 package bool checkStringBeforeChr(T, S)(T[] haysack, S[] needle, S before) @nogc @safe pure nothrow
@@ -165,7 +167,7 @@ void xmlUnescapedWrite(Flag!"strict" strict = Yes.strict, Out, T, U)
         ptrdiff_t j = str[(i+1)..$].indexOf(';');
         static if (strict == Yes.strict)
         {
-            if (j < 0) throw new XMLException("Missing ';' ending XML entity!");
+            enforce!XMLException(j >= 0, "Missing ';' ending XML entity!");
         }
         else 
         {
@@ -174,7 +176,7 @@ void xmlUnescapedWrite(Flag!"strict" strict = Yes.strict, Out, T, U)
         auto ent = str[(i+1)..(i+j+1)];
         static if (strict == Yes.strict)
         {
-            if (!ent.length) throw new XMLException("Character replacement entity not found!");
+            enforce!XMLException(ent.length, "Character replacement entity not found!");
         }
         else
         {
@@ -190,7 +192,8 @@ void xmlUnescapedWrite(Flag!"strict" strict = Yes.strict, Out, T, U)
             if (ent.length > 2 && ent[1] == 'x')
             {
                 static if (strict == Yes.strict)
-                    if (ent.length > 10) throw new XMLException("Number escape value is too large!");
+					enforce!XMLException(ent.length <= 10
+							, "Number escape value is too large!");
                 foreach(digit; ent[2..$])
                 {
                     if ('0' <= digit && digit <= '9')
@@ -212,7 +215,7 @@ void xmlUnescapedWrite(Flag!"strict" strict = Yes.strict, Out, T, U)
             else
             {
                 static if (strict == Yes.strict)
-                    if (ent.length > 12) throw new XMLException("Number escape value is too large!");
+                    enforce!XMLException(ent.length <= 12, "Number escape value is too large!");
                 foreach(digit; ent[1..$])
                 {
                     if ('0' <= digit && digit <= '9')
@@ -226,10 +229,9 @@ void xmlUnescapedWrite(Flag!"strict" strict = Yes.strict, Out, T, U)
                             break;
                 }
             }
-            //assert(num <= 0x10FFFF);
             static if (strict == Yes.strict)
-                if (num > 0x10FFFF)
-                    throw new XMLException("Number escape value is too large!");
+				enforce!XMLException(num <= 0x10FFFF
+						, "Number escape value is too large!");
 
             output ~= cast(dchar)num;
         }
@@ -239,8 +241,8 @@ void xmlUnescapedWrite(Flag!"strict" strict = Yes.strict, Out, T, U)
             auto repl = replacements.get(ent, null);
             static if (strict == Yes.strict)
             {
-                //assert (repl, cast(string)str[(i+1)..(i+j+1)]);
-                if (!repl) throw new XMLException("Character replacement entity not found!");
+                enforce!XMLException(repl
+						, "Character replacement entity not found!");
             }
             else
             {

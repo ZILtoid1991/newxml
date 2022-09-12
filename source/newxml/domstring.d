@@ -1,9 +1,10 @@
 module newxml.domstring;
 
+import std.algorithm.comparison : equal;
+import std.exception : enforce;
 import std.range;
 import std.string;
 import std.utf;
-import std.algorithm.comparison : equal;
 
 import newxml.faststrings;
 import newxml.interfaces;
@@ -171,8 +172,8 @@ public class DOMString : RandomAccessFinite!XMLCh {
      *   count = The count of characters from the offset that must be deleted 
      */
     void deleteData(size_t offset, size_t count) pure {
-        if (offset + count > buffer.length) 
-            throw new XMLException("offset + count larger than buffer length!");
+		enforce!XMLException(offset + count <= buffer.length
+            , "offset + count larger than buffer length!");
         buffer = buffer[0..offset] ~ buffer[offset+count..$];
         backPos = buffer.length;
     }

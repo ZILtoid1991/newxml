@@ -29,6 +29,7 @@ module newxml.lexers;
 import newxml.interfaces;
 import newxml.faststrings;
 
+import std.exception : enforce;
 import std.range.primitives;
 import std.traits : isArray, isSomeFunction;
 import std.string;
@@ -130,7 +131,7 @@ struct SliceLexer(T)
     /// ditto
     bool testAndAdvance(char c)
     {
-        if (empty) throw new LexerException("No more characters are found!");
+        enforce!LexerException(!empty, "No more characters are found!");
             //handler();
         if (input[pos] == c)
         {
@@ -143,13 +144,13 @@ struct SliceLexer(T)
     /// ditto
     void advanceUntil(char c, bool included)
     {
-        if (empty) throw new LexerException("No more characters are found!");
+        enforce!LexerException(!empty, "No more characters are found!");
             //handler();
         auto adv = indexOf(input[pos..$], c);
         if (adv != -1)
         {
             pos += adv;
-            if (empty) throw new LexerException("No more characters are found!");
+            enforce!LexerException(!empty, "No more characters are found!");
                 //handler();
         }
         else
@@ -159,7 +160,7 @@ struct SliceLexer(T)
 
         if (included)
         {
-            if (empty) throw new LexerException("No more characters are found!");
+            enforce!LexerException(!empty, "No more characters are found!");
                 //handler();
             pos++;
         }
@@ -168,13 +169,15 @@ struct SliceLexer(T)
     /// ditto
     size_t advanceUntilAny(string s, bool included)
     {
-        if (empty) throw new LexerException("No more characters are found!");
-            //handler();
+        enforce!LexerException(!empty, "No more characters are found!");
 
         ptrdiff_t res;
         while ((res = indexOf(s, input[pos])) == -1)
-            if (++pos >= input.length) throw new LexerException("No more characters are found!");
-                //handler();
+		{
+            enforce!LexerException(++pos < input.length
+					, "No more characters are found!");
+		}
+
         if (included)
             pos++;
         return res;
@@ -283,8 +286,8 @@ struct RangeLexer(T)
     /// ditto
     bool testAndAdvance(char c)
     {
-        if (input.empty)
-            throw new LexerException("No more characters are found!");//handler();
+        enforce!LexerException(!input.empty
+            , "No more characters are found!");//handler();
         if (input.front == c)
         {
             buffer ~= input.front;//app.put(input.front);
@@ -297,14 +300,14 @@ struct RangeLexer(T)
     /// ditto
     void advanceUntil(char c, bool included)
     {
-        if (input.empty)
-            throw new LexerException("No more characters are found!");//handler();
+        enforce!LexerException(!input.empty
+            , "No more characters are found!");//handler();
         while (input.front != c)
         {
             buffer ~= input.front;//app.put(input.front);
             input.popFront();
-            if (input.empty)
-                throw new LexerException("No more characters are found!");//handler();
+            enforce!LexerException(!input.empty
+                , "No more characters are found!");//handler();
         }
         if (included)
         {
@@ -316,15 +319,15 @@ struct RangeLexer(T)
     /// ditto
     size_t advanceUntilAny(string s, bool included)
     {
-        if (input.empty)
-            throw new LexerException("No more characters are found!");//handler();
+        enforce!LexerException(!input.empty
+            , "No more characters are found!");//handler();
         size_t res;
         while ((res = indexOf(s, input.front)) == -1)
         {
             buffer ~= input.front;//app.put(input.front);
             input.popFront;
-            if (input.empty)
-                throw new LexerException("No more characters are found!");//handler();
+            enforce!LexerException(!input.empty
+                , "No more characters are found!");//handler();
         }
         if (included)
         {
@@ -442,8 +445,7 @@ struct ForwardLexer(T)
     /// ditto
     bool testAndAdvance(char c)
     {
-        if (input.empty)
-            throw new LexerException("No data found!");
+        enforce!LexerException(!input.empty , "No data found!");
         if (input.front == c)
         {
             count++;
@@ -456,14 +458,14 @@ struct ForwardLexer(T)
     /// ditto
     void advanceUntil(char c, bool included)
     {
-        if (input.empty)
-            throw new LexerException("No data found!");
+        enforce!LexerException(!input.empty
+            , "No data found!");
         while (input.front != c)
         {
             count++;
             input.popFront();
-            if (input.empty)
-                throw new LexerException("No data found!");
+            enforce!LexerException(!input.empty
+                , "No data found!");
         }
         if (included)
         {
@@ -475,15 +477,15 @@ struct ForwardLexer(T)
     /// ditto
     size_t advanceUntilAny(string s, bool included)
     {
-        if (input.empty)
-            throw new LexerException("No more characters are found!");
+        enforce!LexerException(!input.empty
+            , "No more characters are found!");
         size_t res;
         while ((res = indexOf(s, input.front)) == -1)
         {
             count++;
             input.popFront;
-            if (input.empty)
-                throw new LexerException("No more characters are found!");
+            enforce!LexerException(!input.empty
+                , "No more characters are found!");
         }
         if (included)
         {
@@ -588,8 +590,8 @@ struct BufferedLexer(T)
 
     private void advance()
     {
-        if (empty)
-            throw new LexerException("No more characters are found!");
+        enforce!LexerException(!empty
+            , "No more characters are found!");
         if (pos + 1 >= buffer.length)
         {
             if (onEdge)
@@ -615,8 +617,8 @@ struct BufferedLexer(T)
     }
     private void advanceNextBuffer()
     {
-        if (empty)
-            throw new LexerException("No more characters are found!");
+        enforce!LexerException(!empty
+            , "No more characters are found!");
         if (onEdge)
             outBuf ~= buffer[pos..$]; //app.put(buffer[pos..$]);
         else
@@ -656,8 +658,7 @@ struct BufferedLexer(T)
     /// ditto
     bool testAndAdvance(char c)
     {
-        if (empty)
-            throw new LexerException("No data found!");
+        enforce!LexerException(!empty, "No data found!");
         if (buffer[pos] == c)
         {
             advance();
@@ -669,8 +670,7 @@ struct BufferedLexer(T)
     /// ditto
     void advanceUntil(char c, bool included)
     {
-        if (empty)
-            throw new LexerException("No data found!");
+        enforce!LexerException(!empty, "No data found!");
         ptrdiff_t adv;
         while ((adv = indexOf(buffer[pos..$], c)) == -1)
         {
@@ -685,8 +685,7 @@ struct BufferedLexer(T)
     /// ditto
     size_t advanceUntilAny(string s, bool included)
     {
-        if (empty)
-            throw new LexerException("No data found!");
+        enforce!LexerException(!empty, "No data found!");
         ptrdiff_t res;
         while ((res = indexOf(s, buffer[pos])) == -1)
         {
