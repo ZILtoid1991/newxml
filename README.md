@@ -106,6 +106,6 @@ parsing XML. e.g. you really need that extra memory and speed.
 # To do list
 
 * Implement missing DOM functions.
-* Improve error handling.
+* Improve error handling. (Currently it doesn't seem to work well with the DOM parser for some reason)
 * Write even more testcases.
 * gather input on library and adjust things accordingly.
