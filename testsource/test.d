@@ -280,21 +280,23 @@ bool parseFile(string filename, ref bool lint)
         }
     }
     
-    auto cursor = text.lexer.parser.cursor; // lots of tests do not have an xml declaration
+    auto something = parseXMLString(text);
 
-    auto dombuilder = domBuilder(cursor, new domimpl.DOMImplementation);
+    //auto cursor = text.lexer.parser.cursor; // lots of tests do not have an xml declaration
+
+    //auto dombuilder = domBuilder(cursor, new domimpl.DOMImplementation);
     
-    cursor.setSource(text);
+    //cursor.setSource(text);
     
-    lint = false;
-    foreach (attr; cursor.attributes)
+    //lint = false;
+    /+foreach (attr; cursor.attributes)
         if (attr.name == "version" && attr.value == "1.0")
-            lint = true;
+            lint = true;+/
     
-    dombuilder.build;
+    //dombuilder.build;
     //inspectOneLevel(cursor);
     
-    if (lint)
+    /+if (lint)
     {
         import std.process, std.stdio, std.array;
         import newxml.writer;
@@ -327,6 +329,6 @@ bool parseFile(string filename, ref bool lint)
         }
         executeShell("rm -f linted_output.xml linted_input.xml output.xml");
         return result;
-    }
+    }+/
     return false;
 }
