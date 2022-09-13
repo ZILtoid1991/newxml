@@ -50,11 +50,11 @@ struct DOMBuilder(T)
 
     alias StringType = T.StringType;
 
-    alias DocumentType = ReturnType!(DOMImplementation.createDocument);
-    alias NodeType = typeof(DocumentType.firstChild);
+    alias DocType = ReturnType!(DOMImplementation.createDocument);
+    alias NodeType = typeof(DocType.firstChild);
 
     private NodeType currentNode;
-    private DocumentType document;
+    private DocType document;
     private DOMImplementation domImpl;
     private bool already_built;
 
