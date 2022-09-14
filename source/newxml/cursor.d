@@ -678,31 +678,59 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
     +/
     StringType content()
     {
-        if (currentNode.kind == XMLKind.entityDecl)
+        switch (currentNode.kind)
         {
-            sizediff_t b = indexOfAny(currentNode.content[nameEnd..$], "\"\'");
-            sizediff_t e = lastIndexOf(currentNode.content[nameEnd..$], currentNode.content[b + nameEnd]);
-            if (b > 0 && e > 0)
+            case XMLKind.entityDecl:
             {
-                return b + 1 <= e
-                    ? currentNode.content[nameEnd + b + 1..nameEnd + e]
-                    : null;
-            }
-            else
-            {
-                static if (processBadDocument == No.processBadDocument)
+                sizediff_t b = indexOfAny(currentNode.content[nameEnd..$], "\"\'");
+                sizediff_t e = lastIndexOf(currentNode.content[nameEnd..$], currentNode.content[b + nameEnd]);
+                if (b > 0 && e > 0)
                 {
-                    throw new CursorException("Entity content not found!");
+                    return b + 1 <= e
+                        ? currentNode.content[nameEnd + b + 1..nameEnd + e]
+                        : null;
                 }
                 else
                 {
-                    return null;
+                    static if (processBadDocument == No.processBadDocument)
+                    {
+                        throw new CursorException("Entity content not found!");
+                    }
+                    else
+                    {
+                        return null;
+                    }
                 }
             }
-        }
-        else
-        {
-            return currentNode.content[nameEnd..$];
+            case XMLKind.dtdStart, XMLKind.dtdEmpty:
+            {
+                sizediff_t b = indexOfNeither(currentNode.content[nameEnd..$], " \r\n\t");
+                static if (processBadDocument == No.processBadDocument)
+                {
+                    enforce!CursorException(b >= 0, "Document Type Declaration lacks name.");
+                }
+                else
+                {
+                    if (b >= 0)
+                    {
+                        return null;
+                    }
+                }
+                sizediff_t e = indexOfAny(currentNode.content[nameEnd + b..$], " \r\n\t");
+                if (e <= 0)
+                {
+                    e = currentNode.content.length;
+                }
+                else
+                {
+                    e++;
+                }
+                return currentNode.content[nameEnd + b..e];
+            }
+            default:
+            {
+                return currentNode.content[nameEnd..$];
+            }
         }
     }
 

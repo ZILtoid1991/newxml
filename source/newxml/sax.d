@@ -23,6 +23,7 @@ module newxml.sax;
 
 import newxml.interfaces;
 import newxml.cursor;
+import newxml.faststrings;
 @safe:
 /++
 +   A SAX parser built on top of a cursor.
@@ -52,6 +53,8 @@ struct SAXParser(T)
     public void delegate(StringType name, StringType content) onProcessingInstruction;
     ///Called when a CDataSection node is encountered.
     public void delegate(StringType content) onCDataSection;
+    ///Called when a Document Type Declaration is encountered.
+    public void delegate(StringType type, bool empty) onDocTypeDecl;
 
     /++
     +   Initializes this parser (and the underlying low level one) with the given input.
@@ -86,6 +89,30 @@ struct SAXParser(T)
                 case XMLKind.document:
                     if (onDocument !is null)
                         onDocument(createAArray(cursor.attributes));
+                    break;
+                case XMLKind.dtdStart:
+                    if (onDocTypeDecl !is null)
+                        onDocTypeDecl(cursor.content, false);
+                    break;
+                case XMLKind.entityDecl:
+                    if (checkStringBeforeChr(cursor.wholeContent, "SYSTEM", '"') || 
+                            checkStringBeforeChr(cursor.wholeContent, "SYSTEM", '\''))
+                    {
+                        if (cursor.sysEntityLoader !is null)
+                        {
+                            cursor.parser.chrEntities[cursor.name] = cursor.sysEntityLoader(cursor.content);
+                        }
+                    } 
+                    else 
+                    {
+                        cursor.parser.chrEntities[cursor.name] = cursor.content;
+                    }
+                    break;
+                /* case XMLKind.dtdEnd:
+                    break; */
+                case XMLKind.dtdEmpty:
+                    if (onDocTypeDecl !is null)
+                        onDocTypeDecl(cursor.content, true);
                     break;
                 case XMLKind.elementStart:
                     if (onElementStart !is null)
@@ -157,6 +184,7 @@ unittest
 
     dstring xml = q{
     <?xml encoding = "utf-8" ?>
+    <!DOCTYPE somekindofdoc   >
     <aaa xmlns:myns="something">
         <myns:bbb myns:att='>'>
             <!-- lol -->
@@ -201,6 +229,10 @@ unittest
             assert(content == " lol ");
             total_invocations++;
         }
+        void onDocTypeDecl(dstring type, bool empty) {
+            assert(type == "somekindofdoc", type.to!string);
+            assert(empty);
+        }
     }
 
 
@@ -220,6 +252,7 @@ unittest
     parser.onText = &handler.onText;
     parser.onComment = &handler.onComment;
     parser.onProcessingInstruction = &handler.onProcessingInstruction;
+    parser.onDocTypeDecl = &handler.onDocTypeDecl;
     parser.processDocument();
 
     assert(handler.max_nesting == 2, to!string(handler.max_nesting));
