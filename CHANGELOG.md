@@ -3,6 +3,7 @@
 * `newxml.domimpl.DOMImplementation.Element.Map.opSlice` restored.
 * Added function `newxml.parseXMLString()` for easy XML parsing.
 * Code readability improvements.
+* Basic Doctype handling added to the SAX parser.
 
 # v0.2.1
 
