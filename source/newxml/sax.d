@@ -100,12 +100,12 @@ struct SAXParser(T)
                     {
                         if (cursor.sysEntityLoader !is null)
                         {
-                            cursor.parser.chrEntities[cursor.name] = cursor.sysEntityLoader(cursor.content);
+                            cursor.chrEntities[cursor.name] = cursor.sysEntityLoader(cursor.content);
                         }
                     } 
                     else 
                     {
-                        cursor.parser.chrEntities[cursor.name] = cursor.content;
+                        cursor.chrEntities[cursor.name] = cursor.content;
                     }
                     break;
                 /* case XMLKind.dtdEnd:
@@ -258,4 +258,77 @@ unittest
     assert(handler.max_nesting == 2, to!string(handler.max_nesting));
     assert(handler.current_nesting == 0, to!string(handler.current_nesting));
     assert(handler.total_invocations == 9, to!string(handler.total_invocations));
+}
+
+unittest 
+{
+    import newxml.parser;
+    import newxml.lexers;
+    import std.conv : to;
+
+    dstring xml = q"{
+        <?xml encoding = "utf-8" ?>
+        <!DOCTYPE mydoc https://myUri.org/bla [
+            <!ELEMENT myelem ANY>
+            <!ENTITY   myent    "replacement text">
+            <!ATTLIST myelem foo cdata #REQUIRED >
+            <!NOTATION PUBLIC 'h'>
+            <!FOODECL asdffdsa > ]>
+        <doc>&myent;</ doc>
+        }";
+
+    struct MyHandler
+    {
+        int max_nesting;
+        int current_nesting;
+        int total_invocations;
+
+        void onElementStart(dstring name, dstring[dstring] attributes)
+        {
+            total_invocations++;
+            current_nesting++;
+            if (current_nesting > max_nesting)
+            {
+                max_nesting = current_nesting;
+            }
+        }
+        void onElementEnd(dstring name)
+        {
+            total_invocations++;
+            current_nesting--;
+        }
+        void onText(dstring content) { 
+            assert (content == "replacement text");
+            total_invocations++; 
+        }
+        void onDocTypeDecl(dstring type, bool empty) {
+            assert(type == "mydoc", type.to!string);
+            assert(!empty);
+            total_invocations++;
+        }
+        void onDocument(dstring[dstring] attribute)
+        {
+            assert(attribute["encoding"] == "utf-8");
+            total_invocations++;
+        }
+    }
+
+    MyHandler handler;
+    auto parser =
+         xml
+        .lexer
+        .parser
+        .cursor
+        .saxParser;
+    parser.setSource(xml);
+    parser.onElementStart = &handler.onElementStart;
+    parser.onElementEnd = &handler.onElementEnd;
+    parser.onText = &handler.onText;
+    parser.onDocTypeDecl = &handler.onDocTypeDecl;
+    parser.onDocument = &handler.onDocument;
+    parser.processDocument();
+
+    assert(handler.max_nesting == 1, to!string(handler.max_nesting));
+    assert(handler.current_nesting == 0, to!string(handler.current_nesting));
+    assert(handler.total_invocations == 5, to!string(handler.total_invocations));
 }

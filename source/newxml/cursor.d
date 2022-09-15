@@ -246,11 +246,11 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
                 //attr.value = content[(quote + 1)..attEnd];
                 static if (processBadDocument == No.processBadDocument)
                 {
-                    attr.value = xmlUnescape(content[(quote + 1)..attEnd], cursor.parser.chrEntities);
+                    attr.value = xmlUnescape(content[(quote + 1)..attEnd], cursor.chrEntities);
                 }
                 else
                 {
-                    attr.value = xmlUnescape!No.strict(content[(quote + 1)..attEnd], cursor.parser.chrEntities);
+                    attr.value = xmlUnescape!No.strict(content[(quote + 1)..attEnd], cursor.chrEntities);
                 }
                 content = content[attEnd+1..$];
             }
@@ -280,11 +280,16 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
     ///If not used, then it can protect against certain system entity attacks at the
     ///cost of having this feature disabled.
     public @safe StringType delegate(StringType path) sysEntityLoader;
+    ///Contains character and text entities. Text entities might contain additional nodes and elements.
+    ///By default, it is filled with XML entities.
+    public StringType[StringType] chrEntities;
+    public XMLVersion xmlVersion;
 
     /++ Generic constructor; forwards its arguments to the parser constructor +/
     this(Args...)(Args args)
     {
         parser = P(args);
+        chrEntities = xmlPredefinedEntities!CharacterType();
     }
 
     static if (isSaveableLowLevelParser!P)
@@ -726,6 +731,28 @@ struct Cursor(P, Flag!"conflateCDATA" conflateCDATA = Yes.conflateCDATA,
                     e++;
                 }
                 return currentNode.content[nameEnd + b..e];
+            }
+            case XMLKind.text:
+            {   //TO DO: This might have a performance impact if called multiple times.
+                static if (processBadDocument == No.processBadDocument)
+                {
+                    StringType result = xmlUnescape(currentNode.content[nameEnd..$], chrEntities);
+                    if (xmlVersion == XMLVersion.XML1_0)
+                    {
+                        enforce!CursorException(isValidXMLText10(currentNode.content),
+                                "Text contains invalid characters!");
+                    }
+                    else
+                    {
+                        enforce!CursorException(isValidXMLText11(currentNode.content),
+                                "Text contains invalid characters!");
+                    }
+                    return result;
+                }
+                else
+                {
+                    return xmlUnescape!(No.strict)(currentNode.content[nameEnd..$], chrEntities);
+                }
             }
             default:
             {

@@ -85,23 +85,19 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
     ///if set to `true` (which is default), then the parser will test for invalid characters, and will throw an
     ///exception on errors. Turning it off can speed up parsing.
     public bool testTextValidity = true;
-    public XMLVersion xmlVersion;
     private XMLToken next;
-    ///Contains character and text entities. Text entities might contain additional nodes and elements.
-    ///By default, it is filled with XML entities.
-    public StringType[StringType] chrEntities;
 
     //mixin UsesErrorHandler!ErrorHandler;
 
     this(L lexer) {
         this.lexer = lexer;
-        chrEntities = xmlPredefinedEntities!CharacterType();
+        //chrEntities = xmlPredefinedEntities!CharacterType();
     }
     /++ Generic constructor; forwards its arguments to the lexer constructor +/
     this(Args...)(Args args)
     {
         lexer = L(args);
-        chrEntities = xmlPredefinedEntities!CharacterType();
+        //chrEntities = xmlPredefinedEntities!CharacterType();
     }
 
     static if (needSource!L)
@@ -115,7 +111,7 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
         void setSource(InputType input)
         {
             lexer.setSource(input);
-            chrEntities = xmlPredefinedEntities!CharacterType();
+            //chrEntities = xmlPredefinedEntities!CharacterType();
             ready = false;
             insideDTD = false;
         }
@@ -191,7 +187,7 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
         {
             lexer.advanceUntil('<', false);
             next.kind = XMLKind.text;
-            next.content = !processBadDocument
+            next.content = fetchContent(); /* !processBadDocument
                 ? xmlUnescape(fetchContent(), chrEntities)
                 : xmlUnescape!(No.strict)(fetchContent(), chrEntities);
 
@@ -207,7 +203,7 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
                     enforce!ParserException(isValidXMLText11(next.content)
                         , "Text contains invalid characters!");
                 }
-            }
+            } */
         }
         else if (lexer.testAndAdvance('/')) // tag end
         {

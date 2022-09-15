@@ -78,10 +78,10 @@ struct DOMBuilder(T)
                         document.xmlVersion = new DOMString(attr.value);
                         switch (attr.value) {
                             case "1.1":
-                                cursor.parser.xmlVersion = XMLVersion.XML1_1;
+                                cursor.xmlVersion = XMLVersion.XML1_1;
                                 break;
                             default:
-                                cursor.parser.xmlVersion = XMLVersion.XML1_0;
+                                cursor.xmlVersion = XMLVersion.XML1_0;
                                 break;
                         }
                         break;
