@@ -105,7 +105,8 @@ parsing XML. e.g. you really need that extra memory and speed.
 
 # To do list
 
-* Implement missing DOM functions.
+* Implement missing DOM functions. Basic DTD and internal entities now work.
 * Improve error handling. (Currently it doesn't seem to work well with the DOM parser for some reason)
 * Write even more testcases.
-* gather input on library and adjust things accordingly.
+* Gather input on library and adjust things accordingly.
+* Implement namespace URI handling (currently it's unimplemented with many supporting functions potentially broken).

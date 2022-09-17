@@ -49,4 +49,5 @@ unittest {
 
     Document doc = parseXMLString(xml);
     assert(doc !is null);
+    assert(doc.doctype.entities.getNamedItem(new DOMString("myent")).nodeValue == "replacement text");
 }

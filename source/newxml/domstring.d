@@ -200,6 +200,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
      * Returns: True if the two DOMStrings are same, false otherwise.
      */
     bool equals(DOMString other) pure const {
+        if (!other) return false;
         return equal(buffer, other.buffer);
     }
     /**
@@ -456,6 +457,7 @@ unittest {
     assert(test0[3..5].getDString == "lo");
 
     DOMString test3 = new DOMString("test");
+    assert(test0 != test3);
     test3.insertData(2, "te");
     assert(test3 == "tetest");
     test3.deleteData(2, 2);
@@ -463,4 +465,7 @@ unittest {
     foreach (size_t i, XMLCh c; test3) {
         assert(c == "test"[i]);
     }
+
+    DOMString test4 = new DOMString("Hello World!"w);
+    assert(test1 == test4);
 }

@@ -54,7 +54,8 @@ struct DOMBuilder(T)
     alias NodeType = typeof(DocType.firstChild);
 
     private NodeType currentNode;
-    private DocType document;
+    private DOMImplementation.Document document;
+    private DOMImplementation.DocumentType docType;
     private DOMImplementation domImpl;
     private bool already_built;
 
@@ -207,18 +208,30 @@ struct DOMBuilder(T)
     }
 
     private NodeType createCurrent()
-    // TODO: namespace handling
+    // TODO: handling of system (external) entities
     {
         switch (cursor.kind)
         {
+
             // XMLKind.elementEnd is needed for empty tags: <tag></tag>
             case XMLKind.elementEnd:
             case XMLKind.elementStart:
             case XMLKind.elementEmpty:
-                auto elem = document.createElement(new DOMString(cursor.name));
+                /* DOMImplementation.Element elem = cursor.prefix.length ? 
+                        document.createElementNS(new DOMString(cursor.prefix), new DOMString(cursor.localName)) : 
+                        document.createElement(new DOMString(cursor.name)); */
+                DOMImplementation.Element elem = document.createElement(new DOMString(cursor.name));
                 foreach (attr; cursor.attributes)
                 {
+                    /*if (attr.prefix.length)
+                    {
+                        elem.setAttributeNS(new DOMString(attr.prefix), new DOMString(attr.localName), 
+                                new DOMString(attr.value));
+                    }
+                    else
+                    {*/
                     elem.setAttribute(new DOMString(attr.name), new DOMString(attr.value));
+                    //}
                 }
                 return elem;
             case XMLKind.text:
@@ -229,6 +242,14 @@ struct DOMBuilder(T)
                 return document.createProcessingInstruction(new DOMString(cursor.name), new DOMString(cursor.content));
             case XMLKind.comment:
                 return document.createComment(new DOMString(cursor.content));
+            case XMLKind.dtdStart, XMLKind.dtdEmpty:
+                docType = domImpl.createDocumentType(new DOMString(cursor.name), new DOMString(), new DOMString());
+                document.doctype = docType;
+                return null;
+            case XMLKind.entityDecl:
+                docType.createEntity(new DOMString(cursor.name), new DOMString(cursor.content));
+                cursor.chrEntities[cursor.name] = cursor.content;
+                return null;
             default:
                 return null;
         }
@@ -267,7 +288,7 @@ unittest
 
     string xml = q{
     <?xml encoding = "utf-8" ?>
-    <aaa xmlns:myns="something">
+    <aaa myattr="something" xmlns:myns="something">
         <myns:bbb myns:att='>'>
             <!-- lol -->
             Lots of Text!
@@ -290,6 +311,9 @@ unittest
     dom.Document doc = builder.getDocument;
 
     assert(doc.getElementsByTagName(new DOMString("ccc")).length == 1);
+    assert(doc.documentElement.getAttribute(new DOMString("myattr")));
+    assert(doc.documentElement.getAttribute(new DOMString("myattr")) == "something");
+    assert(doc.documentElement.getAttribute(new DOMString("xmlns:myns")));
     assert(doc.documentElement.getAttribute(new DOMString("xmlns:myns")) == "something");
     dom.Element e1 = cast(dom.Element)doc.firstChild;
     assert(e1.nodeName == "aaa");

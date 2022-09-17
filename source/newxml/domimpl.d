@@ -32,7 +32,7 @@ import std.typecons : rebindable, Flag, BitFlags;
 
 
 /++
-+   An implementation of $(LINK2 ../dom/DOMImplementation, `std.experimental.xml.dom.DOMImplementation`).
++   An implementation of $(LINK2 ../dom/DOMImplementation, `newxml.dom.DOMImplementation`).
 +
 +   It allows to specify a custom allocator to be used when creating instances of the DOM classes.
 +   As keeping track of the lifetime of every node would be very complex, this implementation
@@ -58,7 +58,7 @@ class DOMImplementation : dom.DOMImplementation
     {
         /++
         +   Implementation of $(LINK2 ../dom/DOMImplementation.createDocumentType,
-        +   `std.experimental.xml.dom.DOMImplementation.createDocumentType`).
+        +   `newxml.dom.DOMImplementation.createDocumentType`).
         +/
         DocumentType createDocumentType(DOMString qualifiedName, DOMString publicId, DOMString systemId)
         {
@@ -70,7 +70,7 @@ class DOMImplementation : dom.DOMImplementation
         }
         /++
         +   Implementation of $(LINK2 ../dom/DOMImplementation.createDocument,
-        +   `std.experimental.xml.dom.DOMImplementation.createDocument`).
+        +   `newxml.dom.DOMImplementation.createDocument`).
         +/
         Document createDocument(DOMString namespaceURI, DOMString qualifiedName, dom.DocumentType _doctype)
         {
@@ -97,7 +97,7 @@ class DOMImplementation : dom.DOMImplementation
         }
         /++
         +   Implementation of $(LINK2 ../dom/DOMImplementation.hasFeature,
-        +   `std.experimental.xml.dom.DOMImplementation.hasFeature`).
+        +   `newxml.dom.DOMImplementation.hasFeature`).
         +
         +   Only recognizes features `"Core"`and `"XML"` with versions `"1.0"`,
         +   `"2.0"` or `"3.0"`.
@@ -110,7 +110,7 @@ class DOMImplementation : dom.DOMImplementation
         }
         /++
         +   Implementation of $(LINK2 ../dom/DOMImplementation.hasFeature,
-        +   `std.experimental.xml.dom.DOMImplementation.hasFeature`).
+        +   `newxml.dom.DOMImplementation.hasFeature`).
         +
         +   Only recognizes features `"Core"`and `"XML"` with versions `"1.0"`,
         +   `"2.0"` or `"3.0"`. Always returns `this`.
@@ -124,7 +124,7 @@ class DOMImplementation : dom.DOMImplementation
     }
 
     /++
-    +   The implementation of $(LINK2 ../dom/DOMException, `std.experimental.xml.dom.DOMException`)
+    +   The implementation of $(LINK2 ../dom/DOMException, `newxml.dom.DOMException`)
     +   thrown by this DOM implementation.
     +/
     class DOMException: dom.DOMException
@@ -140,14 +140,14 @@ class DOMImplementation : dom.DOMImplementation
         {
             super(msg, file, line, nextInChain);
         }
-        /// Implementation of $(LINK2 ../dom/DOMException.code, `std.experimental.xml.dom.DOMException.code`).
+        /// Implementation of $(LINK2 ../dom/DOMException.code, `newxml.dom.DOMException.code`).
         override @property dom.ExceptionCode code()
         {
             return _code;
         }
         private dom.ExceptionCode _code;
     }
-    /// Implementation of $(LINK2 ../dom/Node, `std.experimental.xml.dom.Node`)
+    /// Implementation of $(LINK2 ../dom/Node, `newxml.dom.Node`)
     abstract class Node : dom.Node
     {
         package this() {
@@ -155,21 +155,21 @@ class DOMImplementation : dom.DOMImplementation
         }
         override
         {
-            /// Implementation of $(LINK2 ../dom/Node.ownerDocument, `std.experimental.xml.dom.Node.ownerDocument`).
+            /// Implementation of $(LINK2 ../dom/Node.ownerDocument, `newxml.dom.Node.ownerDocument`).
             @property Document ownerDocument() { return _ownerDocument; }
 
-            /// Implementation of $(LINK2 ../dom/Node.parentNode, `std.experimental.xml.dom.Node.parentNode`).
+            /// Implementation of $(LINK2 ../dom/Node.parentNode, `newxml.dom.Node.parentNode`).
             @property Node parentNode() { return _parentNode; }
             /++
             +   Implementation of $(LINK2 ../dom/Node.previousSibling,
-            +   `std.experimental.xml.dom.Node.previousSibling`).
+            +   `newxml.dom.Node.previousSibling`).
             +/
             @property Node previousSibling() { return _previousSibling; }
-            /// Implementation of $(LINK2 ../dom/Node.nextSibling, `std.experimental.xml.dom.Node.nextSibling`).
+            /// Implementation of $(LINK2 ../dom/Node.nextSibling, `newxml.dom.Node.nextSibling`).
             @property Node nextSibling() { return _nextSibling; }
 
             /++
-            +   Implementation of $(LINK2 ../dom/Node.isSameNode, `std.experimental.xml.dom.Node.isSameNode`).
+            +   Implementation of $(LINK2 ../dom/Node.isSameNode, `newxml.dom.Node.isSameNode`).
             +
             +   Equivalent to a call to `this is other`.
             +/
@@ -177,7 +177,7 @@ class DOMImplementation : dom.DOMImplementation
             {
                 return this is other;
             }
-            /// Implementation of $(LINK2 ../dom/Node.isEqualNode, `std.experimental.xml.dom.Node.isEqualNode`).
+            /// Implementation of $(LINK2 ../dom/Node.isEqualNode, `newxml.dom.Node.isEqualNode`).
             bool isEqualNode(dom.Node other)
             {
                 import std.meta: AliasSeq;
@@ -220,7 +220,7 @@ class DOMImplementation : dom.DOMImplementation
                 return true;
             }
 
-            /// Implementation of $(LINK2 ../dom/Node.setUserData, `std.experimental.xml.dom.Node.setUserData`).
+            /// Implementation of $(LINK2 ../dom/Node.setUserData, `newxml.dom.Node.setUserData`).
             dom.UserData setUserData(string key, dom.UserData data, dom.UserDataHandler handler) @trusted
             {
                 userData[key] = data;
@@ -230,7 +230,7 @@ class DOMImplementation : dom.DOMImplementation
                 }
                 return data;
             }
-            /// Implementation of $(LINK2 ../dom/Node.getUserData, `std.experimental.xml.dom.Node.getUserData`).
+            /// Implementation of $(LINK2 ../dom/Node.getUserData, `newxml.dom.Node.getUserData`).
             dom.UserData getUserData(string key) const @trusted
             {
                 if (key in userData)
@@ -241,7 +241,7 @@ class DOMImplementation : dom.DOMImplementation
             }
 
             /++
-            +   Implementation of $(LINK2 ../dom/Node.isSupported, `std.experimental.xml.dom.Node.isSupported`).
+            +   Implementation of $(LINK2 ../dom/Node.isSupported, `newxml.dom.Node.isSupported`).
             +
             +   Only recognizes features `"Core"`and `"XML"` with versions `"1.0"`,
             +   `"2.0"` or `"3.0"`.
@@ -253,7 +253,7 @@ class DOMImplementation : dom.DOMImplementation
                             || version_ == "3.0");
             }
             /++
-            +   Implementation of $(LINK2 ../dom/Node.getFeature, `std.experimental.xml.dom.Node.getFeature`).
+            +   Implementation of $(LINK2 ../dom/Node.getFeature, `newxml.dom.Node.getFeature`).
             +
             +   Only recognizes features `"Core"`and `"XML"` with versions `"1.0"`,
             +   `"2.0"` or `"3.0"`. Always returns this.
@@ -267,7 +267,7 @@ class DOMImplementation : dom.DOMImplementation
 
             /++
             +   Implementation of $(LINK2 ../dom/Node.compareDocumentPosition,
-            +   `std.experimental.xml.dom.Node.compareDocumentPosition`).
+            +   `newxml.dom.Node.compareDocumentPosition`).
             +/
             BitFlags!(dom.DocumentPosition) compareDocumentPosition(dom.Node _other) @trusted
             {
@@ -783,7 +783,7 @@ class DOMImplementation : dom.DOMImplementation
 
             @property DOMString textContent()
             {
-                //import std.experimental.xml.appender;
+                //import newxml.appender;
                 DOMString result;
                 //auto result = Appender!(typeof(this.textContent()[0]), typeof(*allocator))(allocator);
                 for (auto child = rebindable(firstChild); child !is null; child = child.nextSibling)
@@ -827,7 +827,7 @@ class DOMImplementation : dom.DOMImplementation
             }
         }
     }
-    /// Implementation of $(LINK2 ../dom/DocumentFragment, `std.experimental.xml.dom.DocumentFragment`)
+    /// Implementation of $(LINK2 ../dom/DocumentFragment, `newxml.dom.DocumentFragment`)
     class DocumentFragment : NodeWithChildren, dom.DocumentFragment
     {
         package this() {
@@ -840,11 +840,15 @@ class DOMImplementation : dom.DOMImplementation
             @property DOMString nodeName() { return new DOMString("#document-fragment"w); }
         }
     }
-    /// Implementation of $(LINK2 ../dom/Document, `std.experimental.xml.dom.Document`)
+    /// Implementation of $(LINK2 ../dom/Document, `newxml.dom.Document`)
     class Document : NodeWithChildren, dom.Document
     {
         package this() {
 
+        }
+        package @property void doctype(DocumentType _doctype)
+        {
+            this._doctype = _doctype;
         }
         // specific to Document
         override
@@ -1315,7 +1319,7 @@ class DOMImplementation : dom.DOMImplementation
         void popFront() { current = findNext(current); }
         auto front() { return current; }
     }
-    /// Implementation of $(LINK2 ../dom/CharacterData, `std.experimental.xml.dom.CharacterData`)
+    /// Implementation of $(LINK2 ../dom/CharacterData, `newxml.dom.CharacterData`)
     abstract class CharacterData : Node, dom.CharacterData
     {
         // specific to CharacterData
@@ -1450,32 +1454,33 @@ class DOMImplementation : dom.DOMImplementation
             @property DOMString namespaceURI() { return _namespaceURI; }
         }
     }
-    /// Implementation of $(LINK2 ../dom/Attr, `std.experimental.xml.dom.Attr`)
+    /// Implementation of $(LINK2 ../dom/Attr, `newxml.dom.Attr`)
     class Attr : NodeWithNamespace, dom.Attr
     {
         package this() {
-
+            //_namespaceURI = new DOMString();
         }
         // specific to Attr
         override
         {
-            /// Implementation of $(LINK2 ../dom/Attr.name, `std.experimental.xml.dom.Attr.name`).
+            /// Implementation of $(LINK2 ../dom/Attr.name, `newxml.dom.Attr.name`).
             @property DOMString name() { return _name; }
-            /// Implementation of $(LINK2 ../dom/Attr.specified, `std.experimental.xml.dom.Attr.specified`).
+            /// Implementation of $(LINK2 ../dom/Attr.specified, `newxml.dom.Attr.specified`).
             @property bool specified() { return _specified; }
-            /// Implementation of $(LINK2 ../dom/Attr.value, `std.experimental.xml.dom.Attr.value`).
+            /// Implementation of $(LINK2 ../dom/Attr.value, `newxml.dom.Attr.value`).
             @property DOMString value()
             {
-
                 //auto result = Appender!(typeof(_name[0]), typeof(*allocator))(allocator);
-                DOMString result = new DOMString();
+                /* DOMString result = new DOMString();
                 auto child = rebindable(firstChild);
                 while (child)
                 {
                     result ~= child.textContent;//result.put(child.textContent);
                     child = child.nextSibling;
                 }
-                return result;
+                return result; */
+                Text result = cast(Text)firstChild;
+                return result.textContent();
             }
             /// ditto
             @property void value(DOMString newVal)
@@ -1487,11 +1492,11 @@ class DOMImplementation : dom.DOMImplementation
                 appendChild(ownerDocument.createTextNode(newVal));
             }
 
-            /// Implementation of $(LINK2 ../dom/Attr.ownerElement, `std.experimental.xml.dom.Attr.ownerElement`).
+            /// Implementation of $(LINK2 ../dom/Attr.ownerElement, `newxml.dom.Attr.ownerElement`).
             @property Element ownerElement() { return _ownerElement; }
-            /// Implementation of $(LINK2 ../dom/Attr.schemaTypeInfo, `std.experimental.xml.dom.Attr.schemaTypeInfo`).
+            /// Implementation of $(LINK2 ../dom/Attr.schemaTypeInfo, `newxml.dom.Attr.schemaTypeInfo`).
             @property dom.XMLTypeInfo schemaTypeInfo() { return null; }
-            /// Implementation of $(LINK2 ../dom/Attr.isId, `std.experimental.xml.dom.Attr.isId`).
+            /// Implementation of $(LINK2 ../dom/Attr.isId, `newxml.dom.Attr.isId`).
             @property bool isId() { return _isId; }
         }
         private
@@ -1547,7 +1552,7 @@ class DOMImplementation : dom.DOMImplementation
             }
         }
     }
-    /// Implementation of $(LINK2 ../dom/Element, `std.experimental.xml.dom.Element`)
+    /// Implementation of $(LINK2 ../dom/Element, `newxml.dom.Element`)
     class Element : NodeWithNamespace, dom.Element
     {
         package this() {
@@ -1560,20 +1565,28 @@ class DOMImplementation : dom.DOMImplementation
         // specific to Element
         override
         {
-            /// Implementation of $(LINK2 ../dom/Element.tagName, `std.experimental.xml.dom.Element.tagName`).
+            /// Implementation of $(LINK2 ../dom/Element.tagName, `newxml.dom.Element.tagName`).
             @property DOMString tagName() { return _name; }
 
             /++
             +   Implementation of $(LINK2 ../dom/Element.getAttribute,
-            +   `std.experimental.xml.dom.Element.getAttribute`).
+            +   `newxml.dom.Element.getAttribute`).
             +/
             DOMString getAttribute(DOMString name)
             {
-                return _attrs.getNamedItem(name).value;
+                auto result = _attrs.getNamedItem(name);
+                if (result)
+                {
+                    return result.value;
+                }
+                else 
+                {
+                    return null;
+                }
             }
             /++
             +   Implementation of $(LINK2 ../dom/Element.setAttribute,
-            +   `std.experimental.xml.dom.Element.setAttribute`).
+            +   `newxml.dom.Element.setAttribute`).
             +/
             void setAttribute(DOMString name, DOMString value)
             {
@@ -1584,7 +1597,7 @@ class DOMImplementation : dom.DOMImplementation
             }
             /++
             +   Implementation of $(LINK2 ../dom/Element.removeAttribute,
-            +   `std.experimental.xml.dom.Element.removeAttribute`).
+            +   `newxml.dom.Element.removeAttribute`).
             +/
             void removeAttribute(DOMString name)
             {
@@ -1593,7 +1606,7 @@ class DOMImplementation : dom.DOMImplementation
 
             /++
             +   Implementation of $(LINK2 ../dom/Element.getAttributeNode,
-            +   `std.experimental.xml.dom.Element.getAttributeNode`).
+            +   `newxml.dom.Element.getAttributeNode`).
             +/
             Attr getAttributeNode(DOMString name)
             {
@@ -1601,7 +1614,7 @@ class DOMImplementation : dom.DOMImplementation
             }
             /++
             +   Implementation of $(LINK2 ../dom/Element.setAttributeNode,
-            +   `std.experimental.xml.dom.Element.setAttributeNode`).
+            +   `newxml.dom.Element.setAttributeNode`).
             +/
             Attr setAttributeNode(dom.Attr newAttr)
             {
@@ -1609,7 +1622,7 @@ class DOMImplementation : dom.DOMImplementation
             }
             /++
             +   Implementation of $(LINK2 ../dom/Element.removeAttributeNode,
-            +   `std.experimental.xml.dom.Element.removeAttributeNode`).
+            +   `newxml.dom.Element.removeAttributeNode`).
             +/
             Attr removeAttributeNode(dom.Attr oldAttr)
             {
@@ -1627,26 +1640,37 @@ class DOMImplementation : dom.DOMImplementation
 
             /++
             +   Implementation of $(LINK2 ../dom/Element.getAttributeNS,
-            +   `std.experimental.xml.dom.Element.getAttributeNS`).
+            +   `newxml.dom.Element.getAttributeNS`).
             +/
             DOMString getAttributeNS(DOMString namespaceURI, DOMString localName)
             {
-                return _attrs.getNamedItemNS(namespaceURI, localName).value;
+                auto result = _attrs.getNamedItemNS(namespaceURI, localName);
+                if (result)
+                {
+                    return result.value;
+                }
+                else 
+                {
+                    return null;
+                }
             }
             /++
             +   Implementation of $(LINK2 ../dom/Element.setAttributeNS,
-            +   `std.experimental.xml.dom.Element.setAttributeNS`).
+            +   `newxml.dom.Element.setAttributeNS`).
             +/
             void setAttributeNS(DOMString namespaceURI, DOMString qualifiedName, DOMString value)
             {
                 auto attr = ownerDocument.createAttributeNS(namespaceURI, qualifiedName);
                 attr.nodeValue = value;
                 attr._ownerElement = this;
-                _attrs.setNamedItem(attr);
+                assert(attr.nodeValue == value);
+                _attrs.setNamedItemNS(attr);
+                assert(_attrs.getNamedItemNS(namespaceURI, qualifiedName));
+                assert(_attrs.getNamedItemNS(namespaceURI, qualifiedName).nodeValue);
             }
             /++
             +   Implementation of $(LINK2 ../dom/Element.removeAttributeNS,
-            +   `std.experimental.xml.dom.Element.removeAttributeNS`).
+            +   `newxml.dom.Element.removeAttributeNS`).
             +/
             void removeAttributeNS(DOMString namespaceURI, DOMString localName)
             {
@@ -1655,7 +1679,7 @@ class DOMImplementation : dom.DOMImplementation
 
             /++
             +   Implementation of $(LINK2 ../dom/Element.getAttributeNodeNS,
-            +   `std.experimental.xml.dom.Element.getAttributeNodeNS`).
+            +   `newxml.dom.Element.getAttributeNodeNS`).
             +/
             Attr getAttributeNodeNS(DOMString namespaceURI, DOMString localName)
             {
@@ -1663,7 +1687,7 @@ class DOMImplementation : dom.DOMImplementation
             }
             /++
             +   Implementation of $(LINK2 ../dom/Element.setAttributeNodeNS,
-            +   `std.experimental.xml.dom.Element.setAttributeNodeNS`).
+            +   `newxml.dom.Element.setAttributeNodeNS`).
             +/
             Attr setAttributeNodeNS(dom.Attr newAttr)
             {
@@ -1672,7 +1696,7 @@ class DOMImplementation : dom.DOMImplementation
 
             /++
             +   Implementation of $(LINK2 ../dom/Element.hasAttribute,
-            +   `std.experimental.xml.dom.Element.hasAttribute`).
+            +   `newxml.dom.Element.hasAttribute`).
             +/
             bool hasAttribute(DOMString name)
             {
@@ -1680,7 +1704,7 @@ class DOMImplementation : dom.DOMImplementation
             }
             /++
             +   Implementation of $(LINK2 ../dom/Element.hasAttributeNS,
-            +   `std.experimental.xml.dom.Element.hasAttributeNS`).
+            +   `newxml.dom.Element.hasAttributeNS`).
             +/
             bool hasAttributeNS(DOMString namespaceURI, DOMString localName)
             {
@@ -1689,7 +1713,7 @@ class DOMImplementation : dom.DOMImplementation
 
             /++
             +   Implementation of $(LINK2 ../dom/Element.setIdAttribute,
-            +   `std.experimental.xml.dom.Element.setIdAttribute`).
+            +   `newxml.dom.Element.setIdAttribute`).
             +/
             void setIdAttribute(DOMString name, bool isId)
             {
@@ -1705,7 +1729,7 @@ class DOMImplementation : dom.DOMImplementation
             }
             /++
             +   Implementation of $(LINK2 ../dom/Element.setIdAttributeNS,
-            +   `std.experimental.xml.dom.Element.setIdAttributeNS`).
+            +   `newxml.dom.Element.setIdAttributeNS`).
             +/
             void setIdAttributeNS(DOMString namespaceURI, DOMString localName, bool isId)
             {
@@ -1721,7 +1745,7 @@ class DOMImplementation : dom.DOMImplementation
             }
             /++
             +   Implementation of $(LINK2 ../dom/Element.getAttribute,
-            +   `std.experimental.xml.dom.Element.getAttribute`).
+            +   `newxml.dom.Element.getAttribute`).
             +/
             void setIdAttributeNode(dom.Attr idAttr, bool isId)
             {
@@ -1741,7 +1765,7 @@ class DOMImplementation : dom.DOMImplementation
 
             /++
             +   Implementation of $(LINK2 ../dom/Element.getElementsByTagName,
-            +   `std.experimental.xml.dom.Element.getElementsByTagName`).
+            +   `newxml.dom.Element.getElementsByTagName`).
             +/
             ElementsByTagName getElementsByTagName(DOMString tagname)
             {
@@ -1753,7 +1777,7 @@ class DOMImplementation : dom.DOMImplementation
             }
             /++
             +   Implementation of $(LINK2 ../dom/Element.getElementsByTagNameNS,
-            +   `std.experimental.xml.dom.Element.getElementsByTagNameNS`).
+            +   `newxml.dom.Element.getElementsByTagNameNS`).
             +/
             ElementsByTagNameNS getElementsByTagNameNS(DOMString namespaceURI, DOMString localName)
             {
@@ -1767,7 +1791,7 @@ class DOMImplementation : dom.DOMImplementation
 
             /++
             +   Implementation of $(LINK2 ../dom/Element.schemaTypeInfo,
-            +   `std.experimental.xml.dom.Element.schemaTypeInfo`).
+            +   `newxml.dom.Element.schemaTypeInfo`).
             +/
             @property dom.XMLTypeInfo schemaTypeInfo() { return null; }
         }
@@ -1907,7 +1931,7 @@ class DOMImplementation : dom.DOMImplementation
 
                 Attr getNamedItem(DOMString name)
                 {
-                    auto res = firstAttr;
+                    Attr res = firstAttr;
                     while (res && res.nodeName != name)
                     {
                         res = res._nextAttr;
@@ -1983,12 +2007,14 @@ class DOMImplementation : dom.DOMImplementation
 
                 Attr getNamedItemNS(DOMString namespaceURI, DOMString localName)
                 {
-                    auto res = firstAttr;
+                    Attr res = firstAttr;
                     while (res && (res.localName != localName || res.namespaceURI != namespaceURI))
                     {
+                        assert(res.localName != localName || res.namespaceURI != namespaceURI);
                         res = res._nextAttr;
                     }
                     return res;
+                    
                 }
                 Attr setNamedItemNS(dom.Node arg)
                 {
@@ -2081,7 +2107,7 @@ class DOMImplementation : dom.DOMImplementation
             }
         }
     }
-    /// Implementation of $(LINK2 ../dom/Text, `std.experimental.xml.dom.Text`)
+    /// Implementation of $(LINK2 ../dom/Text, `newxml.dom.Text`)
     class Text: CharacterData, dom.Text
     {
         package this() {
@@ -2090,7 +2116,7 @@ class DOMImplementation : dom.DOMImplementation
         // specific to Text
         override
         {
-            /// Implementation of $(LINK2 ../dom/Text.splitText, `std.experimental.xml.dom.Text.splitText`).
+            /// Implementation of $(LINK2 ../dom/Text.splitText, `newxml.dom.Text.splitText`).
             Text splitText(size_t offset)
             {
                 enforce!DOMException(!(offset > data.length)
@@ -2112,13 +2138,13 @@ class DOMImplementation : dom.DOMImplementation
             }
             /++
             +   Implementation of $(LINK2 ../dom/Text.isElementContentWhitespace,
-            +   `std.experimental.xml.dom.Text.isElementContentWhitespace`).
+            +   `newxml.dom.Text.isElementContentWhitespace`).
             +/
             @property bool isElementContentWhitespace()
             {
                 return _data.getDString.indexOfNeither(" \r\n\t") == -1;
             }
-            /// Implementation of $(LINK2 ../dom/Text.wholeText, `std.experimental.xml.dom.Text.wholeText`).
+            /// Implementation of $(LINK2 ../dom/Text.wholeText, `newxml.dom.Text.wholeText`).
             @property DOMString wholeText()
             {
                 Text findPreviousText(Text text)
@@ -2171,7 +2197,7 @@ class DOMImplementation : dom.DOMImplementation
                     return null;
                 }
 
-                //import std.experimental.xml.appender;
+                //import newxml.appender;
                 DOMString result;//auto result = Appender!(typeof(_data[0]), typeof(*allocator))(allocator);
 
                 Text node, prev = this;
@@ -2191,7 +2217,7 @@ class DOMImplementation : dom.DOMImplementation
             }
             /++
             +   Implementation of $(LINK2 ../dom/Text.replaceWholeText,
-            +   `std.experimental.xml.dom.Text.replaceWholeText`).
+            +   `newxml.dom.Text.replaceWholeText`).
             +/
             // the W3C DOM spec explains the details of this
             @property Text replaceWholeText(DOMString newText)
@@ -2368,7 +2394,7 @@ class DOMImplementation : dom.DOMImplementation
             }
         }
     }
-    /// Implementation of $(LINK2 ../dom/Comment, `std.experimental.xml.dom.Comment`)
+    /// Implementation of $(LINK2 ../dom/Comment, `newxml.dom.Comment`)
     class Comment : CharacterData, dom.Comment
     {
         package this() {
@@ -2389,40 +2415,44 @@ class DOMImplementation : dom.DOMImplementation
             }
         }
     }
-    /// Implementation of $(LINK2 ../dom/DocumentType, `std.experimental.xml.dom.DocumentType`)
+    /// Implementation of $(LINK2 ../dom/DocumentType, `newxml.dom.DocumentType`)
     class DocumentType : Node, dom.DocumentType
     {
+        package dom.NamedNodeMap _entities;
         package this() {
-
+            _entities = new NamedNodeMap();
+        }
+        package void createEntity(DOMString _name, DOMString content) {
+            _entities.setNamedItem(new Entity(_name, content, null));
         }
         // specific to DocumentType
         override
         {
-            /// Implementation of $(LINK2 ../dom/DocumentType.name, `std.experimental.xml.dom.DocumentType.name`).
+            /// Implementation of $(LINK2 ../dom/DocumentType.name, `newxml.dom.DocumentType.name`).
             @property DOMString name() { return _name; }
             /++
             +   Implementation of $(LINK2 ../dom/DocumentType.entities,
-            +   `std.experimental.xml.dom.DocumentType.entities`).
+            +   `newxml.dom.DocumentType.entities`).
             +/
-            @property dom.NamedNodeMap entities() { return null; }
+            @property dom.NamedNodeMap entities() { return _entities; }
             /++
             +   Implementation of $(LINK2 ../dom/DocumentType.notations,
-            +   `std.experimental.xml.dom.DocumentType.notations`).
+            +   `newxml.dom.DocumentType.notations`).
             +/
             @property dom.NamedNodeMap notations() { return null; }
             /++
             +   Implementation of $(LINK2 ../dom/DocumentType.publicId,
-            +   `std.experimental.xml.dom.DocumentType.publicId`).
+            +   `newxml.dom.DocumentType.publicId`).
             +/
             @property DOMString publicId() { return _publicId; }
             /++
             +   Implementation of $(LINK2 ../dom/DocumentType.systemId,
-            +   `std.experimental.xml.dom.DocumentType.systemId`).
+            +   `newxml.dom.DocumentType.systemId`).
             +/
             @property DOMString systemId() { return _systemId; }
             /++
             +   Implementation of $(LINK2 ../dom/DocumentType.internalSubset,
-            +   `std.experimental.xml.dom.DocumentType.internalSubset`).
+            +   `newxml.dom.DocumentType.internalSubset`).
             +/
             @property DOMString internalSubset() { return _internalSubset; }
         }
@@ -2433,8 +2463,117 @@ class DOMImplementation : dom.DOMImplementation
             @property dom.NodeType nodeType() { return dom.NodeType.documentType; }
             @property DOMString nodeName() { return _name; }
         }
+        class NamedNodeMap : dom.NamedNodeMap 
+        {
+            package dom.Node[] nodes;
+            package this()
+            {
+
+            }
+            /++
+            +   Returns the `index`th item in the collection. If `index` is greater than
+            +   or equal to the number of nodes in the list, this returns `null`.
+            +/
+            dom.Node item(size_t index)
+            {
+                return nodes[index];
+            }
+            /++
+            +   The number of nodes in the list. The range of valid child node indices is
+            +   `0` to `length-1` inclusive.
+            +/
+            @property size_t length()
+            {
+                return nodes.length;
+            }
+            /// Retrieves a node specified by name.
+            dom.Node getNamedItem(DOMString name) 
+            {
+                foreach (dom.Node key; nodes) {
+                    if (key.nodeName == name) 
+                    {
+                        return key;
+                    }
+                }
+                return null;
+            }
+            /++
+            +   Adds a node using its `nodeName` attribute. If a node with that name is
+            +   already present in this map, it is replaced by the new one. Replacing a
+            +   node by itself has no effect.
+            +   As the `nodeName` attribute is used to derive the name which the node must
+            +   be stored under, multiple nodes of certain types (those that have a "special"
+            +   string value) cannot be stored as the names would clash. This is seen as
+            +   preferable to allowing nodes to be aliased.
+            +/
+            dom.Node setNamedItem(dom.Node arg)
+            {
+                foreach (size_t i, dom.Node key; nodes) {
+                    if (key.nodeName == name) 
+                    {
+                        nodes[i] = arg;
+                        //cast(Node)(key)._parentNode = null;
+                        return arg;
+                    }
+                }
+                nodes ~= arg;
+                return arg;
+            }
+            /++
+            +   Removes a node specified by name. When this map contains the attributes
+            +   attached to an element, if the removed attribute is known to have a default
+            +   value, an attribute immediately appears containing the default value as
+            +   well as the corresponding namespace URI, local name, and prefix when applicable.
+            +/
+            dom.Node removeNamedItem(DOMString name)
+            {
+                foreach (size_t i, dom.Node key; nodes) {
+                    if (key.nodeName == name) 
+                    {
+                        nodes = nodes[0..i] ~ nodes[i+1..$];
+                        //cast(Node)(key)._parentNode = null;
+                        return key;
+                    }
+                }
+                return null;
+            }
+
+            /++
+            +   Retrieves a node specified by local name and namespace URI.
+            +   Per the XML Namespaces specification, applications must use the value `null`
+            +   as the `namespaceURI` parameter for methods if they wish to have no namespace.
+            +/
+            Node getNamedItemNS(DOMString namespaceURI, DOMString localName)
+            {
+                return null;
+            }
+            /++
+            +   Adds a node using its `namespaceURI` and `localName`. If a node with that
+            +   namespace URI and that local name is already present in this map, it is
+            +   replaced by the new one. Replacing a node by itself has no effect.
+            +   Per the XML Namespaces specification, applications must use the value `null`
+            +   as the namespaceURI parameter for methods if they wish to have no namespace.
+            +/
+            dom.Node setNamedItemNS(dom.Node arg) @safe
+            {
+                return null;
+            }
+            /++
+            +   Removes a node specified by local name and namespace URI. A removed attribute
+            +   may be known to have a default value when this map contains the attributes attached
+            +   to an element, as returned by the attributes attribute of the `Node` interface.
+            +   If so, an attribute immediately appears containing the default value as well
+            +   as the corresponding namespace URI, local name, and prefix when applicable.
+            +   Per the XML Namespaces specification, applications must use the value `null`
+            +   as the `namespaceURI` parameter for methods if they wish to have no namespace.
+            +/
+            Node removeNamedItemNS(DOMString namespaceURI, DOMString localName)
+            {
+                return null;
+            }
+        }
     }
-    /// Implementation of $(LINK2 ../dom/CDATASection, `std.experimental.xml.dom.CDATASection`)
+    /// Implementation of $(LINK2 ../dom/CDATASection, `newxml.dom.CDATASection`)
     class CDATASection : Text, dom.CDATASection
     {
         package this() {
@@ -2455,7 +2594,7 @@ class DOMImplementation : dom.DOMImplementation
             }
         }
     }
-    /// Implementation of $(LINK2 ../dom/ProcessingInstruction, `std.experimental.xml.dom.ProcessingInstruction`)
+    /// Implementation of $(LINK2 ../dom/ProcessingInstruction, `newxml.dom.ProcessingInstruction`)
     class ProcessingInstruction : Node, dom.ProcessingInstruction
     {
         package this() {
@@ -2466,12 +2605,12 @@ class DOMImplementation : dom.DOMImplementation
         {
             /++
             +   Implementation of $(LINK2 ../dom/ProcessingInstruction.target,
-            +   `std.experimental.xml.dom.ProcessingInstruction.target`).
+            +   `newxml.dom.ProcessingInstruction.target`).
             +/
             @property DOMString target() { return _target; }
             /++
             +   Implementation of $(LINK2 ../dom/ProcessingInstruction.data,
-            +   `std.experimental.xml.dom.ProcessingInstruction.data`).
+            +   `newxml.dom.ProcessingInstruction.data`).
             +/
             @property DOMString data() { return _data; }
             /// ditto
@@ -2510,7 +2649,90 @@ class DOMImplementation : dom.DOMImplementation
             }
         }
     }
-    /// Implementation of $(LINK2 ../dom/EntityReference, `std.experimental.xml.dom.EntityReference`)
+    ///Implementation of newxml.dom.Entity
+    ///Currently external (system) entities are not supported.
+    class Entity : Node, dom.Entity
+    {
+        private DOMString _publicId;
+        private DOMString _systemId;
+        private DOMString content;
+        package this(DOMString _publicId, DOMString content, Document _ownerDocument) 
+        {
+            this._publicId = _publicId;
+            this.content = content;
+            this._ownerDocument = _ownerDocument;
+        }
+        package this(DOMString _publicId, DOMString _systemId, DOMString content, Document _ownerDocument) 
+        {
+            this._publicId = _publicId;
+            this._systemId = _systemId;
+            this.content = content;
+            this._ownerDocument = _ownerDocument;
+        }
+        /// The text substituted by this entity.
+        override @property DOMString nodeValue()
+        {
+            return content;
+        }
+        /// The text substituted by this entity.
+        override @property DOMString textContent()
+        {
+            return content;
+        }
+        override @property DOMString nodeName()
+        {
+            return _publicId;
+        }
+        override @property dom.NodeType nodeType()
+        {
+            return dom.NodeType.entity;
+        }
+        /// The public identifier associated with the entity if specified, and `null` otherwise.
+        @property DOMString publicId() 
+        {
+            return _publicId;
+        }
+        /++
+        +   The system identifier associated with the entity if specified, and `null` otherwise.
+        +   This may be an absolute URI or not.
+        +/
+        @property DOMString systemId()
+        {
+            return _systemId;
+        }
+        /// For unparsed entities, the name of the `Notation` for the entity. For parsed entities, this is `null`.
+        @property DOMString notationName()
+        {
+            return null;
+        }
+        /++
+        +   An attribute specifying the encoding used for this entity at the time of
+        +   parsing, when it is an external parsed entity. This is `null` if it an
+        +   entity from the internal subset or if it is not known.
+        +/
+        @property DOMString inputEncoding()
+        {
+            return null;
+        }
+        /++
+        +   An attribute specifying, as part of the text declaration, the encoding of
+        +   this entity, when it is an external parsed entity. This is `null` otherwise.
+        +/
+        @property DOMString xmlEncoding()
+        {
+            return null;
+        }
+        /++
+        +   An attribute specifying, as part of the text declaration, the version
+        +   number of this entity, when it is an external parsed entity. This is
+        +   `null` otherwise.
+        +/
+        @property DOMString xmlVersion()
+        {
+            return null;
+        }
+    }
+    /// Implementation of $(LINK2 ../dom/EntityReference, `newxml.dom.EntityReference`)
     class EntityReference : NodeWithChildren, dom.EntityReference
     {
         package this() {
@@ -2525,7 +2747,7 @@ class DOMImplementation : dom.DOMImplementation
         }
         private DOMString _ent_name;
     }
-    /// Implementation of $(LINK2 ../dom/DOMConfiguration, `std.experimental.xml.dom.DOMConfiguration`)
+    /// Implementation of $(LINK2 ../dom/DOMConfiguration, `newxml.dom.DOMConfiguration`)
     class DOMConfiguration : dom.DOMConfiguration
     {
         import std.meta;
@@ -2570,7 +2792,7 @@ class DOMImplementation : dom.DOMImplementation
         {
             /++
             +   Implementation of $(LINK2 ../dom/DOMConfiguration.setParameter,
-            +   `std.experimental.xml.dom.DOMConfiguration.setParameter`).
+            +   `newxml.dom.DOMConfiguration.setParameter`).
             +/
             void setParameter(string name, dom.UserData value) @trusted
             {
@@ -2587,7 +2809,7 @@ class DOMImplementation : dom.DOMImplementation
             }
             /++
             +   Implementation of $(LINK2 ../dom/DOMConfiguration.getParameter,
-            +   `std.experimental.xml.dom.DOMConfiguration.getParameter`).
+            +   `newxml.dom.DOMConfiguration.getParameter`).
             +/
             dom.UserData getParameter(string name) @trusted
             {
@@ -2604,7 +2826,7 @@ class DOMImplementation : dom.DOMImplementation
             }
             /++
             +   Implementation of $(LINK2 ../dom/DOMConfiguration.canSetParameter,
-            +   `std.experimental.xml.dom.DOMConfiguration.canSetParameter`).
+            +   `newxml.dom.DOMConfiguration.canSetParameter`).
             +/
             bool canSetParameter(string name, dom.UserData value) @trusted
             {
@@ -2623,7 +2845,7 @@ class DOMImplementation : dom.DOMImplementation
             }
             /++
             +   Implementation of $(LINK2 ../dom/DOMConfiguration.parameterNames,
-            +   `std.experimental.xml.dom.DOMConfiguration.parameterNames`).
+            +   `newxml.dom.DOMConfiguration.parameterNames`).
             +/
             @property dom.DOMStringList parameterNames()
             {
@@ -2688,7 +2910,10 @@ unittest
     assert(root.prefix == "myPrefix");
 
     auto attr = doc.createAttributeNS(new DOMString("myAttrNamespace"), new DOMString("myAttrPrefix:myAttrName"));
+    attr.value = new DOMString("something");
     root.setAttributeNode(attr);
+    assert(attr.value);
+    assert(attr.value == "something");
     assert(root.attributes.length == 1);
     assert(root.getAttributeNodeNS(new DOMString("myAttrNamespace"), new DOMString("myAttrName")) is attr);
 
@@ -2703,6 +2928,9 @@ unittest
     root.appendChild(elem);
     assert(root.firstChild is elem);
     assert(root.firstChild.namespaceURI == "myOtherNamespace");
+    /* elem.setAttributeNS(new DOMString("xxx"), new DOMString("yyy"), new DOMString("zzz"));
+    assert(elem.getAttributeNS(new DOMString("xxx"), new DOMString("yyy")));
+    assert(elem.getAttributeNS(new DOMString("xxx"), new DOMString("yyy")) == "zzz"); */
 
     auto comm = doc.createComment(new DOMString("myWonderfulComment"));
     doc.insertBefore(comm, root);

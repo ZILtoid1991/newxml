@@ -757,6 +757,10 @@ interface NamedNodeMap {
         return 0;
     }
 
+    final Node opIndex(size_t index) {
+        return item(index);
+    }
+
     /// Retrieves a node specified by name.
     Node getNamedItem(DOMString name);
     /++
@@ -1189,6 +1193,8 @@ interface Notation : Node {
 +   has to be replaced in the structure model by a clone of the `Entity`'s contents,
 +   and then the desired changes must be made to each of those clones instead.
 +   `Entity` nodes and all their descendants are readonly.
++
++   DOM Level 4 has deprecated the use of entities, but kept for DTD processing reasons.
 +
 +   An `Entity` node does not have any parent.
 +/
