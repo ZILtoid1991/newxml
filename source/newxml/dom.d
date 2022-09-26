@@ -43,7 +43,8 @@ alias UserData = Variant;
 +   the application to implement various behaviors regarding the data it associates
 +   to the DOM nodes.
 +/
-alias UserDataHandler = void delegate(UserDataOperation, DOMString, UserData, Node, Node) @safe;
+alias UserDataHandler = void delegate(UserDataOperation, DOMString, UserData, Node,
+        Node) @safe;
 
 /++
 +   An integer indicating which type of node this is.
@@ -51,7 +52,7 @@ alias UserDataHandler = void delegate(UserDataOperation, DOMString, UserData, No
 +   Note:
 +   Numeric codes up to 200 are reserved to W3C for possible future use.
 +/
-enum NodeType: ushort
+enum NodeType : ushort
 {
     element = 1,
     attribute,
@@ -71,18 +72,18 @@ enum NodeType: ushort
 +   A bitmask indicating the relative document position of a node with respect to another node.
 +   Returned by `Node.compareDocumentPosition`.
 +/
-enum DocumentPosition: ushort
+enum DocumentPosition : ushort
 {
     /// Set when the two nodes are in fact the same
-    none         = 0,
+    none = 0,
     /// Set when the two nodes are not in the same tree
     disconnected = 1,
     /// Set when the second node precedes the first
-    preceding    = 2,
+    preceding = 2,
     /// Set when the second node follows the first
-    following    = 4,
+    following = 4,
     /// Set when the second node _contains the first
-    contains     = 8,
+    contains = 8,
     /// Set when the second node is contained by the first
     containedBy = 16,
     /++
@@ -98,7 +99,7 @@ enum DocumentPosition: ushort
 /++
 +   An integer indicating the type of operation being performed on a node.
 +/
-enum UserDataOperation: ushort
+enum UserDataOperation : ushort
 {
     /// The node is cloned, using `Node.cloneNode()`.
     nodeCloned = 1,
@@ -124,7 +125,7 @@ enum UserDataOperation: ushort
 +   Note:
 +   Other numeric codes are reserved for W3C for possible future use.
 +/
-enum ExceptionCode: ushort
+enum ExceptionCode : ushort
 {
     /// If index or size is negative, or greater than the allowed value.
     indexSize,
@@ -163,7 +164,7 @@ enum ExceptionCode: ushort
 }
 
 /// An integer indicating the severity of a `DOMError`.
-enum ErrorSeverity: ushort
+enum ErrorSeverity : ushort
 {
     /++
     +   The severity of the error described by the `DOMError` is warning. A `WARNING`
@@ -186,12 +187,12 @@ enum ErrorSeverity: ushort
     fatalError,
 }
 
-enum DerivationMethod: ulong
+enum DerivationMethod : ulong
 {
     restriction = 0x00000001,
-    extension   = 0x00000002,
-    union_      = 0x00000004,
-    list        = 0x00000008,
+    extension = 0x00000002,
+    union_ = 0x00000004,
+    list = 0x00000008,
 }
 
 @safe:
@@ -206,20 +207,20 @@ enum DerivationMethod: ulong
 +   example, implementations should raise an implementation-dependent exception
 +   if a `null` argument is passed when `null` was not expected.
 +/
-abstract class DOMException: XMLException
+abstract class DOMException : XMLException
 {
     ///
     @property ExceptionCode code();
 
     ///
-    @nogc @safe pure nothrow this(string msg, string file = __FILE__
-            , size_t line = __LINE__, Throwable nextInChain = null)
+    @nogc @safe pure nothrow this(string msg, string file = __FILE__,
+            size_t line = __LINE__, Throwable nextInChain = null)
     {
         super(msg, file, line, nextInChain);
     }
 
-    @nogc @safe pure nothrow this(string msg, Throwable nextInChain
-            , string file = __FILE__, size_t line = __LINE__)
+    @nogc @safe pure nothrow this(string msg, Throwable nextInChain,
+            string file = __FILE__, size_t line = __LINE__)
     {
         super(msg, file, line, nextInChain);
     }
@@ -231,7 +232,8 @@ abstract class DOMException: XMLException
 +   implemented. The items in the DOMStringList are accessible via an integral index,
 +   starting from `0`.
 +/
-interface DOMStringList {
+interface DOMStringList
+{
     DOMString item(size_t index);
     @property size_t length();
     bool contains(DOMString str);
@@ -243,7 +245,8 @@ interface DOMStringList {
 +   collection is implemented. The items in the `DOMImplementationList` are accessible
 +   via an integral index, starting from `0`.
 +/
-interface DOMImplementationList {
+interface DOMImplementationList
+{
     DOMImplementation item(size_t index);
     @property size_t length();
 }
@@ -255,7 +258,8 @@ interface DOMImplementationList {
 +   the binding-specific list of available sources so that its
 +   `DOMImplementation` objects are made available.
 +/
-interface DOMImplementationSource {
+interface DOMImplementationSource
+{
     /// A method to request the first DOM implementation that supports the
     /// specified features.
     DOMImplementation getDOMImplementation(DOMString features);
@@ -269,7 +273,8 @@ interface DOMImplementationSource {
 +   operations that are independent of any particular instance of the document
 +   object model.
 +/
-interface DOMImplementation {
+interface DOMImplementation
+{
     /++
     +   Creates an empty DocumentType node. Entity declarations and notations
     +   are not made available. Entity reference expansions and default
@@ -322,7 +327,8 @@ interface DOMImplementation {
 +   acts as the parent of these nodes so that the user can use the standard methods
 +   from the `Node` interface, such as `Node.insertBefore` and `Node.appendChild`.
 +/
-interface DocumentFragment : Node {
+interface DocumentFragment : Node
+{
 }
 
 /++
@@ -335,7 +341,8 @@ interface DocumentFragment : Node {
 +   a `ownerDocument` attribute which associates them with the `Document` within
 +   whose context they were created.
 +/
-interface Document : Node {
+interface Document : Node
+{
     /++
     +   The `DocumentType` associated with this document. For XML documents without a
     +   document type declaration this returns `null`.
@@ -538,7 +545,8 @@ interface Document : Node {
 +   Note that the specialized interfaces may contain additional and more convenient
 +   mechanisms to get and set the relevant information.
 +/
-interface Node {
+interface Node
+{
     /// A code representing the type of the underlying object.
     @property NodeType nodeType();
     /// The name of this node, depending on its type.
@@ -671,12 +679,12 @@ interface Node {
     +   Retrieves the object associated to a key on a this node. The object must
     +   first have been set to this node by calling `setUserData` with the same key.
     +/
-    UserData getUserData(string key) @trusted ;
+    UserData getUserData(string key) @trusted;
     /++
     +   Associate an object to a key on this node.
     +   The object can later be retrieved from this node by calling `getUserData` with the same key.
     +/
-    UserData setUserData(string key, UserData data, UserDataHandler handler) @trusted ;
+    UserData setUserData(string key, UserData data, UserDataHandler handler) @trusted;
 
     /++
     +   Compares the reference node, i.e. the node on which this method is being
@@ -703,7 +711,8 @@ interface Node {
 +
 +   The items in the `NodeList` are accessible via an integral index, starting from `0`.
 +/
-interface NodeList {
+interface NodeList
+{
     /++
     +   Returns the `index`th item in the collection. If `index` is greater than
     +   or equal to the number of nodes in the list, this returns `null`.
@@ -740,7 +749,8 @@ interface NodeList {
 +
 +   `NamedNodeMap` objects in the DOM are live.
 +/
-interface NamedNodeMap {
+interface NamedNodeMap
+{
     /++
     +   Returns the `index`th item in the collection. If `index` is greater than
     +   or equal to the number of nodes in the list, this returns `null`.
@@ -765,7 +775,8 @@ interface NamedNodeMap {
         return 0;
     }
 
-    final Node opIndex(size_t index) {
+    final Node opIndex(size_t index)
+    {
         return item(index);
     }
 
@@ -822,7 +833,8 @@ interface NamedNodeMap {
 +   correspond directly to `CharacterData`, though `Text` and others do inherit
 +   the interface from it. All offsets in this interface start from `0`.
 +/
-interface CharacterData : Node {
+interface CharacterData : Node
+{
     @property DOMString data();
     @property void data(DOMString);
 
@@ -860,7 +872,8 @@ interface CharacterData : Node {
 +   DOM need to be aware that `Attr` nodes have some things in common with other
 +   objects inheriting the `Node` interface, but they also are quite distinct.
 +/
-interface Attr : Node {
+interface Attr : Node
+{
     /++
     +   Returns the _name of this attribute. If `Node.localName` is different from
     +   `null`, this attribute is a qualified name.
@@ -910,7 +923,8 @@ interface Attr : Node {
  * Elements are the main building block of an XML document. They have a name, an associated namespace, attributes,
  * text, and child elements.
  */
-interface Element : Node {
+interface Element : Node
+{
     /// The name of the element. If `Node.localName` is different from `null`, this attribute is a qualified name.
     @property DOMString tagName();
 
@@ -940,7 +954,7 @@ interface Element : Node {
     void removeAttribute(DOMString name);
 
     /// Retrieves an attribute node by name.
-    Attr  getAttributeNode(DOMString name);
+    Attr getAttributeNode(DOMString name);
 
     /++
     +   Adds a new attribute node. If an attribute with that name (`nodeName`) is
@@ -1053,7 +1067,8 @@ interface Element : Node {
 +   there is markup, it is parsed into the information items (elements, comments,
 +   etc.) and `Text` nodes that form the list of children of the element.
 +/
-interface Text : CharacterData {
+interface Text : CharacterData
+{
     /++
     +   Breaks this node into two nodes at the specified `offset`, keeping both
     +   in the tree as siblings. After being split, this node will contain all
@@ -1079,7 +1094,8 @@ interface Text : CharacterData {
 +   This interface inherits from `CharacterData` and represents the content of a
 +   comment, i.e., all the characters between the starting '<!--' and ending '-->'.
 +/
-interface Comment : CharacterData {
+interface Comment : CharacterData
+{
 }
 
 /++
@@ -1087,15 +1103,18 @@ interface Comment : CharacterData {
 +   nodes, specified in the schemas associated with the document. The type is a
 +   pair of a namespace URI and name properties, and depends on the document's schema.
 +/
-interface XMLTypeInfo {
+interface XMLTypeInfo
+{
     @property DOMString typeName();
     @property DOMString typeNamespace();
 
-    bool isDerivedFrom(DOMString typeNamespaceArg, DOMString typeNameArg, DerivationMethod derivationMethod);
+    bool isDerivedFrom(DOMString typeNamespaceArg, DOMString typeNameArg,
+            DerivationMethod derivationMethod);
 }
 
 /// DOMError is an interface that describes an error.
-interface DOMError {
+interface DOMError
+{
     @property ErrorSeverity severity();
     @property DOMString message();
     @property DOMString type();
@@ -1105,7 +1124,8 @@ interface DOMError {
 }
 
 /// `DOMLocator` is an interface that describes a location (e.g. where an error occurred).
-interface DOMLocator {
+interface DOMLocator
+{
     @property long lineNumber();
     @property long columnNumber();
     @property long byteOffset();
@@ -1120,7 +1140,8 @@ interface DOMLocator {
 +   the `CDATASection` nodes with `Text` nodes or specifying the type of the schema
 +   that must be used when the validation of the `Document` is requested.
 +/
-interface DOMConfiguration {
+interface DOMConfiguration
+{
     void setParameter(string name, UserData value) @trusted;
     UserData getParameter(string name) @trusted;
     bool canSetParameter(string name, UserData value) @trusted;
@@ -1138,7 +1159,8 @@ interface DOMConfiguration {
 +   the `Text` interface. Adjacent `CDATASection` nodes are not merged by use of the
 +   normalize method of the `Node` interface.
 +/
-interface CDATASection : Text {
+interface CDATASection : Text
+{
 }
 
 /++
@@ -1150,7 +1172,8 @@ interface CDATASection : Text {
 +
 +   DOM Level 3 doesn't support editing `DocumentType` nodes. `DocumentType` nodes are read-only.
 +/
-interface DocumentType : Node {
+interface DocumentType : Node
+{
     /// The name of DTD; i.e., the name immediately following the `DOCTYPE` keyword.
     @property DOMString name();
 
@@ -1194,7 +1217,8 @@ interface DocumentType : Node {
 +
 +   A `Notation` node does not have any parent.
 +/
-interface Notation : Node {
+interface Notation : Node
+{
     /// The public identifier of this notation. If the public identifier was not specified, this is `null`.
     @property DOMString publicId();
 
@@ -1225,7 +1249,8 @@ interface Notation : Node {
 +
 +   An `Entity` node does not have any parent.
 +/
-interface Entity : Node {
+interface Entity : Node
+{
     /// The public identifier associated with the entity if specified, and `null` otherwise.
     @property DOMString publicId();
 
@@ -1266,14 +1291,16 @@ interface Entity : Node {
 +
 +   As for `Entity` nodes, `EntityReference` nodes and all their descendants are readonly.
 +/
-interface EntityReference : Node {
+interface EntityReference : Node
+{
 }
 
 /++
 +   The `ProcessingInstruction` interface represents a "processing instruction",
 +   used in XML as a way to keep processor-specific information in the text of the document.
 +/
-interface ProcessingInstruction : Node {
+interface ProcessingInstruction : Node
+{
     /++
     +   The target of this processing instruction. XML defines this as being the
     +   first token following the markup that begins the processing instruction.
