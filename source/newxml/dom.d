@@ -193,6 +193,7 @@ enum DerivationMethod: ulong
     union_      = 0x00000004,
     list        = 0x00000008,
 }
+
 @safe:
 /++
 +   DOM operations only raise exceptions in "exceptional" circumstances, i.e.,
@@ -211,13 +212,14 @@ abstract class DOMException: XMLException
     @property ExceptionCode code();
 
     ///
-    @nogc @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__,
-            Throwable nextInChain = null)
+    @nogc @safe pure nothrow this(string msg, string file = __FILE__
+            , size_t line = __LINE__, Throwable nextInChain = null)
     {
         super(msg, file, line, nextInChain);
     }
 
-    @nogc @safe pure nothrow this(string msg, Throwable nextInChain, string file = __FILE__, size_t line = __LINE__)
+    @nogc @safe pure nothrow this(string msg, Throwable nextInChain
+            , string file = __FILE__, size_t line = __LINE__)
     {
         super(msg, file, line, nextInChain);
     }
@@ -233,7 +235,7 @@ interface DOMStringList {
     DOMString item(size_t index);
     @property size_t length();
     bool contains(DOMString str);
-};
+}
 
 /++
 +   The `DOMImplementationList` interface provides the abstraction of an ordered
@@ -247,36 +249,42 @@ interface DOMImplementationList {
 }
 
 /++
-+   This interface permits a DOM implementer to supply one or more implementations,
-+   based upon requested features and versions, as specified in DOM Features.
-+   Each implemented DOMImplementationSource object is listed in the binding-specific
-+   list of available sources so that its `DOMImplementation` objects are made available.
++   This interface permits a DOM implementer to supply one or more
++   implementations, based upon requested features and versions, as specified in
++   DOM Features. Each implemented DOMImplementationSource object is listed in
++   the binding-specific list of available sources so that its
++   `DOMImplementation` objects are made available.
 +/
 interface DOMImplementationSource {
-    /// A method to request the first DOM implementation that supports the specified features.
+    /// A method to request the first DOM implementation that supports the
+    /// specified features.
     DOMImplementation getDOMImplementation(DOMString features);
-    /// A method to request a list of DOM implementations that support the specified features and versions, as specified in DOM Features.
+    /// A method to request a list of DOM implementations that support the
+    /// specified features and versions, as specified in DOM Features.
     DOMImplementationList getDOMImplementationList(DOMString features);
 }
 
 /++
 +   The DOMImplementation interface provides a number of methods for performing
-+   operations that are independent of any particular instance of the document object model.
++   operations that are independent of any particular instance of the document
++   object model.
 +/
 interface DOMImplementation {
     /++
-    +   Creates an empty DocumentType node. Entity declarations and notations are not
-    +   made available. Entity reference expansions and default attribute additions do not occur.
+    +   Creates an empty DocumentType node. Entity declarations and notations
+    +   are not made available. Entity reference expansions and default
+    +   attribute additions do not occur.
     +/
     DocumentType createDocumentType(DOMString qualifiedName, DOMString publicId, DOMString systemId);
 
     /++
     +   Creates a DOM Document object of the specified type with its document element.
     +
-    +   Note that based on the DocumentType given to create the document, the implementation
-    +   may instantiate specialized Document objects that support additional features than the "Core",
-    +   such as "HTML". On the other hand, setting the DocumentType after the document
-    +   was created makes this very unlikely to happen.
+    +   Note that based on the DocumentType given to create the document, the
+    +   implementation may instantiate specialized Document objects that support
+    +   additional features than the "Core", such as "HTML". On the other hand,
+    +   setting the DocumentType after the document was created makes this very
+    +   unlikely to happen.
     +/
     Document createDocument(DOMString namespaceURI, DOMString qualifiedName, DocumentType doctype);
 
@@ -897,6 +905,7 @@ interface Attr : Node {
     +/
     @property bool isId();
 }
+
 /**
  * Elements are the main building block of an XML document. They have a name, an associated namespace, attributes,
  * text, and child elements.
@@ -920,6 +929,7 @@ interface Element : Node {
     +   To set an attribute with a qualified name and namespace URI, use the `setAttributeNS` method.
     +/
     void setAttribute(DOMString name, DOMString value);
+
     /++
     +   Removes an attribute by name. If a default value for the removed attribute
     +   is defined in the DTD, a new attribute immediately appears with the default
@@ -931,6 +941,7 @@ interface Element : Node {
 
     /// Retrieves an attribute node by name.
     Attr  getAttributeNode(DOMString name);
+
     /++
     +   Adds a new attribute node. If an attribute with that name (`nodeName`) is
     +   already present in the element, it is replaced by the new one. Replacing an
@@ -939,6 +950,7 @@ interface Element : Node {
     +   the `setAttributeNodeNS` method.
     +/
     Attr setAttributeNode(Attr newAttr);
+
     /++
     +   Removes the specified attribute node. If a default value for the removed attribute
     +   is defined in the DTD, a new attribute immediately appears with the default
@@ -953,6 +965,7 @@ interface Element : Node {
     +   as the `namespaceURI` parameter for methods if they wish to have no namespace.
     +/
     DOMString getAttributeNS(DOMString namespaceURI, DOMString localName);
+
     /++
     +   Adds a new attribute. If an attribute with the same local name and namespace
     +   URI is already present on the element, its prefix is changed to be the prefix
@@ -968,6 +981,7 @@ interface Element : Node {
     +   as the `namespaceURI` parameter for methods if they wish to have no namespace.
     +/
     void setAttributeNS(DOMString namespaceURI, DOMString qualifiedName, DOMString value);
+
     /++
     +   Removes an attribute by local name and namespace URI. If a default value
     +   for the removed attribute is defined in the DTD, a new attribute immediately
@@ -984,6 +998,7 @@ interface Element : Node {
     +   as the `namespaceURI` parameter for methods if they wish to have no namespace.
     +/
     Attr getAttributeNodeNS(DOMString namespaceURI, DOMString localName);
+
     /++
     +   Adds a new attribute. If an attribute with that local name and that namespace
     +   URI is already present in the element, it is replaced by the new one. Replacing
@@ -995,6 +1010,7 @@ interface Element : Node {
 
     /// Returns `true` when an attribute with a given `name` is specified on this element or has a default value, `false` otherwise.
     bool hasAttribute(DOMString name);
+
     /++
     +   Returns `true` when an attribute with a given `localName` and `namespaceURI`
     +   is specified on this element or has a default value, `false` otherwise.
@@ -1012,13 +1028,16 @@ interface Element : Node {
     +   for the parameter `isId` to undeclare an attribute for being a user-determined ID attribute.
     +/
     void setIdAttribute(DOMString name, bool isId);
+
     /// ditto
     void setIdAttributeNS(DOMString namespaceURI, DOMString localName, bool isId);
+
     /// ditto
     void setIdAttributeNode(Attr idAttr, bool isId);
 
     /// Returns a `NodeList` of all descendant `Element`s with a given tag name, in document order.
     NodeList getElementsByTagName(DOMString name);
+
     /// Returns a `NodeList` of all the descendant `Element`s with a given local name and namespace URI in document order.
     NodeList getElementsByTagNameNS(DOMString namespaceURI, DOMString localName);
 
@@ -1048,8 +1067,10 @@ interface Text : CharacterData {
 
     /// Returns whether this text node contains element content whitespace, often abusively called "ignorable whitespace".
     @property bool isElementContentWhitespace();
+
     /// Returns the combined data of all direct text node siblings.
     @property DOMString wholeText();
+
     /// Couldn't find in DOM documentation, but leavint it there.
     Text replaceWholeText(DOMString content);
 }
@@ -1132,20 +1153,25 @@ interface CDATASection : Text {
 interface DocumentType : Node {
     /// The name of DTD; i.e., the name immediately following the `DOCTYPE` keyword.
     @property DOMString name();
+
     /++
     +   A `NamedNodeMap` containing the general entities, both external and internal,
     +   declared in the DTD. Parameter entities are not contained. Duplicates are discarded.
     +/
     @property NamedNodeMap entities();
+
     /++
     +   A `NamedNodeMap` containing the notations declared in the DTD. Duplicates are discarded.
     +   Every node in this map also implements the `Notation` interface.
     +/
     @property NamedNodeMap notations();
+
     /// The public identifier of the external subset.
     @property DOMString publicId();
+
     /// The system identifier of the external subset. This may be an absolute URI or not.
     @property DOMString systemId();
+
     /++
     +   The internal subset as a string, or `null` if there is none.
     +   This is does not contain the delimiting square brackets.
@@ -1171,6 +1197,7 @@ interface DocumentType : Node {
 interface Notation : Node {
     /// The public identifier of this notation. If the public identifier was not specified, this is `null`.
     @property DOMString publicId();
+
     /++
     +   The system identifier of this notation. If the system identifier was not
     +   specified, this is `null`. This may be an absolute URI or not.
@@ -1201,24 +1228,29 @@ interface Notation : Node {
 interface Entity : Node {
     /// The public identifier associated with the entity if specified, and `null` otherwise.
     @property DOMString publicId();
+
     /++
     +   The system identifier associated with the entity if specified, and `null` otherwise.
     +   This may be an absolute URI or not.
     +/
     @property DOMString systemId();
+
     /// For unparsed entities, the name of the `Notation` for the entity. For parsed entities, this is `null`.
     @property DOMString notationName();
+
     /++
     +   An attribute specifying the encoding used for this entity at the time of
     +   parsing, when it is an external parsed entity. This is `null` if it an
     +   entity from the internal subset or if it is not known.
     +/
     @property DOMString inputEncoding();
+
     /++
     +   An attribute specifying, as part of the text declaration, the encoding of
     +   this entity, when it is an external parsed entity. This is `null` otherwise.
     +/
     @property DOMString xmlEncoding();
+
     /++
     +   An attribute specifying, as part of the text declaration, the version
     +   number of this entity, when it is an external parsed entity. This is
@@ -1247,11 +1279,13 @@ interface ProcessingInstruction : Node {
     +   first token following the markup that begins the processing instruction.
     +/
     @property DOMString target();
+
     /++
     +   The content of this processing instruction. This is from the first non white
     +   space character after the target to the character immediately preceding the `?>`.
     +/
     @property DOMString data();
+
     /// ditto
     @property void data(DOMString);
 }
