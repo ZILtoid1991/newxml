@@ -11,6 +11,7 @@
 +   Authors:
 +   Lodovico Giaretta
 +   László Szerémi
++   Robert Schadek
 +
 +   License:
 +   <a href="http://www.boost.org/LICENSE_1_0.txt">Boost License 1.0</a>.
@@ -30,7 +31,6 @@ import std.range.primitives;
 import std.string;
 import std.typecons : rebindable, Flag, BitFlags;
 
-
 /++
 +   An implementation of $(LINK2 ../dom/DOMImplementation, `newxml.dom.DOMImplementation`).
 +
@@ -42,7 +42,6 @@ import std.typecons : rebindable, Flag, BitFlags;
 class DOMImplementation : dom.DOMImplementation
 {
 @safe:
-    //mixin UsesAllocator!(Alloc, true);
     this() @nogc @safe pure nothrow {
 
     }
@@ -133,7 +132,7 @@ class DOMImplementation : dom.DOMImplementation
         pure nothrow @nogc @safe this(dom.ExceptionCode code, string file = __FILE__, size_t line = __LINE__,
             Throwable nextInChain = null)
         {
-            _code = code;
+            this._code = code;
             super("", file, line);
         }
         @nogc @safe pure nothrow this(string msg, Throwable nextInChain, string file = __FILE__, size_t line = __LINE__)
@@ -143,8 +142,9 @@ class DOMImplementation : dom.DOMImplementation
         /// Implementation of $(LINK2 ../dom/DOMException.code, `newxml.dom.DOMException.code`).
         override @property dom.ExceptionCode code()
         {
-            return _code;
+            return this._code;
         }
+
         private dom.ExceptionCode _code;
     }
     /// Implementation of $(LINK2 ../dom/Node, `newxml.dom.Node`)
@@ -156,17 +156,17 @@ class DOMImplementation : dom.DOMImplementation
         override
         {
             /// Implementation of $(LINK2 ../dom/Node.ownerDocument, `newxml.dom.Node.ownerDocument`).
-            @property Document ownerDocument() { return _ownerDocument; }
+            @property Document ownerDocument() { return this._ownerDocument; }
 
             /// Implementation of $(LINK2 ../dom/Node.parentNode, `newxml.dom.Node.parentNode`).
-            @property Node parentNode() { return _parentNode; }
+            @property Node parentNode() { return this._parentNode; }
             /++
             +   Implementation of $(LINK2 ../dom/Node.previousSibling,
             +   `newxml.dom.Node.previousSibling`).
             +/
-            @property Node previousSibling() { return _previousSibling; }
+            @property Node previousSibling() { return this._previousSibling; }
             /// Implementation of $(LINK2 ../dom/Node.nextSibling, `newxml.dom.Node.nextSibling`).
-            @property Node nextSibling() { return _nextSibling; }
+            @property Node nextSibling() { return this._nextSibling; }
 
             /++
             +   Implementation of $(LINK2 ../dom/Node.isSameNode, `newxml.dom.Node.isSameNode`).
@@ -182,7 +182,7 @@ class DOMImplementation : dom.DOMImplementation
             {
                 import std.meta: AliasSeq;
 
-                if (!other || nodeType != other.nodeType)
+                if (!other || this.nodeType != other.nodeType)
                 {
                     return false;
                 }
@@ -223,19 +223,19 @@ class DOMImplementation : dom.DOMImplementation
             /// Implementation of $(LINK2 ../dom/Node.setUserData, `newxml.dom.Node.setUserData`).
             dom.UserData setUserData(string key, dom.UserData data, dom.UserDataHandler handler) @trusted
             {
-                userData[key] = data;
+                this.userData[key] = data;
                 if (handler)
                 {
-                    userDataHandlers[key] = handler;
+                    this.userDataHandlers[key] = handler;
                 }
                 return data;
             }
             /// Implementation of $(LINK2 ../dom/Node.getUserData, `newxml.dom.Node.getUserData`).
             dom.UserData getUserData(string key) const @trusted
             {
-                if (key in userData)
+                if (key in this.userData)
                 {
-                    return userData[key];
+                    return this.userData[key];
                 }
                 return dom.UserData(null);
             }
@@ -384,16 +384,17 @@ class DOMImplementation : dom.DOMImplementation
             // internal methods
             Element parentElement()
             {
-                auto parent = parentNode;
+                auto parent = this.parentNode;
                 while (parent && parent.nodeType != dom.NodeType.element)
                 {
                     parent = parent.parentNode;
                 }
                 return cast(Element)parent;
             }
+
             void performClone(Node dest, bool deep) @trusted
             {
-                foreach (data; userDataHandlers.byKeyValue)
+                foreach (data; this.userDataHandlers.byKeyValue)
                 {
                     auto value = data.value;
                     // putting data.value directly in the following line causes an error; should investigate further
@@ -497,7 +498,7 @@ class DOMImplementation : dom.DOMImplementation
                             ? attr.ownerElement.lookupNamespacePrefix(namespaceURI, attr.ownerElement)
                             : null;
                     default:
-                        auto parentElement = parentElement();
+                        auto parentElement = this.parentElement();
                         return parentElement
                             ? parentElement.lookupNamespacePrefix(namespaceURI, parentElement)
                             : null;
@@ -518,7 +519,7 @@ class DOMImplementation : dom.DOMImplementation
                             ? attr.ownerElement.lookupNamespaceURI(prefix)
                             : null;
                     default:
-                        auto parentElement = parentElement();
+                        auto parentElement = this.parentElement();
                         return parentElement
                             ? parentElement.lookupNamespaceURI(prefix)
                             : null;
@@ -570,6 +571,7 @@ class DOMImplementation : dom.DOMImplementation
                     }
                     return result;
                 }
+
                 @property size_t length()
                 {
                     auto child = rebindable(this.outer.firstChild);
@@ -582,18 +584,21 @@ class DOMImplementation : dom.DOMImplementation
                     return result;
                 }
             }
+
             // more idiomatic methods
             auto opIndex(size_t i)
             {
-                return item(i);
+                return this.item(i);
             }
             // range interface
-            auto front() { return currentChild; }
-            void popFront() { currentChild = currentChild.nextSibling; }
-            bool empty() { return currentChild is null; }
+            auto front() { return this.currentChild; }
+            void popFront() { this.currentChild = this.currentChild.nextSibling; }
+            bool empty() { return this.currentChild is null; }
         }
+
         // method not required by the spec, specialized in NodeWithChildren
         bool isAncestor(Node other) { return false; }
+
         /++
         +   `true` if and only if this node is _readonly.
         +
@@ -606,8 +611,9 @@ class DOMImplementation : dom.DOMImplementation
         +   are always readonly.
         +/
         // method not required by the spec, specialized in varous subclasses
-        @property bool readonly() { return _readonly; }
+        @property bool readonly() { return this._readonly; }
     }
+
     private abstract class NodeWithChildren : Node
     {
         package this() {
@@ -621,13 +627,15 @@ class DOMImplementation : dom.DOMImplementation
                 res.currentChild = firstChild;
                 return res;
             }
+
             @property Node firstChild()
             {
-                return _firstChild;
+                return this._firstChild;
             }
+
             @property Node lastChild()
             {
-                return _lastChild;
+                return this._lastChild;
             }
 
             Node insertBefore(dom.Node _newChild, dom.Node _refChild)
@@ -683,19 +691,21 @@ class DOMImplementation : dom.DOMImplementation
 
                 if (firstChild is refChild)
                 {
-                    _firstChild = newChild;
+                    this._firstChild = newChild;
                 }
 
                 return newChild;
             }
+
             Node replaceChild(dom.Node newChild, dom.Node oldChild)
             {
-                insertBefore(newChild, oldChild);
-                return removeChild(oldChild);
+                this.insertBefore(newChild, oldChild);
+                return this.removeChild(oldChild);
             }
+
             Node removeChild(dom.Node _oldChild)
             {
-                enforce!DOMException(!readonly, dom.ExceptionCode.noModificationAllowed);
+                enforce!DOMException(!this.readonly, dom.ExceptionCode.noModificationAllowed);
                 Node oldChild = cast(Node)_oldChild;
                 enforce!DOMException(!(!oldChild
                             || oldChild.parentNode !is this)
@@ -703,14 +713,14 @@ class DOMImplementation : dom.DOMImplementation
 
                 if (oldChild is firstChild)
                 {
-                    _firstChild = oldChild.nextSibling;
+                    this._firstChild = oldChild.nextSibling;
                 }
                 else
                 {
                     oldChild.previousSibling._nextSibling = oldChild.nextSibling;
                 }
 
-                if (oldChild is lastChild)
+                if (oldChild is this.lastChild)
                 {
                     _lastChild = oldChild.previousSibling;
                 }
@@ -724,6 +734,7 @@ class DOMImplementation : dom.DOMImplementation
                 oldChild._nextSibling = null;
                 return oldChild;
             }
+
             Node appendChild(dom.Node _newChild)
             {
                 enforce!DOMException(!readonly, dom.ExceptionCode.noModificationAllowed);
@@ -748,25 +759,27 @@ class DOMImplementation : dom.DOMImplementation
                 }
 
                 newChild._parentNode = this;
-                if (lastChild)
+                if (this.lastChild)
                 {
                     newChild._previousSibling = lastChild;
-                    lastChild._nextSibling = newChild;
+                    this.lastChild._nextSibling = newChild;
                 }
                 else
                 {
-                    _firstChild = newChild;
+                    this._firstChild = newChild;
                 }
-                _lastChild = newChild;
+                this._lastChild = newChild;
                 return newChild;
             }
+
             bool hasChildNodes() const
             {
-                return _firstChild !is null;
+                return this._firstChild !is null;
             }
+
             bool isAncestor(Node other)
             {
-                for (auto child = rebindable(firstChild); child !is null; child = child.nextSibling)
+                for (auto child = rebindable(this.firstChild); child !is null; child = child.nextSibling)
                 {
                     if (child is other)
                     {
@@ -783,10 +796,8 @@ class DOMImplementation : dom.DOMImplementation
 
             @property DOMString textContent()
             {
-                //import newxml.appender;
                 DOMString result;
-                //auto result = Appender!(typeof(this.textContent()[0]), typeof(*allocator))(allocator);
-                for (auto child = rebindable(firstChild); child !is null; child = child.nextSibling)
+                for (auto child = rebindable(this.firstChild); child !is null; child = child.nextSibling)
                 {
                     if (child.nodeType != dom.NodeType.comment &&
                         child.nodeType != dom.NodeType.processingInstruction)
@@ -796,29 +807,33 @@ class DOMImplementation : dom.DOMImplementation
                 }
                 return result;
             }
+
             @property void textContent(DOMString newVal)
             {
-                enforce!DOMException(readonly
+                enforce!DOMException(this.readonly
                         , dom.ExceptionCode.noModificationAllowed);
 
-                while (firstChild)
+                while (this.firstChild)
                 {
-                    removeChild(firstChild);
+                    this.removeChild(this.firstChild);
                 }
 
-                _firstChild = _lastChild = ownerDocument.createTextNode(newVal);
+                this._lastChild = ownerDocument.createTextNode(newVal);
+                this._firstChild = this._lastChild;
             }
         }
         private
         {
-            Node _firstChild, _lastChild;
+            Node _firstChild;
+            Node _lastChild;
 
             void performClone(NodeWithChildren dest, bool deep)
             {
                 super.performClone(dest, deep);
+
                 if (deep)
                 {
-                    foreach (child; childNodes)
+                    foreach (child; this.childNodes)
                     {
                         auto childClone = child.cloneNode(true);
                         dest.appendChild(childClone);
@@ -836,8 +851,15 @@ class DOMImplementation : dom.DOMImplementation
         // inherited from Node
         override
         {
-            @property dom.NodeType nodeType() { return dom.NodeType.documentFragment; }
-            @property DOMString nodeName() { return new DOMString("#document-fragment"w); }
+            @property dom.NodeType nodeType()
+            {
+                return dom.NodeType.documentFragment;
+            }
+
+            @property DOMString nodeName()
+            {
+                return new DOMString("#document-fragment"w);
+            }
         }
     }
     /// Implementation of $(LINK2 ../dom/Document, `newxml.dom.Document`)
@@ -846,40 +868,45 @@ class DOMImplementation : dom.DOMImplementation
         package this() {
 
         }
+
         package @property void doctype(DocumentType _doctype)
         {
             this._doctype = _doctype;
         }
+
         // specific to Document
         override
         {
-            @property DocumentType doctype() { return _doctype; }
+            @property DocumentType doctype() { return this._doctype; }
             @property DOMImplementation implementation() { return this.outer; }
-            @property Element documentElement() { return _root; }
+            @property Element documentElement() { return this._root; }
 
             Element createElement(DOMString tagName)
             {
                 Element res = new Element();
                 res._name = tagName;
                 res._ownerDocument = this;
-                res._attrs = res.createMap();//new Element.Map();
+                res._attrs = res.createMap();
                 return res;
             }
+
             Element createElementNS(DOMString namespaceURI, DOMString qualifiedName)
             {
                 Element res = new Element();
                 res.setQualifiedName(qualifiedName);
                 res._namespaceURI = namespaceURI;
                 res._ownerDocument = this;
-                res._attrs = res.createMap();//res._attrs = new Element.Map();
+                res._attrs = res.createMap();
                 return res;
             }
+
             DocumentFragment createDocumentFragment()
             {
                 DocumentFragment res = new DocumentFragment();
                 res._ownerDocument = this;
                 return res;
             }
+
             Text createTextNode(DOMString data)
             {
                 Text res = new Text();
@@ -887,6 +914,7 @@ class DOMImplementation : dom.DOMImplementation
                 res._ownerDocument = this;
                 return res;
             }
+
             Comment createComment(DOMString data)
             {
                 Comment res = new Comment();
@@ -894,6 +922,7 @@ class DOMImplementation : dom.DOMImplementation
                 res._ownerDocument = this;
                 return res;
             }
+
             CDATASection createCDATASection(DOMString data)
             {
                 CDATASection res = new CDATASection();
@@ -901,6 +930,7 @@ class DOMImplementation : dom.DOMImplementation
                 res._ownerDocument = this;
                 return res;
             }
+
             ProcessingInstruction createProcessingInstruction(DOMString target, DOMString data)
             {
                 ProcessingInstruction res = new ProcessingInstruction();
@@ -909,6 +939,7 @@ class DOMImplementation : dom.DOMImplementation
                 res._ownerDocument = this;
                 return res;
             }
+
             Attr createAttribute(DOMString name)
             {
                 Attr res = new Attr();
@@ -916,6 +947,7 @@ class DOMImplementation : dom.DOMImplementation
                 res._ownerDocument = this;
                 return res;
             }
+
             Attr createAttributeNS(DOMString namespaceURI, DOMString qualifiedName)
             {
                 Attr res = new Attr();
@@ -924,7 +956,11 @@ class DOMImplementation : dom.DOMImplementation
                 res._ownerDocument = this;
                 return res;
             }
-            EntityReference createEntityReference(DOMString name) { return null; }
+
+            EntityReference createEntityReference(DOMString name)
+            {
+                return null;
+            }
 
             ElementsByTagName getElementsByTagName(DOMString tagname)
             {
@@ -934,7 +970,9 @@ class DOMImplementation : dom.DOMImplementation
                 res.current = res.item(0);
                 return res;
             }
-            ElementsByTagNameNS getElementsByTagNameNS(DOMString namespaceURI, DOMString localName)
+
+            ElementsByTagNameNS getElementsByTagNameNS(DOMString namespaceURI
+                    , DOMString localName)
             {
                 ElementsByTagNameNS res = new ElementsByTagNameNS();
                 res.root = this;
@@ -943,6 +981,7 @@ class DOMImplementation : dom.DOMImplementation
                 res.current = res.item(0);
                 return res;
             }
+
             Element getElementById(DOMString elementId)
             {
                 Element find(dom.Node node) @safe
@@ -965,6 +1004,7 @@ class DOMImplementation : dom.DOMImplementation
                     }
                     return null;
                 }
+
                 return find(_root);
             }
 
@@ -1035,6 +1075,7 @@ class DOMImplementation : dom.DOMImplementation
             @property void xmlStandalone(bool b) { _standalone = b; }
 
             @property DOMString xmlVersion() { return _xmlVersion; }
+
             @property void xmlVersion(DOMString ver)
             {
                 if (ver == "1.0" || ver == "1.1")
@@ -1054,7 +1095,9 @@ class DOMImplementation : dom.DOMImplementation
             @property void documentURI(DOMString uri) { _documentURI = uri; }
 
             @property DOMConfiguration domConfig() { return _config; }
+
             void normalizeDocument() { }
+
             Node renameNode(dom.Node n, DOMString namespaceURI, DOMString qualifiedName)
             {
                 auto node = cast(Node)n;
@@ -1072,6 +1115,7 @@ class DOMImplementation : dom.DOMImplementation
                 return node;
             }
         }
+
         private
         {
             DOMString _documentURI, _xmlVersion = new DOMString("1.0"w);
@@ -1080,6 +1124,7 @@ class DOMImplementation : dom.DOMImplementation
             DOMConfiguration _config;
             bool _strictErrorChecking = true, _standalone = false;
         }
+
         // inherited from Node
         override
         {
@@ -1099,6 +1144,7 @@ class DOMImplementation : dom.DOMImplementation
                 return documentElement.isDefaultNamespace(namespaceURI);
             }
         }
+
         // inherited from NodeWithChildren
         override
         {
@@ -1132,6 +1178,7 @@ class DOMImplementation : dom.DOMImplementation
                     return super.insertBefore(newChild, refChild);
                 }
             }
+
             Node replaceChild(dom.Node newChild, dom.Node oldChild)
             {
                 if (newChild.nodeType == dom.NodeType.element)
@@ -1162,6 +1209,7 @@ class DOMImplementation : dom.DOMImplementation
                     return super.replaceChild(newChild, oldChild);
                 }
             }
+
             Node removeChild(dom.Node oldChild)
             {
                 if (oldChild.nodeType == dom.NodeType.element)
@@ -1181,6 +1229,7 @@ class DOMImplementation : dom.DOMImplementation
                     return super.removeChild(oldChild);
                 }
             }
+
             Node appendChild(dom.Node newChild)
             {
                 if (newChild.nodeType == dom.NodeType.element)
@@ -1189,7 +1238,7 @@ class DOMImplementation : dom.DOMImplementation
                         , dom.ExceptionCode.hierarchyRequest);
 
                     auto res = super.appendChild(newChild);
-                    _root = cast(Element)newChild;
+                    this._root = cast(Element)newChild;
                     return res;
                 }
                 else if (newChild.nodeType == dom.NodeType.documentType)
@@ -1198,7 +1247,7 @@ class DOMImplementation : dom.DOMImplementation
                         , dom.ExceptionCode.hierarchyRequest);
 
                     auto res = super.appendChild(newChild);
-                    _doctype = cast(DocumentType)newChild;
+                    this._doctype = cast(DocumentType)newChild;
                     return res;
                 }
                 else
@@ -1208,8 +1257,10 @@ class DOMImplementation : dom.DOMImplementation
             }
         }
     }
+
     alias ElementsByTagName = ElementsByTagNameImpl!false;
     alias ElementsByTagNameNS = ElementsByTagNameImpl!true;
+
     static class ElementsByTagNameImpl(bool ns) : dom.NodeList
     {
         package this() {
@@ -1219,7 +1270,8 @@ class DOMImplementation : dom.DOMImplementation
         private Element current;
         static if (ns)
         {
-            private DOMString namespaceURI, localName;
+            private DOMString namespaceURI;
+            private DOMString localName;
         }
         else
         {
@@ -1233,7 +1285,8 @@ class DOMImplementation : dom.DOMImplementation
                 if (node.nodeType == dom.NodeType.element)
                 {
                     Element elem = cast(Element)node;
-                    return elem.namespaceURI == namespaceURI && elem.localName == localName;
+                    return elem.namespaceURI == namespaceURI
+                        && elem.localName == localName;
                 }
                 else
                 {
@@ -1242,38 +1295,27 @@ class DOMImplementation : dom.DOMImplementation
             }
             else
             {
-                return node.nodeType == dom.NodeType.element && node.nodeName == tagname;
+                return node.nodeType == dom.NodeType.element
+                    && node.nodeName == tagname;
             }
         }
 
         private Element findNext(Node node)
         {
-            if (node.firstChild)
-            {
-                auto item = node.firstChild;
-                if (check(item))
-                {
-                    return cast(Element)item;
-                }
-                else
-                {
-                    return findNext(item);
-                }
-            }
-            else
-            {
-                return findNextBack(node);
-            }
+            return node.firstChild
+                ? check(node.firstChild)
+                    ? cast(Element)node.firstChild
+                    : findNext(node.firstChild)
+                : findNextBack(node);
         }
+
         private Element findNextBack(Node node)
         {
             if (node.nextSibling)
             {
-                auto item = node.nextSibling;
-
-                return check(item)
-                    ? cast(Element)item
-                    : findNext(item);
+                return check(node.nextSibling)
+                    ? cast(Element)node.nextSibling
+                    : findNext(node.nextSibling);
             }
             else if (node.parentNode && node.parentNode !is node.ownerDocument)
             {
@@ -1300,6 +1342,7 @@ class DOMImplementation : dom.DOMImplementation
                 }
                 return res;
             }
+
             Element item(size_t i)
             {
                 auto res = findNext(root);
@@ -1319,75 +1362,68 @@ class DOMImplementation : dom.DOMImplementation
         void popFront() { current = findNext(current); }
         auto front() { return current; }
     }
+
     /// Implementation of $(LINK2 ../dom/CharacterData, `newxml.dom.CharacterData`)
     abstract class CharacterData : Node, dom.CharacterData
     {
         // specific to CharacterData
         override
         {
-            @property DOMString data() { return _data; }
-            @property void data(DOMString newVal) { _data = newVal; }
-            @property size_t length() { return _data.length; }
+            @property DOMString data() { return this._data; }
+            @property void data(DOMString newVal) { this._data = newVal; }
+            @property size_t length() { return this._data.length; }
 
             DOMString substringData(size_t offset, size_t count)
             {
                 enforce!DOMException(!(offset > length)
                     , dom.ExceptionCode.indexSize);
 
-                import std.algorithm : min;
-                return _data[offset..min(offset + count, length)];
+                import std.algorithm.comparison : min;
+                return this._data[offset..min(offset + count, length)];
             }
+
             void appendData(DOMString arg)
             {
-                import std.traits : Unqual;
-
-                //auto newData = allocator.makeArray!(Unqual!(typeof(_data[0])))(_data.length + arg.length);
-
-                _data ~= arg;
+                this._data ~= arg;
             }
+
             void insertData(size_t offset, DOMString arg)
             {
-                import std.traits : Unqual;
-
                 enforce!DOMException(!(offset > length)
                     , dom.ExceptionCode.indexSize);
 
-                //auto newData = allocator.makeArray!(Unqual!(typeof(_data[0])))(_data.length + arg.length);
-                /+CharType[] newData;
-                newData.reserve = _data.length + arg.length;
-                newData = _data[0 .. offset];
-                newData[offset .. (offset + arg.length)] = arg;
-                newData[(offset + arg.length) .. $] = _data[offset .. $];
-
-                _data = cast(typeof(_data))newData;+/
-                _data.insertData(offset, arg);
+                this._data.insertData(offset, arg);
             }
+
             void deleteData(size_t offset, size_t count)
             {
-                _data.deleteData(offset, count);
+                this._data.deleteData(offset, count);
             }
+
             void replaceData(size_t offset, size_t count, DOMString arg)
             {
-                _data.deleteData(offset, count);
-                _data.insertData(offset, arg);
+                this._data.deleteData(offset, count);
+                this._data.insertData(offset, arg);
             }
         }
+
         // inherited from Node
         override
         {
-            @property DOMString nodeValue() { return data; }
+            @property DOMString nodeValue() { return this.data; }
             @property void nodeValue(DOMString newVal)
             {
-                enforce!DOMException(!(readonly)
+                enforce!DOMException(!this.readonly
                     , dom.ExceptionCode.noModificationAllowed);
-                data = newVal;
+                this.data = newVal;
             }
-            @property DOMString textContent() { return data; }
+
+            @property DOMString textContent() { return this.data; }
             @property void textContent(DOMString newVal)
             {
-                enforce!DOMException(!(readonly)
+                enforce!DOMException(!this.readonly
                     , dom.ExceptionCode.noModificationAllowed);
-                data = newVal;
+                this.data = newVal;
             }
         }
         private
@@ -1398,7 +1434,7 @@ class DOMImplementation : dom.DOMImplementation
             void performClone(CharacterData dest, bool deep)
             {
                 super.performClone(dest, deep);
-                dest._data = _data;
+                dest._data = this._data;
             }
         }
     }
@@ -1406,15 +1442,19 @@ class DOMImplementation : dom.DOMImplementation
     {
         private
         {
-            DOMString _name, _namespaceURI;
+            DOMString _name;
+            DOMString _namespaceURI;
             size_t _colon;
 
             void setQualifiedName(DOMString name)
             {
-                _name = name;
+                this._name = name;
                 ptrdiff_t i = name.getDString.indexOf(':');
+
                 if (i > 0)
+                {
                     _colon = i;
+                }
             }
             void performClone(NodeWithNamespace dest, bool deep)
             {
@@ -1427,39 +1467,38 @@ class DOMImplementation : dom.DOMImplementation
         // inherited from Node
         override
         {
-            @property DOMString nodeName() { return _name; }
+            @property DOMString nodeName() { return this._name; }
 
             @property DOMString localName()
             {
-                return !_colon
+                return !this._colon
                     ? null
-                    : _name[(_colon+1)..$];
+                    : _name[this._colon+1 .. $];
             }
+
             @property DOMString prefix()
             {
-                return _name[0.._colon];
+                return this._name[0 .. this._colon];
             }
+
             @property void prefix(DOMString pre)
             {
-                enforce!DOMException(!(readonly)
+                enforce!DOMException(!readonly
                     , dom.ExceptionCode.noModificationAllowed);
-
-                import std.traits : Unqual;
 
                 _name ~= pre;
                 _name ~= "w";
                 _name ~= localName;
                 _colon = pre.length;
             }
-            @property DOMString namespaceURI() { return _namespaceURI; }
+
+            @property DOMString namespaceURI() { return this._namespaceURI; }
         }
     }
+
     /// Implementation of $(LINK2 ../dom/Attr, `newxml.dom.Attr`)
     class Attr : NodeWithNamespace, dom.Attr
     {
-        package this() {
-            //_namespaceURI = new DOMString();
-        }
         // specific to Attr
         override
         {
@@ -1468,44 +1507,43 @@ class DOMImplementation : dom.DOMImplementation
             /// Implementation of $(LINK2 ../dom/Attr.specified, `newxml.dom.Attr.specified`).
             @property bool specified() { return _specified; }
             /// Implementation of $(LINK2 ../dom/Attr.value, `newxml.dom.Attr.value`).
+
             @property DOMString value()
             {
-                //auto result = Appender!(typeof(_name[0]), typeof(*allocator))(allocator);
-                /* DOMString result = new DOMString();
-                auto child = rebindable(firstChild);
-                while (child)
-                {
-                    result ~= child.textContent;//result.put(child.textContent);
-                    child = child.nextSibling;
-                }
-                return result; */
                 Text result = cast(Text)firstChild;
                 return result.textContent();
             }
             /// ditto
             @property void value(DOMString newVal)
             {
-                while (firstChild)
+                while (this.firstChild)
                 {
-                    removeChild(firstChild);
+                    this.removeChild(this.firstChild);
                 }
-                appendChild(ownerDocument.createTextNode(newVal));
+                this.appendChild(this.ownerDocument.createTextNode(newVal));
             }
 
             /// Implementation of $(LINK2 ../dom/Attr.ownerElement, `newxml.dom.Attr.ownerElement`).
-            @property Element ownerElement() { return _ownerElement; }
+            @property Element ownerElement() { return this._ownerElement; }
             /// Implementation of $(LINK2 ../dom/Attr.schemaTypeInfo, `newxml.dom.Attr.schemaTypeInfo`).
             @property dom.XMLTypeInfo schemaTypeInfo() { return null; }
             /// Implementation of $(LINK2 ../dom/Attr.isId, `newxml.dom.Attr.isId`).
-            @property bool isId() { return _isId; }
+            @property bool isId() { return this._isId; }
         }
         private
         {
             Element _ownerElement;
-            bool _specified = true, _isId = false;
-            @property Attr _nextAttr() { return cast(Attr)_nextSibling; }
-            @property Attr _previousAttr() { return cast(Attr)_previousSibling; }
+            bool _specified = true;
+            bool _isId = false;
+
+            @property Attr _nextAttr() { return cast(Attr)this._nextSibling; }
+
+            @property Attr _previousAttr()
+            {
+                return cast(Attr)this._previousSibling;
+            }
         }
+
         // inherited from Node
         override
         {
@@ -1526,7 +1564,7 @@ class DOMImplementation : dom.DOMImplementation
             Attr cloneNode(bool deep)
             {
                 Attr cloned = new Attr();
-                cloned._ownerDocument = _ownerDocument;
+                cloned._ownerDocument = this._ownerDocument;
                 super.performClone(cloned, true);
                 cloned._specified = true;
                 return cloned;
@@ -1538,12 +1576,14 @@ class DOMImplementation : dom.DOMImplementation
                     ? ownerElement.lookupPrefix(namespaceURI)
                     : null;
             }
+
             DOMString lookupNamespaceURI(DOMString prefix)
             {
                 return ownerElement
                     ? ownerElement.lookupNamespaceURI(prefix)
                     : null;
             }
+
             bool isDefaultNamespace(DOMString namespaceURI)
             {
                 return ownerElement
@@ -1575,15 +1615,11 @@ class DOMImplementation : dom.DOMImplementation
             DOMString getAttribute(DOMString name)
             {
                 auto result = _attrs.getNamedItem(name);
-                if (result)
-                {
-                    return result.value;
-                }
-                else 
-                {
-                    return null;
-                }
+                return result
+                    ? result.value
+                    : null;
             }
+
             /++
             +   Implementation of $(LINK2 ../dom/Element.setAttribute,
             +   `newxml.dom.Element.setAttribute`).
@@ -1593,15 +1629,16 @@ class DOMImplementation : dom.DOMImplementation
                 auto attr = ownerDocument.createAttribute(name);
                 attr.nodeValue = value;
                 attr._ownerElement = this;
-                _attrs.setNamedItem(attr);
+                this._attrs.setNamedItem(attr);
             }
+
             /++
             +   Implementation of $(LINK2 ../dom/Element.removeAttribute,
             +   `newxml.dom.Element.removeAttribute`).
             +/
             void removeAttribute(DOMString name)
             {
-                _attrs.removeNamedItem(name);
+                this._attrs.removeNamedItem(name);
             }
 
             /++
@@ -1610,29 +1647,31 @@ class DOMImplementation : dom.DOMImplementation
             +/
             Attr getAttributeNode(DOMString name)
             {
-                return _attrs.getNamedItem(name);
+                return this._attrs.getNamedItem(name);
             }
+
             /++
             +   Implementation of $(LINK2 ../dom/Element.setAttributeNode,
             +   `newxml.dom.Element.setAttributeNode`).
             +/
             Attr setAttributeNode(dom.Attr newAttr)
             {
-                return _attrs.setNamedItem(newAttr);
+                return this._attrs.setNamedItem(newAttr);
             }
+
             /++
             +   Implementation of $(LINK2 ../dom/Element.removeAttributeNode,
             +   `newxml.dom.Element.removeAttributeNode`).
             +/
             Attr removeAttributeNode(dom.Attr oldAttr)
             {
-                if (_attrs.getNamedItemNS(oldAttr.namespaceURI, oldAttr.name) is oldAttr)
+                if (this._attrs.getNamedItemNS(oldAttr.namespaceURI, oldAttr.name) is oldAttr)
                 {
-                    return _attrs.removeNamedItemNS(oldAttr.namespaceURI, oldAttr.name);
+                    return this._attrs.removeNamedItemNS(oldAttr.namespaceURI, oldAttr.name);
                 }
-                else if (_attrs.getNamedItem(oldAttr.name) is oldAttr)
+                else if (this._attrs.getNamedItem(oldAttr.name) is oldAttr)
                 {
-                    return _attrs.removeNamedItem(oldAttr.name);
+                    return this._attrs.removeNamedItem(oldAttr.name);
                 }
 
                 throw new DOMException(dom.ExceptionCode.notFound);
@@ -1644,15 +1683,10 @@ class DOMImplementation : dom.DOMImplementation
             +/
             DOMString getAttributeNS(DOMString namespaceURI, DOMString localName)
             {
-                auto result = _attrs.getNamedItemNS(namespaceURI, localName);
-                if (result)
-                {
-                    return result.value;
-                }
-                else 
-                {
-                    return null;
-                }
+                auto result = this._attrs.getNamedItemNS(namespaceURI, localName);
+                return result
+                    ? result.value
+                    : null;
             }
             /++
             +   Implementation of $(LINK2 ../dom/Element.setAttributeNS,
@@ -1660,13 +1694,15 @@ class DOMImplementation : dom.DOMImplementation
             +/
             void setAttributeNS(DOMString namespaceURI, DOMString qualifiedName, DOMString value)
             {
+                import std.exception : enforce;
+
                 auto attr = ownerDocument.createAttributeNS(namespaceURI, qualifiedName);
                 attr.nodeValue = value;
                 attr._ownerElement = this;
-                assert(attr.nodeValue == value);
-                _attrs.setNamedItemNS(attr);
-                assert(_attrs.getNamedItemNS(namespaceURI, qualifiedName));
-                assert(_attrs.getNamedItemNS(namespaceURI, qualifiedName).nodeValue);
+                enforce(attr.nodeValue == value);
+                this._attrs.setNamedItemNS(attr);
+                enforce(this._attrs.getNamedItemNS(namespaceURI, qualifiedName));
+                enforce(this._attrs.getNamedItemNS(namespaceURI, qualifiedName).nodeValue);
             }
             /++
             +   Implementation of $(LINK2 ../dom/Element.removeAttributeNS,
@@ -1674,7 +1710,7 @@ class DOMImplementation : dom.DOMImplementation
             +/
             void removeAttributeNS(DOMString namespaceURI, DOMString localName)
             {
-                _attrs.removeNamedItemNS(namespaceURI, localName);
+                this._attrs.removeNamedItemNS(namespaceURI, localName);
             }
 
             /++
@@ -1683,7 +1719,7 @@ class DOMImplementation : dom.DOMImplementation
             +/
             Attr getAttributeNodeNS(DOMString namespaceURI, DOMString localName)
             {
-                return _attrs.getNamedItemNS(namespaceURI, localName);
+                return this._attrs.getNamedItemNS(namespaceURI, localName);
             }
             /++
             +   Implementation of $(LINK2 ../dom/Element.setAttributeNodeNS,
@@ -1691,7 +1727,7 @@ class DOMImplementation : dom.DOMImplementation
             +/
             Attr setAttributeNodeNS(dom.Attr newAttr)
             {
-                return _attrs.setNamedItemNS(newAttr);
+                return this._attrs.setNamedItemNS(newAttr);
             }
 
             /++
@@ -1700,7 +1736,7 @@ class DOMImplementation : dom.DOMImplementation
             +/
             bool hasAttribute(DOMString name)
             {
-                return _attrs.getNamedItem(name) !is null;
+                return this._attrs.getNamedItem(name) !is null;
             }
             /++
             +   Implementation of $(LINK2 ../dom/Element.hasAttributeNS,
@@ -1708,7 +1744,7 @@ class DOMImplementation : dom.DOMImplementation
             +/
             bool hasAttributeNS(DOMString namespaceURI, DOMString localName)
             {
-                return _attrs.getNamedItemNS(namespaceURI, localName) !is null;
+                return this._attrs.getNamedItemNS(namespaceURI, localName) !is null;
             }
 
             /++
@@ -1718,15 +1754,10 @@ class DOMImplementation : dom.DOMImplementation
             void setIdAttribute(DOMString name, bool isId)
             {
                 auto attr = _attrs.getNamedItem(name);
-                if (attr)
-                {
-                    attr._isId = isId;
-                }
-                else
-                {
-                    throw new DOMException(dom.ExceptionCode.notFound);
-                }
+                enforce!(DOMException)(attr !is null, dom.ExceptionCode.notFound);
+                attr._isId = isId;
             }
+
             /++
             +   Implementation of $(LINK2 ../dom/Element.setIdAttributeNS,
             +   `newxml.dom.Element.setIdAttributeNS`).
@@ -1734,15 +1765,10 @@ class DOMImplementation : dom.DOMImplementation
             void setIdAttributeNS(DOMString namespaceURI, DOMString localName, bool isId)
             {
                 auto attr = _attrs.getNamedItemNS(namespaceURI, localName);
-                if (attr)
-                {
-                    attr._isId = isId;
-                }
-                else
-                {
-                    throw new DOMException(dom.ExceptionCode.notFound);
-                }
+                enforce!(DOMException)(attr !is null, dom.ExceptionCode.notFound);
+                attr._isId = isId;
             }
+
             /++
             +   Implementation of $(LINK2 ../dom/Element.getAttribute,
             +   `newxml.dom.Element.getAttribute`).
@@ -1775,6 +1801,7 @@ class DOMImplementation : dom.DOMImplementation
                 res.current = res.item(0);
                 return res;
             }
+
             /++
             +   Implementation of $(LINK2 ../dom/Element.getElementsByTagNameNS,
             +   `newxml.dom.Element.getElementsByTagNameNS`).
@@ -1808,12 +1835,12 @@ class DOMImplementation : dom.DOMImplementation
                     return this.prefix;
                 }
 
-                if (hasAttributes)
+                if (this.hasAttributes)
                 {
                     foreach (attr; attributes)
                     {
-                        if (attr.prefix == "xmlns" && attr.nodeValue == namespaceURI &&
-                            originalElement.lookupNamespaceURI(attr.localName) == namespaceURI)
+                        if (attr.prefix == "xmlns" && attr.nodeValue == namespaceURI
+                            && originalElement.lookupNamespaceURI(attr.localName) == namespaceURI)
                         {
                             return attr.localName;
                         }
@@ -1830,8 +1857,14 @@ class DOMImplementation : dom.DOMImplementation
         {
             @property dom.NodeType nodeType() { return dom.NodeType.element; }
 
-            @property Map attributes() { return _attrs.length > 0 ? _attrs : null; }
-            bool hasAttributes() { return _attrs.length > 0; }
+            @property Map attributes()
+            {
+                return this._attrs.length > 0
+                    ? _attrs
+                    : null;
+            }
+
+            bool hasAttributes() { return this._attrs.length > 0; }
 
             Element cloneNode(bool deep)
             {
@@ -1846,6 +1879,7 @@ class DOMImplementation : dom.DOMImplementation
             {
                 return lookupNamespacePrefix(namespaceURI, this);
             }
+
             DOMString lookupNamespaceURI(DOMString prefix)
             {
                 if (namespaceURI && prefix == prefix)
@@ -1853,9 +1887,9 @@ class DOMImplementation : dom.DOMImplementation
                     return namespaceURI;
                 }
 
-                if (hasAttributes)
+                if (this.hasAttributes)
                 {
-                    foreach (attr; attributes)
+                    foreach (attr; this.attributes)
                     {
                         if (attr.prefix == "xmlns" && attr.localName == prefix)
                         {
@@ -1867,12 +1901,11 @@ class DOMImplementation : dom.DOMImplementation
                         }
                     }
                 }
-                auto parentElement = parentElement();
-                if (parentElement)
-                {
-                    return parentElement.lookupNamespaceURI(prefix);
-                }
-                return null;
+
+                auto parentElement = this.parentElement();
+                return parentElement
+                    ? parentElement.lookupNamespaceURI(prefix)
+                    : null;
             }
             bool isDefaultNamespace(DOMString namespaceURI)
             {
@@ -1891,6 +1924,7 @@ class DOMImplementation : dom.DOMImplementation
                         }
                     }
                 }
+
                 auto parentElement = parentElement();
                 return parentElement
                     ? parentElement.isDefaultNamespace(namespaceURI)
@@ -1909,7 +1943,7 @@ class DOMImplementation : dom.DOMImplementation
                 size_t length()
                 {
                     size_t res = 0;
-                    auto attr = firstAttr;
+                    auto attr = this.firstAttr;
                     while (attr)
                     {
                         res++;
@@ -1917,10 +1951,11 @@ class DOMImplementation : dom.DOMImplementation
                     }
                     return res;
                 }
+
                 Attr item(size_t index)
                 {
                     size_t count = 0;
-                    auto res = firstAttr;
+                    auto res = this.firstAttr;
                     while (res && count < index)
                     {
                         count++;
@@ -1931,20 +1966,21 @@ class DOMImplementation : dom.DOMImplementation
 
                 Attr getNamedItem(DOMString name)
                 {
-                    Attr res = firstAttr;
+                    Attr res = this.firstAttr;
                     while (res && res.nodeName != name)
                     {
                         res = res._nextAttr;
                     }
                     return res;
                 }
+
                 Attr setNamedItem(dom.Node arg)
                 {
-                    enforce!DOMException(!(arg.ownerDocument !is this.outer.ownerDocument)
+                    enforce!DOMException(arg.ownerDocument is this.outer.ownerDocument
                         , dom.ExceptionCode.wrongDocument);
 
                     Attr attr = cast(Attr)arg;
-                    enforce!DOMException(!(!attr)
+                    enforce!DOMException(attr !is null
                         , dom.ExceptionCode.hierarchyRequest);
 
                     if (attr._previousAttr)
@@ -1957,7 +1993,7 @@ class DOMImplementation : dom.DOMImplementation
                         attr._nextAttr._previousSibling = attr._previousAttr;
                     }
 
-                    auto res = firstAttr;
+                    auto res = this.firstAttr;
                     while (res && res.nodeName != attr.nodeName)
                     {
                         res = res._nextAttr;
@@ -1967,21 +2003,25 @@ class DOMImplementation : dom.DOMImplementation
                     {
                         attr._previousSibling = res._previousAttr;
                         attr._nextSibling = res._nextAttr;
-                        if (res is firstAttr) firstAttr = attr;
+                        if (res is firstAttr)
+                        {
+                            firstAttr = attr;
+                        }
                     }
                     else
                     {
-                        attr._nextSibling = firstAttr;
-                        firstAttr = attr;
+                        attr._nextSibling = this.firstAttr;
+                        this.firstAttr = attr;
                         attr._previousSibling = null;
-                        currentAttr = firstAttr;
+                        currentAttr = this.firstAttr;
                     }
 
                     return res;
                 }
+
                 Attr removeNamedItem(DOMString name)
                 {
-                    auto res = firstAttr;
+                    auto res = this.firstAttr;
                     while (res && res.nodeName != name)
                     {
                         res = res._nextAttr;
@@ -2007,22 +2047,22 @@ class DOMImplementation : dom.DOMImplementation
 
                 Attr getNamedItemNS(DOMString namespaceURI, DOMString localName)
                 {
-                    Attr res = firstAttr;
+                    Attr res = this.firstAttr;
                     while (res && (res.localName != localName || res.namespaceURI != namespaceURI))
                     {
                         assert(res.localName != localName || res.namespaceURI != namespaceURI);
                         res = res._nextAttr;
                     }
                     return res;
-                    
                 }
+
                 Attr setNamedItemNS(dom.Node arg)
                 {
                     enforce!DOMException(!(arg.ownerDocument !is this.outer.ownerDocument)
                         , dom.ExceptionCode.wrongDocument);
 
                     Attr attr = cast(Attr)arg;
-                    enforce!DOMException(!(!attr)
+                    enforce!DOMException(!attr
                         , dom.ExceptionCode.hierarchyRequest);
 
                     if (attr._previousAttr)
@@ -2034,7 +2074,7 @@ class DOMImplementation : dom.DOMImplementation
                         attr._nextAttr._previousSibling = attr._previousAttr;
                     }
 
-                    auto res = firstAttr;
+                    auto res = this.firstAttr;
                     while (res && (res.localName != attr.localName
                                 || res.namespaceURI != attr.namespaceURI))
                     {
@@ -2045,7 +2085,10 @@ class DOMImplementation : dom.DOMImplementation
                     {
                         attr._previousSibling = res._previousAttr;
                         attr._nextSibling = res._nextAttr;
-                        if (res is firstAttr) firstAttr = attr;
+                        if (res is firstAttr)
+                        {
+                            firstAttr = attr;
+                        }
                     }
                     else
                     {
@@ -2066,32 +2109,29 @@ class DOMImplementation : dom.DOMImplementation
                         res = res._nextAttr;
                     }
 
-                    if (res)
+                    enforce!(DOMException)(!res, dom.ExceptionCode.notFound);
+
+                    if (res._previousAttr)
                     {
-                        if (res._previousAttr)
-                        {
-                            res._previousAttr._nextSibling = res._nextAttr;
-                        }
-                        if (res._nextAttr)
-                        {
-                            res._nextAttr._previousSibling = res._previousAttr;
-                        }
-                        return res;
+                        res._previousAttr._nextSibling = res._nextAttr;
                     }
-                    else
+                    if (res._nextAttr)
                     {
-                        throw new DOMException(dom.ExceptionCode.notFound);
+                        res._nextAttr._previousSibling = res._previousAttr;
                     }
+                    return res;
                 }
             }
+
             private
             {
                 Attr firstAttr;
                 Attr currentAttr;
             }
+
             // better methods
             auto opIndex(size_t i) { return item(i); }
-            
+
             // range interface
             auto opSlice()
             {
@@ -2099,20 +2139,22 @@ class DOMImplementation : dom.DOMImplementation
                 {
                     Attr currentAttr;
 
-                    auto front() { return currentAttr; }
-                    void popFront() { currentAttr = currentAttr._nextAttr; }
-                    bool empty() { return currentAttr is null; }
+                    auto front() { return this.currentAttr; }
+                    void popFront()
+                    {
+                        this.currentAttr = this.currentAttr._nextAttr;
+                    }
+
+                    bool empty() { return this.currentAttr is null; }
                 }
-                return Range(firstAttr);
+
+                return Range(this.firstAttr);
             }
         }
     }
     /// Implementation of $(LINK2 ../dom/Text, `newxml.dom.Text`)
     class Text: CharacterData, dom.Text
     {
-        package this() {
-
-        }
         // specific to Text
         override
         {
@@ -2121,29 +2163,32 @@ class DOMImplementation : dom.DOMImplementation
             {
                 enforce!DOMException(!(offset > data.length)
                     , dom.ExceptionCode.indexSize);
-                auto second = ownerDocument.createTextNode(data[offset..$]);
-                data = data[0..offset];
+                auto second = ownerDocument.createTextNode(this.data[offset .. $]);
+                data = this.data[0 .. offset];
+
                 if (parentNode)
                 {
                     if (nextSibling)
                     {
-                        parentNode.insertBefore(second, nextSibling);
+                        this.parentNode.insertBefore(second, nextSibling);
                     }
                     else
                     {
-                        parentNode.appendChild(second);
+                        this.parentNode.appendChild(second);
                     }
                 }
                 return second;
             }
+
             /++
             +   Implementation of $(LINK2 ../dom/Text.isElementContentWhitespace,
             +   `newxml.dom.Text.isElementContentWhitespace`).
             +/
             @property bool isElementContentWhitespace()
             {
-                return _data.getDString.indexOfNeither(" \r\n\t") == -1;
+                return this._data.getDString.indexOfNeither(" \r\n\t") == -1;
             }
+
             /// Implementation of $(LINK2 ../dom/Text.wholeText, `newxml.dom.Text.wholeText`).
             @property DOMString wholeText()
             {
@@ -2170,6 +2215,7 @@ class DOMImplementation : dom.DOMImplementation
                     while (node && node.nodeType == dom.NodeType.entityReference);
                     return null;
                 }
+
                 Text findNextText(Text text)
                 {
                     Node node = text;
@@ -2197,10 +2243,10 @@ class DOMImplementation : dom.DOMImplementation
                     return null;
                 }
 
-                //import newxml.appender;
-                DOMString result;//auto result = Appender!(typeof(_data[0]), typeof(*allocator))(allocator);
+                DOMString result;
 
-                Text node, prev = this;
+                Text node;
+                Text prev = this;
                 do
                 {
                     node = prev;
@@ -2215,6 +2261,7 @@ class DOMImplementation : dom.DOMImplementation
                 }
                 return result;
             }
+
             /++
             +   Implementation of $(LINK2 ../dom/Text.replaceWholeText,
             +   `newxml.dom.Text.replaceWholeText`).
@@ -2259,6 +2306,7 @@ class DOMImplementation : dom.DOMImplementation
                             return false;
                     }
                 }
+
                 bool endsWithText(Node reference)
                 {
                     if (!reference.lastChild)
@@ -2287,10 +2335,10 @@ class DOMImplementation : dom.DOMImplementation
                         current = current.parentNode;
                     }
 
-                    enforce!DOMException(!(!hasOnlyText(current))
+                    enforce!DOMException(!hasOnlyText(current)
                         , dom.ExceptionCode.noModificationAllowed);
                 }
-                else if (readonly)
+                else if (this.readonly)
                 {
                     throw new DOMException(dom.ExceptionCode.noModificationAllowed);
                 }
@@ -2299,7 +2347,8 @@ class DOMImplementation : dom.DOMImplementation
                     current = this;
                 }
 
-                size_t previousToKill, nextToKill;
+                size_t previousToKill;
+                size_t nextToKill;
                 auto node = current.previousSibling;
                 while (node)
                 {
@@ -2323,6 +2372,7 @@ class DOMImplementation : dom.DOMImplementation
                     previousToKill++;
                     node = node.previousSibling;
                 }
+
                 node = current.nextSibling;
                 while (node)
                 {
@@ -2375,7 +2425,8 @@ class DOMImplementation : dom.DOMImplementation
                         ? null
                         : ownerDocument.createTextNode(newText);
                 }
-                _data = newText;
+
+                this._data = newText;
                 return this;
             }
         }
@@ -2429,12 +2480,12 @@ class DOMImplementation : dom.DOMImplementation
         override
         {
             /// Implementation of $(LINK2 ../dom/DocumentType.name, `newxml.dom.DocumentType.name`).
-            @property DOMString name() { return _name; }
+            @property DOMString name() { return this._name; }
             /++
             +   Implementation of $(LINK2 ../dom/DocumentType.entities,
             +   `newxml.dom.DocumentType.entities`).
             +/
-            @property dom.NamedNodeMap entities() { return _entities; }
+            @property dom.NamedNodeMap entities() { return this._entities; }
             /++
             +   Implementation of $(LINK2 ../dom/DocumentType.notations,
             +   `newxml.dom.DocumentType.notations`).
@@ -2444,59 +2495,68 @@ class DOMImplementation : dom.DOMImplementation
             +   Implementation of $(LINK2 ../dom/DocumentType.publicId,
             +   `newxml.dom.DocumentType.publicId`).
             +/
-            @property DOMString publicId() { return _publicId; }
+            @property DOMString publicId() { return this._publicId; }
             /++
             +   Implementation of $(LINK2 ../dom/DocumentType.systemId,
             +   `newxml.dom.DocumentType.systemId`).
             +/
-            @property DOMString systemId() { return _systemId; }
+            @property DOMString systemId() { return this._systemId; }
             /++
             +   Implementation of $(LINK2 ../dom/DocumentType.internalSubset,
             +   `newxml.dom.DocumentType.internalSubset`).
             +/
-            @property DOMString internalSubset() { return _internalSubset; }
+            @property DOMString internalSubset() { return this._internalSubset; }
         }
-        private DOMString _name, _publicId, _systemId, _internalSubset;
+
+        private
+        {
+            DOMString _name;
+            DOMString _publicId;
+            DOMString _systemId;
+            DOMString _internalSubset;
+        }
+
         // inherited from Node
         override
         {
             @property dom.NodeType nodeType() { return dom.NodeType.documentType; }
-            @property DOMString nodeName() { return _name; }
+            @property DOMString nodeName() { return this._name; }
         }
-        class NamedNodeMap : dom.NamedNodeMap 
+
+        class NamedNodeMap : dom.NamedNodeMap
         {
             package dom.Node[] nodes;
-            package this()
-            {
 
-            }
             /++
             +   Returns the `index`th item in the collection. If `index` is greater than
             +   or equal to the number of nodes in the list, this returns `null`.
             +/
             dom.Node item(size_t index)
             {
-                return nodes[index];
+                return this.nodes[index];
             }
+
             /++
             +   The number of nodes in the list. The range of valid child node indices is
             +   `0` to `length-1` inclusive.
             +/
             @property size_t length()
             {
-                return nodes.length;
+                return this.nodes.length;
             }
+
             /// Retrieves a node specified by name.
-            dom.Node getNamedItem(DOMString name) 
+            dom.Node getNamedItem(DOMString name)
             {
-                foreach (dom.Node key; nodes) {
-                    if (key.nodeName == name) 
+                foreach (dom.Node key; this.nodes) {
+                    if (key.nodeName == name)
                     {
                         return key;
                     }
                 }
                 return null;
             }
+
             /++
             +   Adds a node using its `nodeName` attribute. If a node with that name is
             +   already present in this map, it is replaced by the new one. Replacing a
@@ -2508,17 +2568,17 @@ class DOMImplementation : dom.DOMImplementation
             +/
             dom.Node setNamedItem(dom.Node arg)
             {
-                foreach (size_t i, dom.Node key; nodes) {
-                    if (key.nodeName == name) 
+                foreach (size_t i, dom.Node key; this.nodes) {
+                    if (key.nodeName == name)
                     {
-                        nodes[i] = arg;
-                        //cast(Node)(key)._parentNode = null;
+                        this.nodes[i] = arg;
                         return arg;
                     }
                 }
                 nodes ~= arg;
                 return arg;
             }
+
             /++
             +   Removes a node specified by name. When this map contains the attributes
             +   attached to an element, if the removed attribute is known to have a default
@@ -2527,11 +2587,10 @@ class DOMImplementation : dom.DOMImplementation
             +/
             dom.Node removeNamedItem(DOMString name)
             {
-                foreach (size_t i, dom.Node key; nodes) {
-                    if (key.nodeName == name) 
+                foreach (size_t i, dom.Node key; this.nodes) {
+                    if (key.nodeName == name)
                     {
-                        nodes = nodes[0..i] ~ nodes[i+1..$];
-                        //cast(Node)(key)._parentNode = null;
+                        this.nodes = this.nodes[0 .. i] ~ this.nodes[i + 1 .. $];
                         return key;
                     }
                 }
@@ -2547,6 +2606,7 @@ class DOMImplementation : dom.DOMImplementation
             {
                 return null;
             }
+
             /++
             +   Adds a node using its `namespaceURI` and `localName`. If a node with that
             +   namespace URI and that local name is already present in this map, it is
@@ -2558,6 +2618,7 @@ class DOMImplementation : dom.DOMImplementation
             {
                 return null;
             }
+
             /++
             +   Removes a node specified by local name and namespace URI. A removed attribute
             +   may be known to have a default value when this map contains the attributes attached
@@ -2576,9 +2637,6 @@ class DOMImplementation : dom.DOMImplementation
     /// Implementation of $(LINK2 ../dom/CDATASection, `newxml.dom.CDATASection`)
     class CDATASection : Text, dom.CDATASection
     {
-        package this() {
-
-        }
         // inherited from Node
         override
         {
@@ -2588,7 +2646,7 @@ class DOMImplementation : dom.DOMImplementation
             CDATASection cloneNode(bool deep)
             {
                 CDATASection cloned = new CDATASection();
-                cloned._ownerDocument = _ownerDocument;
+                cloned._ownerDocument = this._ownerDocument;
                 super.performClone(cloned, deep);
                 return cloned;
             }
@@ -2597,9 +2655,6 @@ class DOMImplementation : dom.DOMImplementation
     /// Implementation of $(LINK2 ../dom/ProcessingInstruction, `newxml.dom.ProcessingInstruction`)
     class ProcessingInstruction : Node, dom.ProcessingInstruction
     {
-        package this() {
-
-        }
         // specific to ProcessingInstruction
         override
         {
@@ -2607,16 +2662,18 @@ class DOMImplementation : dom.DOMImplementation
             +   Implementation of $(LINK2 ../dom/ProcessingInstruction.target,
             +   `newxml.dom.ProcessingInstruction.target`).
             +/
-            @property DOMString target() { return _target; }
+            @property DOMString target() { return this._target; }
             /++
             +   Implementation of $(LINK2 ../dom/ProcessingInstruction.data,
             +   `newxml.dom.ProcessingInstruction.data`).
             +/
-            @property DOMString data() { return _data; }
+            @property DOMString data() { return this._data; }
             /// ditto
-            @property void data(DOMString newVal) { _data = newVal; }
+            @property void data(DOMString newVal) { this._data = newVal; }
         }
-        private DOMString _target, _data;
+        private DOMString _target;
+        private DOMString _data;
+
         // inherited from Node
         override
         {
@@ -2627,7 +2684,7 @@ class DOMImplementation : dom.DOMImplementation
             {
                 enforce!DOMException(!(readonly)
                     , dom.ExceptionCode.noModificationAllowed);
-                _data = newVal;
+                this._data = newVal;
             }
 
             @property DOMString textContent() { return _data; }
@@ -2635,16 +2692,16 @@ class DOMImplementation : dom.DOMImplementation
             {
                 enforce!DOMException(!(readonly)
                     , dom.ExceptionCode.noModificationAllowed);
-                _data = newVal;
+                this._data = newVal;
             }
 
             ProcessingInstruction cloneNode(bool deep)
             {
                 auto cloned = new ProcessingInstruction();
-                cloned._ownerDocument = _ownerDocument;
+                cloned._ownerDocument = this._ownerDocument;
                 super.performClone(cloned, deep);
-                cloned._target = _target;
-                cloned._data = _data;
+                cloned._target = this._target;
+                cloned._data = this._data;
                 return cloned;
             }
         }
@@ -2656,55 +2713,66 @@ class DOMImplementation : dom.DOMImplementation
         private DOMString _publicId;
         private DOMString _systemId;
         private DOMString content;
-        package this(DOMString _publicId, DOMString content, Document _ownerDocument) 
+
+        package this(DOMString publicId, DOMString content, Document ownerDocument)
         {
-            this._publicId = _publicId;
+            this._publicId = publicId;
             this.content = content;
-            this._ownerDocument = _ownerDocument;
+            this._ownerDocument = ownerDocument;
         }
-        package this(DOMString _publicId, DOMString _systemId, DOMString content, Document _ownerDocument) 
+
+        package this(DOMString publicId, DOMString systemId, DOMString content
+                , Document ownerDocument)
         {
-            this._publicId = _publicId;
-            this._systemId = _systemId;
+            this._publicId = publicId;
+            this._systemId = systemId;
             this.content = content;
-            this._ownerDocument = _ownerDocument;
+            this._ownerDocument = ownerDocument;
         }
+
         /// The text substituted by this entity.
         override @property DOMString nodeValue()
         {
             return content;
         }
+
         /// The text substituted by this entity.
         override @property DOMString textContent()
         {
             return content;
         }
+
         override @property DOMString nodeName()
         {
             return _publicId;
         }
+
         override @property dom.NodeType nodeType()
         {
             return dom.NodeType.entity;
         }
+
         /// The public identifier associated with the entity if specified, and `null` otherwise.
-        @property DOMString publicId() 
+        @property DOMString publicId()
         {
-            return _publicId;
+            return this._publicId;
         }
+
         /++
         +   The system identifier associated with the entity if specified, and `null` otherwise.
         +   This may be an absolute URI or not.
         +/
         @property DOMString systemId()
         {
-            return _systemId;
+            return this._systemId;
         }
+
         /// For unparsed entities, the name of the `Notation` for the entity. For parsed entities, this is `null`.
         @property DOMString notationName()
         {
             return null;
         }
+
         /++
         +   An attribute specifying the encoding used for this entity at the time of
         +   parsing, when it is an external parsed entity. This is `null` if it an
@@ -2714,6 +2782,7 @@ class DOMImplementation : dom.DOMImplementation
         {
             return null;
         }
+
         /++
         +   An attribute specifying, as part of the text declaration, the encoding of
         +   this entity, when it is an external parsed entity. This is `null` otherwise.
@@ -2722,6 +2791,7 @@ class DOMImplementation : dom.DOMImplementation
         {
             return null;
         }
+
         /++
         +   An attribute specifying, as part of the text declaration, the version
         +   number of this entity, when it is an external parsed entity. This is
@@ -2732,29 +2802,27 @@ class DOMImplementation : dom.DOMImplementation
             return null;
         }
     }
+
     /// Implementation of $(LINK2 ../dom/EntityReference, `newxml.dom.EntityReference`)
     class EntityReference : NodeWithChildren, dom.EntityReference
     {
-        package this() {
-
-        }
         // inherited from Node
         override
         {
             @property dom.NodeType nodeType() { return dom.NodeType.entityReference; }
-            @property DOMString nodeName() { return _ent_name; }
+            @property DOMString nodeName() { return this._ent_name; }
             @property bool readonly() { return true; }
         }
+
         private DOMString _ent_name;
     }
+
     /// Implementation of $(LINK2 ../dom/DOMConfiguration, `newxml.dom.DOMConfiguration`)
     class DOMConfiguration : dom.DOMConfiguration
     {
         import std.meta;
         import std.traits;
-        package this() {
 
-        }
         private
         {
             enum string always = "((x) => true)";
@@ -2787,6 +2855,7 @@ class DOMImplementation : dom.DOMImplementation
                 return false;
             }
         }
+
         // specific to DOMConfiguration
         override
         {
@@ -2807,6 +2876,7 @@ class DOMImplementation : dom.DOMImplementation
                         throw new DOMException(dom.ExceptionCode.notFound);
                 }
             }
+
             /++
             +   Implementation of $(LINK2 ../dom/DOMConfiguration.getParameter,
             +   `newxml.dom.DOMConfiguration.getParameter`).
@@ -2824,6 +2894,7 @@ class DOMImplementation : dom.DOMImplementation
                         throw new DOMException(dom.ExceptionCode.notFound);
                 }
             }
+
             /++
             +   Implementation of $(LINK2 ../dom/DOMConfiguration.canSetParameter,
             +   `newxml.dom.DOMConfiguration.canSetParameter`).
@@ -2843,6 +2914,7 @@ class DOMImplementation : dom.DOMImplementation
                         return false;
                 }
             }
+
             /++
             +   Implementation of $(LINK2 ../dom/DOMConfiguration.parameterNames,
             +   `newxml.dom.DOMConfiguration.parameterNames`).
@@ -2855,9 +2927,6 @@ class DOMImplementation : dom.DOMImplementation
 
         class StringList : dom.DOMStringList
         {
-            package this() {
-
-            }
             private template MapToConfigName(Members...)
             {
                 static if (Members.length > 0)
@@ -2884,7 +2953,6 @@ class DOMImplementation : dom.DOMImplementation
                     return arr.canFind(str);
                 }
             }
-            //alias arr this;
         }
     }
 }
@@ -2895,9 +2963,8 @@ class DOMImplementation : dom.DOMImplementation
 +/
 auto domBuilder(CursorType)(auto ref CursorType cursor)
 {
-    //import std.experimental.allocator.gc_allocator;//import stdx.allocator.gc_allocator;
     import dompar = newxml.domparser;
-    return dompar.domBuilder(cursor, new DOMImplementation());//return dompar.domBuilder(cursor, new DOMImplementation!(CursorType.StringType, shared(GCAllocator))());
+    return dompar.domBuilder(cursor, new DOMImplementation());
 }
 
 unittest
@@ -2970,7 +3037,7 @@ unittest
     assert(pi.isEqualNode(pi.cloneNode(false)));
 }
 
-unittest
+@safe unittest
 {
     import newxml.lexers;
     import newxml.parser;
