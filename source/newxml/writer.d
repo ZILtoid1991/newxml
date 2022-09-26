@@ -46,7 +46,7 @@ private auto xmlDeclarationAttributes(StringType, Args...)(Args args)
     // version specification
     static if (is(Args[0] == int))
     {
-        assert(args[0] == 10 || args[0] == 11, "Invalid xml version specified");
+        enforce(args[0] == 10 || args[0] == 11, "Invalid xml version specified");
         StringType versionString = args[0] == 10 ? "1.0" : "1.1";
         auto args1 = args[1..$];
     }
@@ -212,11 +212,12 @@ struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
 
     StringType output;
 
-    bool startingTag = false, insideDTD = false;
+    bool startingTag = false;
+    bool insideDTD = false;
 
     this(typeof(prettyPrinter) pretty)
     {
-        prettyPrinter = pretty;
+        this.prettyPrinter = pretty;
     }
 
     private template expand(string methodName)
@@ -481,7 +482,7 @@ struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
     }
     void writeDeclaration(StringType decl, StringType content)
     {
-        //assert(insideDTD);
+        assert(insideDTD);
 
         mixin(ifAnyCompiles(expand!"beforeNode"));
         output ~= "<!";
@@ -492,22 +493,18 @@ struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
     }
 }
 
-unittest
+@safe unittest
 {
     import std.array : Appender;
     import std.typecons : refCounted;
 
-    //string app;
     auto writer = Writer!(string)();
-    //writer.setSink(app);
 
     writer.writeXMLDeclaration(10, "utf-8", false);
     assert(writer.output == "<?xml version='1.0' encoding='utf-8' standalone='no'?>", writer.output);
-
-    //static assert(isWriter!(typeof(writer)));
 }
 
-unittest
+@safe unittest
 {
     import std.array : Appender;
     import std.typecons : refCounted;
@@ -602,7 +599,7 @@ void writeDOM(WriterType)(auto ref WriterType writer, dom.Node node)
     }
 }
 
-unittest
+@safe unittest
 {
     import newxml.domimpl;
     Writer!(string, PrettyPrinters.Minimalizer) wrt = Writer!(string)(PrettyPrinters.Minimalizer!string());
@@ -745,7 +742,7 @@ auto writeCursor(Flag!"useFiber" useFiber = No.useFiber, WriterType, CursorType)
         inspectOneLevel();
 }
 
-unittest
+@safe unittest
 {
     import std.array : Appender;
     import newxml.parser;
