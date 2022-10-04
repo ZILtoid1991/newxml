@@ -9,13 +9,14 @@ import std.utf;
 import newxml.faststrings;
 import newxml.interfaces;
 
-version (newxml_force_utf8) {
-    alias XMLCh = immutable(char);
+version (newxml_force_utf16) {
+    alias XMLCh = immutable(wchar);
 } else version (newxml_force_utf32) {
     alias XMLCh = immutable(dchar);
 } else {
-    alias XMLCh = immutable(wchar);
+    alias XMLCh = immutable(char);
 }
+
 /**
  * Proper DOMString implementation, with some added range capabilities.
  * Authors:
@@ -82,32 +83,33 @@ public class DOMString : RandomAccessFinite!XMLCh {
         buffer = other[0..length];
         backPos = buffer.length;
     }
-    version (newxml_force_utf8) {
 
-    } else {
-        /**
-         * Constructor to build a DOMString from an 8 bit character array.
-         * Params:
-         *   other = The character array to be imported into the DOMString
-         */
-        this(const(char)* other) @trusted nothrow pure {
-            version (newxml_force_utf32) {
-                buffer = toUTF32(fromStringz(other));
-            } else {
-                buffer = toUTF16(fromStringz(other));
-            }
-            backPos = buffer.length;
+    /**
+     * Constructor to build a DOMString from an 8 bit character array.
+     * Params:
+     *   other = The character array to be imported into the DOMString
+     */
+    this(const(char)* other) @trusted nothrow pure {
+        version (newxml_force_utf32) {
+            buffer = toUTF32(fromStringz(other));
+        } else version (newxml_force_utf16) {
+            buffer = toUTF16(fromStringz(other));
+        } else {
+            import std.conv : to;
+            buffer = other.to!string();
         }
+        backPos = buffer.length;
     }
+
 
     ///Creates DOMString objects from standard D strings.
     this(T)(T[] other) nothrow pure {
-        version (newxml_force_utf8) {
-            buffer = toUTF8(other);
+        version (newxml_force_utf16) {
+            buffer = toUTF16(other);
         } else version (newxml_force_utf32) {
             buffer = toUTF32(other);
         } else {
-            buffer = toUTF16(other);
+            buffer = toUTF8(other);
         }
         backPos = buffer.length;
     }
@@ -149,10 +151,10 @@ public class DOMString : RandomAccessFinite!XMLCh {
      */
     void appendData(T)(T[] other) nothrow pure {
         version (newxml_force_utf8) {
-            buffer ~= toUTF8(other);
+            buffer ~= other;
         } else version (newxml_force_utf32) {
             buffer ~= toUTF32(other);
-        } else {
+        } else version (newxml_force_utf16) {
             buffer ~= toUTF16(other);
         }
         backPos = buffer.length;
@@ -225,7 +227,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
      */
     bool equals(T)(T other) pure const {
         XMLCh[] o;
-        version (newxml_force_utf8)
+        version (newxml_force_utf16)
         {
             o = toUTF8(other);
         }
@@ -235,7 +237,7 @@ public class DOMString : RandomAccessFinite!XMLCh {
         }
         else
         {
-            o = toUTF16(other);
+            o = toUTF8(other);
         }
 
         return equal(buffer, o);
