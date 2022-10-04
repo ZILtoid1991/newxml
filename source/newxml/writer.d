@@ -543,7 +543,6 @@ struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
 }
 
 import dom = newxml.dom;
-import newxml.domstring;
 
 /++
 +   Outputs the entire DOM tree rooted at `node` using the given `writer`.
@@ -551,6 +550,7 @@ import newxml.domstring;
 void writeDOM(WriterType)(auto ref WriterType writer, dom.Node node)
 {
     import std.traits : ReturnType;
+    import std.conv : to;
     import newxml.faststrings;
     alias Document = typeof(node.ownerDocument);
     alias Element = ReturnType!(Document.documentElement);
@@ -560,9 +560,15 @@ void writeDOM(WriterType)(auto ref WriterType writer, dom.Node node)
     {
         case document:
             auto doc = cast(Document)node;
-            DOMString xmlVersion = doc.xmlVersion, xmlEncoding = doc.xmlEncoding;
-            writer.writeXMLDeclaration(xmlVersion ? xmlVersion.transcodeTo!StringType() : null,
-                    xmlEncoding ? xmlEncoding.transcodeTo!StringType() : null, doc.xmlStandalone);
+            string xmlVersion = doc.xmlVersion;
+            string xmlEncoding = doc.xmlEncoding;
+            writer.writeXMLDeclaration(xmlVersion
+                    ? xmlVersion.to!StringType()
+                    : null
+                , xmlEncoding
+                    ? xmlEncoding.to!StringType()
+                    : null
+                , doc.xmlStandalone);
             foreach (child; doc.childNodes)
             {
                 writer.writeDOM(child);
@@ -570,29 +576,29 @@ void writeDOM(WriterType)(auto ref WriterType writer, dom.Node node)
             break;
         case element:
             auto elem = cast(Element)node;
-            writer.startElement(elem.tagName.transcodeTo!StringType);
+            writer.startElement(elem.tagName.to!StringType);
             if (elem.hasAttributes)
             {
                 foreach (attr; elem.attributes)
                 {
-                    writer.writeAttribute(attr.nodeName.transcodeTo!StringType,
-                            xmlEscape(attr.nodeValue.transcodeTo!StringType));
+                    writer.writeAttribute(attr.nodeName.to!StringType,
+                            xmlEscape(attr.nodeValue.to!StringType));
                 }
             }
             foreach (child; elem.childNodes)
             {
                 writer.writeDOM(child);
             }
-            writer.closeElement(elem.tagName.transcodeTo!StringType);
+            writer.closeElement(elem.tagName.to!StringType);
             break;
         case text:
-            writer.writeText(xmlEscape(node.nodeValue.transcodeTo!StringType));
+            writer.writeText(xmlEscape(node.nodeValue.to!StringType));
             break;
         case cdataSection:
-            writer.writeCDATA(xmlEscape(node.nodeValue.transcodeTo!StringType));
+            writer.writeCDATA(xmlEscape(node.nodeValue.to!StringType));
             break;
         case comment:
-            writer.writeComment(node.nodeValue.transcodeTo!StringType);
+            writer.writeComment(node.nodeValue.to!StringType);
             break;
         default:
             break;
@@ -605,15 +611,15 @@ void writeDOM(WriterType)(auto ref WriterType writer, dom.Node node)
     Writer!(string, PrettyPrinters.Minimalizer) wrt = Writer!(string)(PrettyPrinters.Minimalizer!string());
 
     dom.DOMImplementation domimpl = new DOMImplementation;
-    dom.Document doc = domimpl.createDocument(null, new DOMString("doc"), null);
-    dom.Element e0 = doc.createElement(new DOMString("text"));
+    dom.Document doc = domimpl.createDocument(null, "doc", null);
+    dom.Element e0 = doc.createElement("text");
     doc.firstChild.appendChild(e0);
-    e0.setAttribute(new DOMString("something"), new DOMString("other thing"));
-    e0.appendChild(doc.createTextNode(new DOMString("Some text ")));
-    dom.Element e1 = doc.createElement(new DOMString("b"));
-    e1.appendChild(doc.createTextNode(new DOMString("with")));
+    e0.setAttribute("something", "other thing");
+    e0.appendChild(doc.createTextNode("Some text "));
+    dom.Element e1 = doc.createElement("b");
+    e1.appendChild(doc.createTextNode("with"));
     e0.appendChild(e1);
-    e0.appendChild(doc.createTextNode(new DOMString(" markup.")));
+    e0.appendChild(doc.createTextNode(" markup."));
 
     wrt.writeDOM(doc);
 

@@ -27,7 +27,6 @@
 module newxml.dom;
 
 import newxml.interfaces;
-public import newxml.domstring;
 import std.typecons : BitFlags;
 import std.variant : Variant;
 
@@ -43,7 +42,7 @@ alias UserData = Variant;
 +   the application to implement various behaviors regarding the data it associates
 +   to the DOM nodes.
 +/
-alias UserDataHandler = void delegate(UserDataOperation, DOMString, UserData, Node,
+alias UserDataHandler = void delegate(UserDataOperation, string, UserData, Node,
         Node) @safe;
 
 /++
@@ -129,7 +128,7 @@ enum ExceptionCode : ushort
 {
     /// If index or size is negative, or greater than the allowed value.
     indexSize,
-    /// If the specified range of text does not fit into a `DOMString`.
+    /// If the specified range of text does not fit into a `string`.
     domStringSize,
     /// If any `Node` is inserted somewhere it doesn't belong.
     hierarchyRequest,
@@ -227,16 +226,16 @@ abstract class DOMException : XMLException
 }
 
 /++
-+   The `DOMStringList` interface provides the abstraction of an ordered collection
-+   of `DOMString` values, without defining or constraining how this collection is
-+   implemented. The items in the DOMStringList are accessible via an integral index,
++   The `stringList` interface provides the abstraction of an ordered collection
++   of `string` values, without defining or constraining how this collection is
++   implemented. The items in the stringList are accessible via an integral index,
 +   starting from `0`.
 +/
-interface DOMStringList
+interface stringList
 {
-    DOMString item(size_t index);
+    string item(size_t index);
     @property size_t length();
-    bool contains(DOMString str);
+    bool contains(string str);
 }
 
 /++
@@ -262,10 +261,10 @@ interface DOMImplementationSource
 {
     /// A method to request the first DOM implementation that supports the
     /// specified features.
-    DOMImplementation getDOMImplementation(DOMString features);
+    DOMImplementation getDOMImplementation(string features);
     /// A method to request a list of DOM implementations that support the
     /// specified features and versions, as specified in DOM Features.
-    DOMImplementationList getDOMImplementationList(DOMString features);
+    DOMImplementationList getDOMImplementationList(string features);
 }
 
 /++
@@ -280,7 +279,7 @@ interface DOMImplementation
     +   are not made available. Entity reference expansions and default
     +   attribute additions do not occur.
     +/
-    DocumentType createDocumentType(DOMString qualifiedName, DOMString publicId, DOMString systemId);
+    DocumentType createDocumentType(string qualifiedName, string publicId, string systemId);
 
     /++
     +   Creates a DOM Document object of the specified type with its document element.
@@ -291,7 +290,7 @@ interface DOMImplementation
     +   setting the DocumentType after the document was created makes this very
     +   unlikely to happen.
     +/
-    Document createDocument(DOMString namespaceURI, DOMString qualifiedName, DocumentType doctype);
+    Document createDocument(string namespaceURI, string qualifiedName, DocumentType doctype);
 
     bool hasFeature(string feature, string version_);
     Object getFeature(string feature, string version_);
@@ -371,53 +370,53 @@ interface Document : Node
     +   To create an `Element` with a qualified name and namespace URI, use the
     +   `createElementNS` method.
     +/
-    Element createElement(DOMString tagName);
+    Element createElement(string tagName);
     /++
     +   Creates an `Element` of the given qualified name and namespace URI.
     +   Per the XML Namespaces specification, applications must use the value `null`
     +   as the `namespaceURI` parameter for methods if they wish to have no namespace.
     +/
-    Element createElementNS(DOMString namespaceURI, DOMString qualifiedName);
+    Element createElementNS(string namespaceURI, string qualifiedName);
     /// Creates an empty `DocumentFragment` object.
     DocumentFragment createDocumentFragment();
     /// Creates a `Text` node given the specified string.
-    Text createTextNode(DOMString data);
+    Text createTextNode(string data);
     /// Creates a `Comment` node given the specified string.
-    Comment createComment(DOMString data);
+    Comment createComment(string data);
     /// Creates a `CDATASection` node whose value is the specified string.
-    CDATASection createCDATASection(DOMString data);
+    CDATASection createCDATASection(string data);
     /// Creates a `ProcessingInstruction` node given the specified name and data strings.
-    ProcessingInstruction createProcessingInstruction(DOMString target, DOMString data);
+    ProcessingInstruction createProcessingInstruction(string target, string data);
     /++
     +   Creates an `Attr` of the given name. Note that the `Attr` instance can
     +   then be set on an `Element` using the `setAttributeNode` method.
     +   To create an attribute with a qualified name and namespace URI, use the
     +   `createAttributeNS` method.
     +/
-    Attr createAttribute(DOMString name);
+    Attr createAttribute(string name);
     /++
     +   Creates an attribute of the given qualified name and namespace URI.
     +   Per the XML Namespaces specification, applications must use the value `null`
     +   as the `namespaceURI` parameter for methods if they wish to have no namespace.
     +/
-    Attr createAttributeNS(DOMString namespaceURI, DOMString qualifiedName);
+    Attr createAttributeNS(string namespaceURI, string qualifiedName);
     /++
     +   Creates an `EntityReference` object. In addition, if the referenced entity
     +   is known, the child list of the `EntityReference` node is made the same as
     +   that of the corresponding `Entity` node.
     +/
-    EntityReference createEntityReference(DOMString name);
+    EntityReference createEntityReference(string name);
 
     /++
     +   Returns a `NodeList` of all the `Element`s in document order with a given
     +   tag name and are contained in the document.
     +/
-    NodeList getElementsByTagName(DOMString tagname);
+    NodeList getElementsByTagName(string tagname);
     /++
     +   Returns a `NodeList` of all the `Element`s with a given local name and
     +   namespace URI in document order.
     +/
-    NodeList getElementsByTagNameNS(DOMString namespaceURI, DOMString localName);
+    NodeList getElementsByTagNameNS(string namespaceURI, string localName);
     /++
     +   Returns the `Element` that has an ID attribute with the given value. If no
     +   such element exists, this returns `null`. If more than one element has an
@@ -427,7 +426,7 @@ interface Document : Node
     +
     +   Note: Attributes with the name "ID" or "id" are not of type ID unless so defined.
     +/
-    Element getElementById(DOMString elementId);
+    Element getElementById(string elementId);
 
     /++
     +   Imports a node from another document to this document, without altering or
@@ -455,13 +454,13 @@ interface Document : Node
     +   the parsing. This is `null` when it is not known, such as when the `Document`
     +   was created in memory.
     +/
-    @property DOMString inputEncoding();
+    @property string inputEncoding();
     /++
     +   An attribute specifying, as part of the XML declaration, the encoding of
     +   this document. This is `null` when unspecified or when it is not known,
     +   such as when the Document was created in memory.
     +/
-    @property DOMString xmlEncoding();
+    @property string xmlEncoding();
 
     /++
     +   An attribute specifying, as part of the XML declaration, whether this document
@@ -477,9 +476,9 @@ interface Document : Node
     +   the "XML" feature, the value is "1.0". If this document does not support
     +   the "XML" feature, the value is always `null`.
     +/
-    @property DOMString xmlVersion();
+    @property string xmlVersion();
     /// ditto
-    @property void xmlVersion(DOMString);
+    @property void xmlVersion(string);
 
     /++
     +   An attribute specifying whether error checking is enforced or not.
@@ -498,9 +497,9 @@ interface Document : Node
     +   is performed when setting this attribute; this could result in a `null`
     +   value returned when using `Node.baseURI`.
     +/
-    @property DOMString documentURI();
+    @property string documentURI();
     /// ditto
-    @property void documentURI(DOMString);
+    @property void documentURI(string);
 
     /// The configuration used when `Document.normalizeDocument()` is invoked.
     @property DOMConfiguration domConfig();
@@ -527,7 +526,7 @@ interface Document : Node
     +   nodes list if it has one, the user data that was attached to the old node
     +   is attached to the new node.
     +/
-    Node renameNode(Node n, DOMString namespaceURI, DOMString qualifiedName);
+    Node renameNode(Node n, string namespaceURI, string qualifiedName);
 }
 
 /++
@@ -550,14 +549,14 @@ interface Node
     /// A code representing the type of the underlying object.
     @property NodeType nodeType();
     /// The name of this node, depending on its type.
-    @property DOMString nodeName();
+    @property string nodeName();
     /++
     +   Returns the local part of the qualified name of this node.
     +
     +   For nodes of any type other than `ELEMENT` and `ATTRIBUTE` and nodes created
     +   with a DOM Level 1 method, such as `Document.createElement`, this is always `null`.
     +/
-    @property DOMString localName();
+    @property string localName();
     /++
     +   The namespace prefix of this node, or `null` if it is unspecified.
     +   When it is defined to be `null`, setting it has no effect, including if
@@ -574,9 +573,9 @@ interface Node
     +   with a DOM Level 1 method, such as `createElement` from the `Document`
     +   interface, this is always `null`.
     +/
-    @property DOMString prefix();
+    @property string prefix();
     /// ditto
-    @property void prefix(DOMString);
+    @property void prefix(string);
     /++
     +   The namespace URI of this node, or `null` if it is unspecified.
     +   This is not a computed value that is the result of a namespace lookup based
@@ -585,18 +584,18 @@ interface Node
     +   For nodes of any type other than `ELEMENT` and `ATTRIBUTE` and nodes created
     +   with a DOM Level 1 method, such as `Document.createElement`, this is always `null`.
     +/
-    @property DOMString namespaceURI();
+    @property string namespaceURI();
     /// The absolute base URI of this node or null if the implementation wasn't able to obtain an absolute URI
-    @property DOMString baseURI();
+    @property string baseURI();
 
     /// The value of this node, depending on its type.
-    @property DOMString nodeValue();
+    @property string nodeValue();
     /// ditto
-    @property void nodeValue(DOMString);
+    @property void nodeValue(string);
     /// Returns the text content, if there's any.
-    @property DOMString textContent();
+    @property string textContent();
     /// Sets the text content, it there's any.
-    @property void textContent(DOMString);
+    @property void textContent(string);
 
     /++
     +   The parent of this node. All nodes, except `Attr`, `Document`, `DocumentFragment`,
@@ -697,11 +696,11 @@ interface Node
     +   Look up the prefix associated to the given namespace URI, starting from this node.
     +   The default namespace declarations are ignored by this method.
     +/
-    DOMString lookupPrefix(DOMString namespaceURI);
+    string lookupPrefix(string namespaceURI);
     /// Look up the namespace URI associated to the given `prefix`, starting from this node.
-    DOMString lookupNamespaceURI(DOMString prefix);
+    string lookupNamespaceURI(string prefix);
     /// This method checks if the specified `namespaceURI` is the default namespace or not.
-    bool isDefaultNamespace(DOMString namespaceURI);
+    bool isDefaultNamespace(string namespaceURI);
 }
 
 /++
@@ -781,7 +780,7 @@ interface NamedNodeMap
     }
 
     /// Retrieves a node specified by name.
-    Node getNamedItem(DOMString name);
+    Node getNamedItem(string name);
     /++
     +   Adds a node using its `nodeName` attribute. If a node with that name is
     +   already present in this map, it is replaced by the new one. Replacing a
@@ -798,14 +797,14 @@ interface NamedNodeMap
     +   value, an attribute immediately appears containing the default value as
     +   well as the corresponding namespace URI, local name, and prefix when applicable.
     +/
-    Node removeNamedItem(DOMString name);
+    Node removeNamedItem(string name);
 
     /++
     +   Retrieves a node specified by local name and namespace URI.
     +   Per the XML Namespaces specification, applications must use the value `null`
     +   as the `namespaceURI` parameter for methods if they wish to have no namespace.
     +/
-    Node getNamedItemNS(DOMString namespaceURI, DOMString localName);
+    Node getNamedItemNS(string namespaceURI, string localName);
     /++
     +   Adds a node using its `namespaceURI` and `localName`. If a node with that
     +   namespace URI and that local name is already present in this map, it is
@@ -823,7 +822,7 @@ interface NamedNodeMap
     +   Per the XML Namespaces specification, applications must use the value `null`
     +   as the `namespaceURI` parameter for methods if they wish to have no namespace.
     +/
-    Node removeNamedItemNS(DOMString namespaceURI, DOMString localName);
+    Node removeNamedItemNS(string namespaceURI, string localName);
 }
 
 /++
@@ -835,24 +834,24 @@ interface NamedNodeMap
 +/
 interface CharacterData : Node
 {
-    @property DOMString data();
-    @property void data(DOMString);
+    @property string data();
+    @property void data(string);
 
     @property size_t length();
 
     /// Extracts a substring of `data` starting at `offset`, with length `count`.
-    DOMString substringData(size_t offset, size_t count);
+    string substringData(size_t offset, size_t count);
     /++
     +   Append the string to the end of the character data of the node. Upon success,
-    +   data provides access to the concatenation of data and the DOMString specified.
+    +   data provides access to the concatenation of data and the string specified.
     +/
-    void appendData(DOMString arg);
+    void appendData(string arg);
     /// Insert a string at the specified offset.
-    void insertData(size_t offset, DOMString arg);
+    void insertData(size_t offset, string arg);
     /// Remove a range of characters from the node. Upon success, `data` and `length` reflect the change.
     void deleteData(size_t offset, size_t count);
     /// Replace `count` characters starting at the specified offset with the specified string.
-    void replaceData(size_t offset, size_t count, DOMString arg);
+    void replaceData(size_t offset, size_t count, string arg);
 }
 
 /++
@@ -878,7 +877,7 @@ interface Attr : Node
     +   Returns the _name of this attribute. If `Node.localName` is different from
     +   `null`, this attribute is a qualified name.
     +/
-    @property DOMString name();
+    @property string name();
     /++
     +   `true` if this attribute was explicitly given a value in the instance document,
     +   `false` otherwise. If the application changed the value of this attribute
@@ -889,7 +888,7 @@ interface Attr : Node
     +/
     @property bool specified();
     /++
-    +   On retrieval, the value of the attribute is returned as a `DOMString`.
+    +   On retrieval, the value of the attribute is returned as a `string`.
     +   Character and general entity references are replaced with their values.
     +   See also the method `getAttribute` on the `Element` interface.
     +   On setting, this creates a `Text` node with the unparsed contents of the
@@ -897,9 +896,9 @@ interface Attr : Node
     +   are instead treated as literal text.
     +   See also the method `Element.setAttribute`.
     +/
-    @property DOMString value();
+    @property string value();
     /// ditto
-    @property void value(DOMString);
+    @property void value(string);
 
     /// The `Element` node this attribute is attached to or `null` if this attribute is not in use.
     @property Element ownerElement();
@@ -926,10 +925,10 @@ interface Attr : Node
 interface Element : Node
 {
     /// The name of the element. If `Node.localName` is different from `null`, this attribute is a qualified name.
-    @property DOMString tagName();
+    @property string tagName();
 
     /// Retrieves an attribute value by name.
-    DOMString getAttribute(DOMString name);
+    string getAttribute(string name);
     /++
     +   Adds a new attribute. If an attribute with that name is already present in
     +   the element, its value is changed to be that of the value parameter. This
@@ -942,7 +941,7 @@ interface Element : Node
     +   to assign it as the value of an attribute.
     +   To set an attribute with a qualified name and namespace URI, use the `setAttributeNS` method.
     +/
-    void setAttribute(DOMString name, DOMString value);
+    void setAttribute(string name, string value);
 
     /++
     +   Removes an attribute by name. If a default value for the removed attribute
@@ -951,10 +950,10 @@ interface Element : Node
     +   when applicable.
     +   To remove an attribute by local name and namespace URI, use the `removeAttributeNS` method.
     +/
-    void removeAttribute(DOMString name);
+    void removeAttribute(string name);
 
     /// Retrieves an attribute node by name.
-    Attr getAttributeNode(DOMString name);
+    Attr getAttributeNode(string name);
 
     /++
     +   Adds a new attribute node. If an attribute with that name (`nodeName`) is
@@ -978,7 +977,7 @@ interface Element : Node
     +   Per the XML Namespaces specification, applications must use the value `null`
     +   as the `namespaceURI` parameter for methods if they wish to have no namespace.
     +/
-    DOMString getAttributeNS(DOMString namespaceURI, DOMString localName);
+    string getAttributeNS(string namespaceURI, string localName);
 
     /++
     +   Adds a new attribute. If an attribute with the same local name and namespace
@@ -994,7 +993,7 @@ interface Element : Node
     +   Per the XML Namespaces specification, applications must use the value `null`
     +   as the `namespaceURI` parameter for methods if they wish to have no namespace.
     +/
-    void setAttributeNS(DOMString namespaceURI, DOMString qualifiedName, DOMString value);
+    void setAttributeNS(string namespaceURI, string qualifiedName, string value);
 
     /++
     +   Removes an attribute by local name and namespace URI. If a default value
@@ -1004,14 +1003,14 @@ interface Element : Node
     +   Per the XML Namespaces specification, applications must use the value `null`
     +   as the `namespaceURI` parameter for methods if they wish to have no namespace.
     +/
-    void removeAttributeNS(DOMString namespaceURI, DOMString localName);
+    void removeAttributeNS(string namespaceURI, string localName);
 
     /++
     +   Retrieves an `Attr` node by local name and namespace URI.
     +   Per the XML Namespaces specification, applications must use the value `null`
     +   as the `namespaceURI` parameter for methods if they wish to have no namespace.
     +/
-    Attr getAttributeNodeNS(DOMString namespaceURI, DOMString localName);
+    Attr getAttributeNodeNS(string namespaceURI, string localName);
 
     /++
     +   Adds a new attribute. If an attribute with that local name and that namespace
@@ -1023,7 +1022,7 @@ interface Element : Node
     Attr setAttributeNodeNS(Attr newAttr);
 
     /// Returns `true` when an attribute with a given `name` is specified on this element or has a default value, `false` otherwise.
-    bool hasAttribute(DOMString name);
+    bool hasAttribute(string name);
 
     /++
     +   Returns `true` when an attribute with a given `localName` and `namespaceURI`
@@ -1031,7 +1030,7 @@ interface Element : Node
     +   Per the XML Namespaces specification, applications must use the value `null`
     +   as the `namespaceURI` parameter for methods if they wish to have no namespace.
     +/
-    bool hasAttributeNS(DOMString namespaceURI, DOMString localName);
+    bool hasAttributeNS(string namespaceURI, string localName);
 
     /++
     +   If the parameter `isId` is `true`, this method declares the specified
@@ -1041,19 +1040,19 @@ interface Element : Node
     +   the `Attr.schemaTypeInfo` of the specified `Attr` node. Use the value `false`
     +   for the parameter `isId` to undeclare an attribute for being a user-determined ID attribute.
     +/
-    void setIdAttribute(DOMString name, bool isId);
+    void setIdAttribute(string name, bool isId);
 
     /// ditto
-    void setIdAttributeNS(DOMString namespaceURI, DOMString localName, bool isId);
+    void setIdAttributeNS(string namespaceURI, string localName, bool isId);
 
     /// ditto
     void setIdAttributeNode(Attr idAttr, bool isId);
 
     /// Returns a `NodeList` of all descendant `Element`s with a given tag name, in document order.
-    NodeList getElementsByTagName(DOMString name);
+    NodeList getElementsByTagName(string name);
 
     /// Returns a `NodeList` of all the descendant `Element`s with a given local name and namespace URI in document order.
-    NodeList getElementsByTagNameNS(DOMString namespaceURI, DOMString localName);
+    NodeList getElementsByTagNameNS(string namespaceURI, string localName);
 
     /// The type information associated with this element.
     @property XMLTypeInfo schemaTypeInfo();
@@ -1084,10 +1083,10 @@ interface Text : CharacterData
     @property bool isElementContentWhitespace();
 
     /// Returns the combined data of all direct text node siblings.
-    @property DOMString wholeText();
+    @property string wholeText();
 
     /// Couldn't find in DOM documentation, but leavint it there.
-    Text replaceWholeText(DOMString content);
+    Text replaceWholeText(string content);
 }
 
 /++
@@ -1105,10 +1104,10 @@ interface Comment : CharacterData
 +/
 interface XMLTypeInfo
 {
-    @property DOMString typeName();
-    @property DOMString typeNamespace();
+    @property string typeName();
+    @property string typeNamespace();
 
-    bool isDerivedFrom(DOMString typeNamespaceArg, DOMString typeNameArg,
+    bool isDerivedFrom(string typeNamespaceArg, string typeNameArg,
             DerivationMethod derivationMethod);
 }
 
@@ -1116,8 +1115,8 @@ interface XMLTypeInfo
 interface DOMError
 {
     @property ErrorSeverity severity();
-    @property DOMString message();
-    @property DOMString type();
+    @property string message();
+    @property string type();
     @property Object relatedException();
     @property Object relatedData();
     @property DOMLocator location();
@@ -1130,7 +1129,7 @@ interface DOMLocator
     @property long columnNumber();
     @property long byteOffset();
     @property Node relatedNode();
-    @property DOMString uri();
+    @property string uri();
 }
 
 /++
@@ -1145,7 +1144,7 @@ interface DOMConfiguration
     void setParameter(string name, UserData value) @trusted;
     UserData getParameter(string name) @trusted;
     bool canSetParameter(string name, UserData value) @trusted;
-    @property DOMStringList parameterNames();
+    @property stringList parameterNames();
 }
 
 /++
@@ -1175,7 +1174,7 @@ interface CDATASection : Text
 interface DocumentType : Node
 {
     /// The name of DTD; i.e., the name immediately following the `DOCTYPE` keyword.
-    @property DOMString name();
+    @property string name();
 
     /++
     +   A `NamedNodeMap` containing the general entities, both external and internal,
@@ -1190,10 +1189,10 @@ interface DocumentType : Node
     @property NamedNodeMap notations();
 
     /// The public identifier of the external subset.
-    @property DOMString publicId();
+    @property string publicId();
 
     /// The system identifier of the external subset. This may be an absolute URI or not.
-    @property DOMString systemId();
+    @property string systemId();
 
     /++
     +   The internal subset as a string, or `null` if there is none.
@@ -1204,7 +1203,7 @@ interface DocumentType : Node
     +   to the implementation. This may vary depending on various parameters,
     +   including the XML processor used to build the document.
     +/
-    @property DOMString internalSubset();
+    @property string internalSubset();
 }
 
 /++
@@ -1220,13 +1219,13 @@ interface DocumentType : Node
 interface Notation : Node
 {
     /// The public identifier of this notation. If the public identifier was not specified, this is `null`.
-    @property DOMString publicId();
+    @property string publicId();
 
     /++
     +   The system identifier of this notation. If the system identifier was not
     +   specified, this is `null`. This may be an absolute URI or not.
     +/
-    @property DOMString systemId();
+    @property string systemId();
 }
 
 /++
@@ -1252,36 +1251,36 @@ interface Notation : Node
 interface Entity : Node
 {
     /// The public identifier associated with the entity if specified, and `null` otherwise.
-    @property DOMString publicId();
+    @property string publicId();
 
     /++
     +   The system identifier associated with the entity if specified, and `null` otherwise.
     +   This may be an absolute URI or not.
     +/
-    @property DOMString systemId();
+    @property string systemId();
 
     /// For unparsed entities, the name of the `Notation` for the entity. For parsed entities, this is `null`.
-    @property DOMString notationName();
+    @property string notationName();
 
     /++
     +   An attribute specifying the encoding used for this entity at the time of
     +   parsing, when it is an external parsed entity. This is `null` if it an
     +   entity from the internal subset or if it is not known.
     +/
-    @property DOMString inputEncoding();
+    @property string inputEncoding();
 
     /++
     +   An attribute specifying, as part of the text declaration, the encoding of
     +   this entity, when it is an external parsed entity. This is `null` otherwise.
     +/
-    @property DOMString xmlEncoding();
+    @property string xmlEncoding();
 
     /++
     +   An attribute specifying, as part of the text declaration, the version
     +   number of this entity, when it is an external parsed entity. This is
     +   `null` otherwise.
     +/
-    @property DOMString xmlVersion();
+    @property string xmlVersion();
 }
 
 /++
@@ -1305,14 +1304,14 @@ interface ProcessingInstruction : Node
     +   The target of this processing instruction. XML defines this as being the
     +   first token following the markup that begins the processing instruction.
     +/
-    @property DOMString target();
+    @property string target();
 
     /++
     +   The content of this processing instruction. This is from the first non white
     +   space character after the target to the character immediately preceding the `?>`.
     +/
-    @property DOMString data();
+    @property string data();
 
     /// ditto
-    @property void data(DOMString);
+    @property void data(string);
 }
