@@ -90,11 +90,15 @@ struct SAXParser(T)
             {
                 case XMLKind.document:
                     if (onDocument !is null)
+                    {
                         onDocument(createAArray(cursor.attributes));
+                    }
                     break;
                 case XMLKind.dtdStart:
                     if (onDocTypeDecl !is null)
+                    {
                         onDocTypeDecl(cursor.content, false);
+                    }
                     break;
                 case XMLKind.entityDecl:
                     if (checkStringBeforeChr(cursor.wholeContent, "SYSTEM", '"') ||
@@ -114,35 +118,51 @@ struct SAXParser(T)
                     break; */
                 case XMLKind.dtdEmpty:
                     if (onDocTypeDecl !is null)
+                    {
                         onDocTypeDecl(cursor.content, true);
+                    }
                     break;
                 case XMLKind.elementStart:
                     if (onElementStart !is null)
+                    {
                         onElementStart(cursor.name, createAArray(cursor.attributes));
+                    }
                     break;
                 case XMLKind.elementEnd:
                     if (onElementEnd !is null)
+                    {
                         onElementEnd(cursor.name);
+                    }
                     break;
                 case XMLKind.elementEmpty:
                     if (onElementEmpty !is null)
+                    {
                         onElementEmpty(cursor.name, createAArray(cursor.attributes));
+                    }
                     break;
                 case XMLKind.text:
                     if (onText !is null)
+                    {
                         onText(cursor.content);
+                    }
                     break;
                 case XMLKind.comment:
                     if (onComment !is null)
+                    {
                         onComment(cursor.content);
+                    }
                     break;
                 case XMLKind.processingInstruction:
                     if (onProcessingInstruction !is null)
+                    {
                         onProcessingInstruction(cursor.name, cursor.content);
+                    }
                     break;
                 case XMLKind.cdata:
                     if (onCDataSection !is null)
+                    {
                         onCDataSection(cursor.content);
+                    }
                     break;
 
                 default: break;
@@ -304,7 +324,7 @@ auto saxParser(CursorType)(auto ref CursorType cursor)
             current_nesting--;
         }
         void onText(dstring content) {
-            assert (content == "replacement text");
+            assert(content == "replacement text");
             total_invocations++;
         }
         void onDocTypeDecl(dstring type, bool empty) {

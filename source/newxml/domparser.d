@@ -180,7 +180,9 @@ struct DOMBuilder(T)
 
         auto cur = createCurrent;
         if (cur)
+        {
             currentNode.appendChild(createCurrent);
+        }
 
         already_built = true;
     }
@@ -217,15 +219,15 @@ struct DOMBuilder(T)
             case XMLKind.elementEnd:
             case XMLKind.elementStart:
             case XMLKind.elementEmpty:
-                /* DOMImplementation.Element elem = cursor.prefix.length ? 
-                        document.createElementNS(new DOMString(cursor.prefix), new DOMString(cursor.localName)) : 
+                /* DOMImplementation.Element elem = cursor.prefix.length ?
+                        document.createElementNS(new DOMString(cursor.prefix), new DOMString(cursor.localName)) :
                         document.createElement(new DOMString(cursor.name)); */
                 DOMImplementation.Element elem = document.createElement(new DOMString(cursor.name));
                 foreach (attr; cursor.attributes)
                 {
                     /*if (attr.prefix.length)
                     {
-                        elem.setAttributeNS(new DOMString(attr.prefix), new DOMString(attr.localName), 
+                        elem.setAttributeNS(new DOMString(attr.prefix), new DOMString(attr.localName),
                                 new DOMString(attr.value));
                     }
                     else
@@ -282,7 +284,7 @@ unittest
     import newxml.parser;
     import newxml.cursor;
     import domimpl = newxml.domimpl;
-    
+
 
     alias DOMImpl = domimpl.DOMImplementation;
 
@@ -322,7 +324,7 @@ unittest
     dom.Comment c1 = cast(dom.Comment)e2.firstChild;
     assert(c1.data == " lol ");
     dom.Text t1 = cast(dom.Text)e2.lastChild;
-    //Issue: Extra whitespace isn't dropped between and after words when dropWhiteSpace is enabled in 
+    //Issue: Extra whitespace isn't dropped between and after words when dropWhiteSpace is enabled in
     //assert(t1.data == "Lots of Text! On multiple lines!", t1.data.transcodeToUTF8);
 
 }

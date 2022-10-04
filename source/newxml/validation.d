@@ -54,7 +54,10 @@ pure nothrow @nogc @safe bool isValidXMLText10(T)(T[] input)
 {
     foreach (elem; input)
     {
-        if (!isValidXMLCharacter10(elem)) return false;
+        if (!isValidXMLCharacter10(elem))
+        {
+            return false;
+        }
     }
     return true;
 }
@@ -68,7 +71,10 @@ pure nothrow @nogc @safe bool isValidXMLText11(T)(T[] input)
 {
     foreach (elem; input)
     {
-        if (!isValidXMLCharacter11(elem)) return false;
+        if (!isValidXMLCharacter11(elem))
+        {
+            return false;
+        }
     }
     return true;
 }
@@ -149,7 +155,7 @@ pure nothrow @nogc @safe bool isValidXMLPublicIdCharacter(dchar c)
         || "-'()+,./:=?;!*#@$_%".indexOf(c) != -1;
 }
 
-unittest
+@safe pure unittest
 {
     assert(isValidXMLName("foo"));
     assert(isValidXMLName("bar"));

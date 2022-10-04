@@ -739,7 +739,9 @@ auto writeCursor(Flag!"useFiber" useFiber = No.useFiber, WriterType, CursorType)
         return fiber;
     }
     else
+    {
         inspectOneLevel();
+    }
 }
 
 @safe unittest
