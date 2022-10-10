@@ -33,12 +33,14 @@ import std.exception : enforce;
 import std.typecons : Flag, Yes, No;
 
 public class ParserException : XMLException {
-    @nogc @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable nextInChain = null)
+    @nogc @safe pure nothrow this(string msg, string file = __FILE__
+            , size_t line = __LINE__, Throwable nextInChain = null)
     {
         super(msg, file, line, nextInChain);
     }
 
-    @nogc @safe pure nothrow this(string msg, Throwable nextInChain, string file = __FILE__, size_t line = __LINE__)
+    @nogc @safe pure nothrow this(string msg, Throwable nextInChain
+            , string file = __FILE__, size_t line = __LINE__)
     {
         super(msg, file, line, nextInChain);
     }
@@ -139,7 +141,9 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
     bool empty()
     {
         static if (preserveWhitespace == No.preserveWhitespace)
+        {
             lexer.dropWhile(" \r\n\t");
+        }
 
         return !ready && lexer.empty;
     }
@@ -169,7 +173,7 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
             lexer.dropWhile(" \r\n\t");
         }
 
-        assert(!lexer.empty);
+        enforce!ParserException(!lexer.empty, "Lexer must not be empty");
 
         lexer.start();
 
@@ -411,7 +415,7 @@ auto chooseParser(InputType, Flag!"preserveWhitespace" preserveWhitespace = No.p
           .parser!(preserveWhitespace)();
 }
 
-unittest
+@safe pure unittest
 {
     import newxml.lexers;
     import std.algorithm : find;

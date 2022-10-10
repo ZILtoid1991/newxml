@@ -3,7 +3,6 @@ module newxml;
 public import newxml.dom;
 public import domimpl = newxml.domimpl;
 public import newxml.domparser;
-public import newxml.domstring;
 public import newxml.sax;
 public import newxml.writer;
 public import newxml.cursor;
@@ -49,5 +48,5 @@ unittest {
 
     Document doc = parseXMLString(xml);
     assert(doc !is null);
-    assert(doc.doctype.entities.getNamedItem(new DOMString("myent")).nodeValue == "replacement text");
+    assert(doc.doctype.entities.getNamedItem("myent").nodeValue == "replacement text");
 }

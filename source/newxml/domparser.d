@@ -25,7 +25,6 @@ import newxml.cursor;
 
 import dom = newxml.dom;
 import newxml.domimpl;
-import newxml.domstring;
 
 /++
 +   Built on top of Cursor, the DOM builder adds to it the ability to
@@ -76,7 +75,7 @@ struct DOMBuilder(T)
                 switch (attr.name)
                 {
                     case "version":
-                        document.xmlVersion = new DOMString(attr.value);
+                        document.xmlVersion = attr.value;
                         switch (attr.value) {
                             case "1.1":
                                 cursor.xmlVersion = XMLVersion.XML1_1;
@@ -180,7 +179,9 @@ struct DOMBuilder(T)
 
         auto cur = createCurrent;
         if (cur)
+        {
             currentNode.appendChild(createCurrent);
+        }
 
         already_built = true;
     }
@@ -217,37 +218,37 @@ struct DOMBuilder(T)
             case XMLKind.elementEnd:
             case XMLKind.elementStart:
             case XMLKind.elementEmpty:
-                /* DOMImplementation.Element elem = cursor.prefix.length ? 
-                        document.createElementNS(new DOMString(cursor.prefix), new DOMString(cursor.localName)) : 
-                        document.createElement(new DOMString(cursor.name)); */
-                DOMImplementation.Element elem = document.createElement(new DOMString(cursor.name));
+                /* DOMImplementation.Element elem = cursor.prefix.length ?
+                        document.createElementNS(cursor.prefix, cursor.localName) :
+                        document.createElement(cursor.name); */
+                DOMImplementation.Element elem = document.createElement(cursor.name);
                 foreach (attr; cursor.attributes)
                 {
                     /*if (attr.prefix.length)
                     {
-                        elem.setAttributeNS(new DOMString(attr.prefix), new DOMString(attr.localName), 
-                                new DOMString(attr.value));
+                        elem.setAttributeNS(attr.prefix, attr.localName,
+                                attr.value);
                     }
                     else
                     {*/
-                    elem.setAttribute(new DOMString(attr.name), new DOMString(attr.value));
+                    elem.setAttribute(attr.name, attr.value);
                     //}
                 }
                 return elem;
             case XMLKind.text:
-                return document.createTextNode(new DOMString(cursor.content));
+                return document.createTextNode(cursor.content);
             case XMLKind.cdata:
-                return document.createCDATASection(new DOMString(cursor.content));
+                return document.createCDATASection(cursor.content);
             case XMLKind.processingInstruction:
-                return document.createProcessingInstruction(new DOMString(cursor.name), new DOMString(cursor.content));
+                return document.createProcessingInstruction(cursor.name, cursor.content);
             case XMLKind.comment:
-                return document.createComment(new DOMString(cursor.content));
+                return document.createComment(cursor.content);
             case XMLKind.dtdStart, XMLKind.dtdEmpty:
-                docType = domImpl.createDocumentType(new DOMString(cursor.name), new DOMString(), new DOMString());
+                docType = domImpl.createDocumentType(cursor.name, "", "");
                 document.doctype = docType;
                 return null;
             case XMLKind.entityDecl:
-                docType.createEntity(new DOMString(cursor.name), new DOMString(cursor.content));
+                docType.createEntity(cursor.name, cursor.content);
                 cursor.chrEntities[cursor.name] = cursor.content;
                 return null;
             default:
@@ -282,7 +283,7 @@ unittest
     import newxml.parser;
     import newxml.cursor;
     import domimpl = newxml.domimpl;
-    
+
 
     alias DOMImpl = domimpl.DOMImplementation;
 
@@ -310,11 +311,11 @@ unittest
     builder.buildRecursive;
     dom.Document doc = builder.getDocument;
 
-    assert(doc.getElementsByTagName(new DOMString("ccc")).length == 1);
-    assert(doc.documentElement.getAttribute(new DOMString("myattr")));
-    assert(doc.documentElement.getAttribute(new DOMString("myattr")) == "something");
-    assert(doc.documentElement.getAttribute(new DOMString("xmlns:myns")));
-    assert(doc.documentElement.getAttribute(new DOMString("xmlns:myns")) == "something");
+    assert(doc.getElementsByTagName("ccc").length == 1);
+    assert(doc.documentElement.getAttribute("myattr"));
+    assert(doc.documentElement.getAttribute("myattr") == "something");
+    assert(doc.documentElement.getAttribute("xmlns:myns"));
+    assert(doc.documentElement.getAttribute("xmlns:myns") == "something");
     dom.Element e1 = cast(dom.Element)doc.firstChild;
     assert(e1.nodeName == "aaa");
     dom.Element e2 = cast(dom.Element)e1.firstChild();
@@ -322,7 +323,7 @@ unittest
     dom.Comment c1 = cast(dom.Comment)e2.firstChild;
     assert(c1.data == " lol ");
     dom.Text t1 = cast(dom.Text)e2.lastChild;
-    //Issue: Extra whitespace isn't dropped between and after words when dropWhiteSpace is enabled in 
+    //Issue: Extra whitespace isn't dropped between and after words when dropWhiteSpace is enabled in
     //assert(t1.data == "Lots of Text! On multiple lines!", t1.data.transcodeToUTF8);
 
 }

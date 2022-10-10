@@ -11,6 +11,7 @@
 +   Authors:
 +   Lodovico Giaretta
 +   László Szerémi
++   Robert Schadek
 +
 +   License:
 +   <a href="http://www.boost.org/LICENSE_1_0.txt">Boost License 1.0</a>.
@@ -24,6 +25,7 @@ module newxml.sax;
 import newxml.interfaces;
 import newxml.cursor;
 import newxml.faststrings;
+
 @safe:
 /++
 +   A SAX parser built on top of a cursor.
@@ -88,22 +90,26 @@ struct SAXParser(T)
             {
                 case XMLKind.document:
                     if (onDocument !is null)
+                    {
                         onDocument(createAArray(cursor.attributes));
+                    }
                     break;
                 case XMLKind.dtdStart:
                     if (onDocTypeDecl !is null)
+                    {
                         onDocTypeDecl(cursor.content, false);
+                    }
                     break;
                 case XMLKind.entityDecl:
-                    if (checkStringBeforeChr(cursor.wholeContent, "SYSTEM", '"') || 
+                    if (checkStringBeforeChr(cursor.wholeContent, "SYSTEM", '"') ||
                             checkStringBeforeChr(cursor.wholeContent, "SYSTEM", '\''))
                     {
                         if (cursor.sysEntityLoader !is null)
                         {
                             cursor.chrEntities[cursor.name] = cursor.sysEntityLoader(cursor.content);
                         }
-                    } 
-                    else 
+                    }
+                    else
                     {
                         cursor.chrEntities[cursor.name] = cursor.content;
                     }
@@ -112,35 +118,51 @@ struct SAXParser(T)
                     break; */
                 case XMLKind.dtdEmpty:
                     if (onDocTypeDecl !is null)
+                    {
                         onDocTypeDecl(cursor.content, true);
+                    }
                     break;
                 case XMLKind.elementStart:
                     if (onElementStart !is null)
+                    {
                         onElementStart(cursor.name, createAArray(cursor.attributes));
+                    }
                     break;
                 case XMLKind.elementEnd:
                     if (onElementEnd !is null)
+                    {
                         onElementEnd(cursor.name);
+                    }
                     break;
                 case XMLKind.elementEmpty:
                     if (onElementEmpty !is null)
+                    {
                         onElementEmpty(cursor.name, createAArray(cursor.attributes));
+                    }
                     break;
                 case XMLKind.text:
                     if (onText !is null)
+                    {
                         onText(cursor.content);
+                    }
                     break;
                 case XMLKind.comment:
                     if (onComment !is null)
+                    {
                         onComment(cursor.content);
+                    }
                     break;
                 case XMLKind.processingInstruction:
                     if (onProcessingInstruction !is null)
+                    {
                         onProcessingInstruction(cursor.name, cursor.content);
+                    }
                     break;
                 case XMLKind.cdata:
                     if (onCDataSection !is null)
+                    {
                         onCDataSection(cursor.content);
+                    }
                     break;
 
                 default: break;
@@ -176,7 +198,7 @@ auto saxParser(CursorType)(auto ref CursorType cursor)
     return res;
 }
 
-unittest
+@safe unittest
 {
     import newxml.parser;
     import newxml.lexers;
@@ -198,6 +220,8 @@ unittest
 
     struct MyHandler
     {
+        @safe:
+
         int max_nesting;
         int current_nesting;
         int total_invocations;
@@ -260,7 +284,7 @@ unittest
     assert(handler.total_invocations == 9, to!string(handler.total_invocations));
 }
 
-unittest 
+@safe unittest
 {
     import newxml.parser;
     import newxml.lexers;
@@ -279,6 +303,8 @@ unittest
 
     struct MyHandler
     {
+        @safe:
+
         int max_nesting;
         int current_nesting;
         int total_invocations;
@@ -297,9 +323,9 @@ unittest
             total_invocations++;
             current_nesting--;
         }
-        void onText(dstring content) { 
-            assert (content == "replacement text");
-            total_invocations++; 
+        void onText(dstring content) {
+            assert(content == "replacement text");
+            total_invocations++;
         }
         void onDocTypeDecl(dstring type, bool empty) {
             assert(type == "mydoc", type.to!string);

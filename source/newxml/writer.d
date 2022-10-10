@@ -46,7 +46,7 @@ private auto xmlDeclarationAttributes(StringType, Args...)(Args args)
     // version specification
     static if (is(Args[0] == int))
     {
-        assert(args[0] == 10 || args[0] == 11, "Invalid xml version specified");
+        enforce(args[0] == 10 || args[0] == 11, "Invalid xml version specified");
         StringType versionString = args[0] == 10 ? "1.0" : "1.1";
         auto args1 = args[1..$];
     }
@@ -212,11 +212,12 @@ struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
 
     StringType output;
 
-    bool startingTag = false, insideDTD = false;
+    bool startingTag = false;
+    bool insideDTD = false;
 
     this(typeof(prettyPrinter) pretty)
     {
-        prettyPrinter = pretty;
+        this.prettyPrinter = pretty;
     }
 
     private template expand(string methodName)
@@ -481,7 +482,7 @@ struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
     }
     void writeDeclaration(StringType decl, StringType content)
     {
-        //assert(insideDTD);
+        assert(insideDTD);
 
         mixin(ifAnyCompiles(expand!"beforeNode"));
         output ~= "<!";
@@ -492,22 +493,18 @@ struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
     }
 }
 
-unittest
+@safe unittest
 {
     import std.array : Appender;
     import std.typecons : refCounted;
 
-    //string app;
     auto writer = Writer!(string)();
-    //writer.setSink(app);
 
     writer.writeXMLDeclaration(10, "utf-8", false);
     assert(writer.output == "<?xml version='1.0' encoding='utf-8' standalone='no'?>", writer.output);
-
-    //static assert(isWriter!(typeof(writer)));
 }
 
-unittest
+@safe unittest
 {
     import std.array : Appender;
     import std.typecons : refCounted;
@@ -546,7 +543,6 @@ unittest
 }
 
 import dom = newxml.dom;
-import newxml.domstring;
 
 /++
 +   Outputs the entire DOM tree rooted at `node` using the given `writer`.
@@ -554,6 +550,7 @@ import newxml.domstring;
 void writeDOM(WriterType)(auto ref WriterType writer, dom.Node node)
 {
     import std.traits : ReturnType;
+    import std.conv : to;
     import newxml.faststrings;
     alias Document = typeof(node.ownerDocument);
     alias Element = ReturnType!(Document.documentElement);
@@ -563,9 +560,15 @@ void writeDOM(WriterType)(auto ref WriterType writer, dom.Node node)
     {
         case document:
             auto doc = cast(Document)node;
-            DOMString xmlVersion = doc.xmlVersion, xmlEncoding = doc.xmlEncoding;
-            writer.writeXMLDeclaration(xmlVersion ? xmlVersion.transcodeTo!StringType() : null,
-                    xmlEncoding ? xmlEncoding.transcodeTo!StringType() : null, doc.xmlStandalone);
+            string xmlVersion = doc.xmlVersion;
+            string xmlEncoding = doc.xmlEncoding;
+            writer.writeXMLDeclaration(xmlVersion
+                    ? xmlVersion.to!StringType()
+                    : null
+                , xmlEncoding
+                    ? xmlEncoding.to!StringType()
+                    : null
+                , doc.xmlStandalone);
             foreach (child; doc.childNodes)
             {
                 writer.writeDOM(child);
@@ -573,50 +576,50 @@ void writeDOM(WriterType)(auto ref WriterType writer, dom.Node node)
             break;
         case element:
             auto elem = cast(Element)node;
-            writer.startElement(elem.tagName.transcodeTo!StringType);
+            writer.startElement(elem.tagName.to!StringType);
             if (elem.hasAttributes)
             {
                 foreach (attr; elem.attributes)
                 {
-                    writer.writeAttribute(attr.nodeName.transcodeTo!StringType,
-                            xmlEscape(attr.nodeValue.transcodeTo!StringType));
+                    writer.writeAttribute(attr.nodeName.to!StringType,
+                            xmlEscape(attr.nodeValue.to!StringType));
                 }
             }
             foreach (child; elem.childNodes)
             {
                 writer.writeDOM(child);
             }
-            writer.closeElement(elem.tagName.transcodeTo!StringType);
+            writer.closeElement(elem.tagName.to!StringType);
             break;
         case text:
-            writer.writeText(xmlEscape(node.nodeValue.transcodeTo!StringType));
+            writer.writeText(xmlEscape(node.nodeValue.to!StringType));
             break;
         case cdataSection:
-            writer.writeCDATA(xmlEscape(node.nodeValue.transcodeTo!StringType));
+            writer.writeCDATA(xmlEscape(node.nodeValue.to!StringType));
             break;
         case comment:
-            writer.writeComment(node.nodeValue.transcodeTo!StringType);
+            writer.writeComment(node.nodeValue.to!StringType);
             break;
         default:
             break;
     }
 }
 
-unittest
+@safe unittest
 {
     import newxml.domimpl;
     Writer!(string, PrettyPrinters.Minimalizer) wrt = Writer!(string)(PrettyPrinters.Minimalizer!string());
 
     dom.DOMImplementation domimpl = new DOMImplementation;
-    dom.Document doc = domimpl.createDocument(null, new DOMString("doc"), null);
-    dom.Element e0 = doc.createElement(new DOMString("text"));
+    dom.Document doc = domimpl.createDocument(null, "doc", null);
+    dom.Element e0 = doc.createElement("text");
     doc.firstChild.appendChild(e0);
-    e0.setAttribute(new DOMString("something"), new DOMString("other thing"));
-    e0.appendChild(doc.createTextNode(new DOMString("Some text ")));
-    dom.Element e1 = doc.createElement(new DOMString("b"));
-    e1.appendChild(doc.createTextNode(new DOMString("with")));
+    e0.setAttribute("something", "other thing");
+    e0.appendChild(doc.createTextNode("Some text "));
+    dom.Element e1 = doc.createElement("b");
+    e1.appendChild(doc.createTextNode("with"));
     e0.appendChild(e1);
-    e0.appendChild(doc.createTextNode(new DOMString(" markup.")));
+    e0.appendChild(doc.createTextNode(" markup."));
 
     wrt.writeDOM(doc);
 
@@ -742,10 +745,12 @@ auto writeCursor(Flag!"useFiber" useFiber = No.useFiber, WriterType, CursorType)
         return fiber;
     }
     else
+    {
         inspectOneLevel();
+    }
 }
 
-unittest
+@safe unittest
 {
     import std.array : Appender;
     import newxml.parser;

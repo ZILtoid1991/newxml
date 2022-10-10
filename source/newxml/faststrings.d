@@ -37,7 +37,8 @@ package bool checkStringBeforeChr(T, S)(T[] haysack, S[] needle, S before) @nogc
     }
     return false;
 }
-unittest
+
+@safe pure unittest
 {
     assert(checkStringBeforeChr("extentity SYSTEM \"someexternalentity.file\"", "SYSTEM", '"'));
     assert(!checkStringBeforeChr("extentity SYST", "SYSTEM", '"'));
@@ -145,6 +146,7 @@ T[] xmlUnescape(Flag!"strict" strict = Yes.strict, T, U)(T[] str, U replacements
     }
     return str;
 }
+
 T[] xmlUnescape(Flag!"strict" strict = Yes.strict, T)(T[] str)
 {
     if (str.indexOf('&') >= 0)
