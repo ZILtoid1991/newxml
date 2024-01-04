@@ -42,8 +42,7 @@ alias UserData = Variant;
 +   the application to implement various behaviors regarding the data it associates
 +   to the DOM nodes.
 +/
-alias UserDataHandler = void delegate(UserDataOperation, string, UserData, Node,
-        Node) @safe;
+alias UserDataHandler = void delegate(UserDataOperation, string, UserData, Node, Node) @safe;
 
 /++
 +   An integer indicating which type of node this is.

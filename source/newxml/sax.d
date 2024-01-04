@@ -33,8 +33,7 @@ import newxml.faststrings;
 +   Delegates are called when certain events are encountered, then it passes the necessary data to process the
 +   element.
 +/
-struct SAXParser(T)
-    if (isCursor!T)
+struct SAXParser(T) if (isCursor!T)
 {
     public T cursor;
     alias StringType = T.StringType;
@@ -84,88 +83,91 @@ struct SAXParser(T)
     void processDocument()
     {
         import std.traits : hasMember;
+
         while (!cursor.documentEnd)
         {
             switch (cursor.kind)
             {
-                case XMLKind.document:
-                    if (onDocument !is null)
+            case XMLKind.document:
+                if (onDocument !is null)
+                {
+                    onDocument(createAArray(cursor.attributes));
+                }
+                break;
+            case XMLKind.dtdStart:
+                if (onDocTypeDecl !is null)
+                {
+                    onDocTypeDecl(cursor.content, false);
+                }
+                break;
+            case XMLKind.entityDecl:
+                if (checkStringBeforeChr(cursor.wholeContent, "SYSTEM", '"')
+                        || checkStringBeforeChr(cursor.wholeContent, "SYSTEM", '\''))
+                {
+                    if (cursor.sysEntityLoader !is null)
                     {
-                        onDocument(createAArray(cursor.attributes));
+                        cursor.chrEntities[cursor.name] = cursor.sysEntityLoader(
+                                cursor.content);
                     }
-                    break;
-                case XMLKind.dtdStart:
-                    if (onDocTypeDecl !is null)
-                    {
-                        onDocTypeDecl(cursor.content, false);
-                    }
-                    break;
-                case XMLKind.entityDecl:
-                    if (checkStringBeforeChr(cursor.wholeContent, "SYSTEM", '"') ||
-                            checkStringBeforeChr(cursor.wholeContent, "SYSTEM", '\''))
-                    {
-                        if (cursor.sysEntityLoader !is null)
-                        {
-                            cursor.chrEntities[cursor.name] = cursor.sysEntityLoader(cursor.content);
-                        }
-                    }
-                    else
-                    {
-                        cursor.chrEntities[cursor.name] = cursor.content;
-                    }
-                    break;
+                }
+                else
+                {
+                    cursor.chrEntities[cursor.name] = cursor.content;
+                }
+                break;
                 /* case XMLKind.dtdEnd:
                     break; */
-                case XMLKind.dtdEmpty:
-                    if (onDocTypeDecl !is null)
-                    {
-                        onDocTypeDecl(cursor.content, true);
-                    }
-                    break;
-                case XMLKind.elementStart:
-                    if (onElementStart !is null)
-                    {
-                        onElementStart(cursor.name, createAArray(cursor.attributes));
-                    }
-                    break;
-                case XMLKind.elementEnd:
-                    if (onElementEnd !is null)
-                    {
-                        onElementEnd(cursor.name);
-                    }
-                    break;
-                case XMLKind.elementEmpty:
-                    if (onElementEmpty !is null)
-                    {
-                        onElementEmpty(cursor.name, createAArray(cursor.attributes));
-                    }
-                    break;
-                case XMLKind.text:
-                    if (onText !is null)
-                    {
-                        onText(cursor.content);
-                    }
-                    break;
-                case XMLKind.comment:
-                    if (onComment !is null)
-                    {
-                        onComment(cursor.content);
-                    }
-                    break;
-                case XMLKind.processingInstruction:
-                    if (onProcessingInstruction !is null)
-                    {
-                        onProcessingInstruction(cursor.name, cursor.content);
-                    }
-                    break;
-                case XMLKind.cdata:
-                    if (onCDataSection !is null)
-                    {
-                        onCDataSection(cursor.content);
-                    }
-                    break;
+            case XMLKind.dtdEmpty:
+                if (onDocTypeDecl !is null)
+                {
+                    onDocTypeDecl(cursor.content, true);
+                }
+                break;
+            case XMLKind.elementStart:
+                if (onElementStart !is null)
+                {
+                    onElementStart(cursor.name, createAArray(cursor.attributes));
+                }
+                break;
+            case XMLKind.elementEnd:
+                if (onElementEnd !is null)
+                {
+                    onElementEnd(cursor.name);
+                }
+                break;
+            case XMLKind.elementEmpty:
+                if (onElementEmpty !is null)
+                {
+                    onElementEmpty(cursor.name, createAArray(cursor.attributes));
+                }
+                break;
+            case XMLKind.text:
+                if (onText !is null)
+                {
+                    onText(cursor.content);
+                }
+                break;
+            case XMLKind.comment:
+                if (onComment !is null)
+                {
+                    onComment(cursor.content);
+                }
+                break;
+            case XMLKind.processingInstruction:
+                if (onProcessingInstruction !is null)
+                {
+                    onProcessingInstruction(cursor.name, cursor.content);
+                }
+                break;
+            case XMLKind.cdata:
+                if (onCDataSection !is null)
+                {
+                    onCDataSection(cursor.content);
+                }
+                break;
 
-                default: break;
+            default:
+                break;
             }
 
             if (cursor.enter)
@@ -177,7 +179,9 @@ struct SAXParser(T)
             }
         }
     }
-    protected StringType[StringType] createAArray(AttrRange source) {
+
+    protected StringType[StringType] createAArray(AttrRange source)
+    {
         StringType[StringType] result;
         foreach (key; source)
         {
@@ -190,8 +194,7 @@ struct SAXParser(T)
 /++
 +   Instantiates a suitable SAX parser from the given `cursor` and `handler`.
 +/
-auto saxParser(CursorType)(auto ref CursorType cursor)
-    if (isCursor!CursorType)
+auto saxParser(CursorType)(auto ref CursorType cursor) if (isCursor!CursorType)
 {
     auto res = SAXParser!(CursorType)();
     res.cursor = cursor;
@@ -220,7 +223,7 @@ auto saxParser(CursorType)(auto ref CursorType cursor)
 
     struct MyHandler
     {
-        @safe:
+    @safe:
 
         int max_nesting;
         int current_nesting;
@@ -235,38 +238,49 @@ auto saxParser(CursorType)(auto ref CursorType cursor)
                 max_nesting = current_nesting;
             }
         }
+
         void onElementEnd(dstring name)
         {
             total_invocations++;
             current_nesting--;
         }
-        void onElementEmpty(dstring name, dstring[dstring] attributes) { total_invocations++; }
-        void onProcessingInstruction(dstring name, dstring content) { total_invocations++; }
-        void onText(dstring content) { total_invocations++; }
+
+        void onElementEmpty(dstring name, dstring[dstring] attributes)
+        {
+            total_invocations++;
+        }
+
+        void onProcessingInstruction(dstring name, dstring content)
+        {
+            total_invocations++;
+        }
+
+        void onText(dstring content)
+        {
+            total_invocations++;
+        }
+
         void onDocument(dstring[dstring] attribute)
         {
             assert(attribute["encoding"] == "utf-8");
             total_invocations++;
         }
+
         void onComment(dstring content)
         {
             assert(content == " lol ");
             total_invocations++;
         }
-        void onDocTypeDecl(dstring type, bool empty) {
+
+        void onDocTypeDecl(dstring type, bool empty)
+        {
             assert(type == "somekindofdoc", type.to!string);
             assert(empty);
         }
     }
 
-
     MyHandler handler;
-    auto parser =
-         xml
-        .lexer
-        .parser
-        .cursor
-        .saxParser;
+    auto parser = xml.lexer.parser.cursor.saxParser;
 
     parser.setSource(xml);
     parser.onDocument = &handler.onDocument;
@@ -303,7 +317,7 @@ auto saxParser(CursorType)(auto ref CursorType cursor)
 
     struct MyHandler
     {
-        @safe:
+    @safe:
 
         int max_nesting;
         int current_nesting;
@@ -318,20 +332,26 @@ auto saxParser(CursorType)(auto ref CursorType cursor)
                 max_nesting = current_nesting;
             }
         }
+
         void onElementEnd(dstring name)
         {
             total_invocations++;
             current_nesting--;
         }
-        void onText(dstring content) {
+
+        void onText(dstring content)
+        {
             assert(content == "replacement text");
             total_invocations++;
         }
-        void onDocTypeDecl(dstring type, bool empty) {
+
+        void onDocTypeDecl(dstring type, bool empty)
+        {
             assert(type == "mydoc", type.to!string);
             assert(!empty);
             total_invocations++;
         }
+
         void onDocument(dstring[dstring] attribute)
         {
             assert(attribute["encoding"] == "utf-8");
@@ -340,12 +360,7 @@ auto saxParser(CursorType)(auto ref CursorType cursor)
     }
 
     MyHandler handler;
-    auto parser =
-         xml
-        .lexer
-        .parser
-        .cursor
-        .saxParser;
+    auto parser = xml.lexer.parser.cursor.saxParser;
     parser.setSource(xml);
     parser.onElementStart = &handler.onElementStart;
     parser.onElementEnd = &handler.onElementEnd;

@@ -32,19 +32,21 @@ import std.algorithm.comparison : equal;
 import std.exception : enforce;
 import std.typecons : Flag, Yes, No;
 
-public class ParserException : XMLException {
-    @nogc @safe pure nothrow this(string msg, string file = __FILE__
-            , size_t line = __LINE__, Throwable nextInChain = null)
+public class ParserException : XMLException
+{
+    @nogc @safe pure nothrow this(string msg, string file = __FILE__,
+            size_t line = __LINE__, Throwable nextInChain = null)
     {
         super(msg, file, line, nextInChain);
     }
 
-    @nogc @safe pure nothrow this(string msg, Throwable nextInChain
-            , string file = __FILE__, size_t line = __LINE__)
+    @nogc @safe pure nothrow this(string msg, Throwable nextInChain,
+            string file = __FILE__, size_t line = __LINE__)
     {
         super(msg, file, line, nextInChain);
     }
 }
+
 @safe:
 /++
 +   A low level XML parser.
@@ -57,8 +59,8 @@ public class ParserException : XMLException {
 +       preserveWhitespace = if set to `Yes` (default is `No`), the parser will not remove element content whitespace
 +   (i.e. the whitespace that separates tags), but will report it as text.
 +/
-struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhitespace)
-    if (isLexer!L)
+struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No
+        .preserveWhitespace) if (isLexer!L)
 {
     import std.meta : staticIndexOf;
 
@@ -91,7 +93,8 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
 
     //mixin UsesErrorHandler!ErrorHandler;
 
-    this(L lexer) {
+    this(L lexer)
+    {
         this.lexer = lexer;
         //chrEntities = xmlPredefinedEntities!CharacterType();
     }
@@ -131,7 +134,7 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
 
     private CharacterType[] fetchContent(size_t start = 0, size_t stop = 0)
     {
-        return lexer.get[start..($ - stop)];
+        return lexer.get[start .. ($ - stop)];
     }
 
     /++
@@ -181,8 +184,8 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
         if (insideDTD && lexer.testAndAdvance(']'))
         {
             lexer.dropWhile(" \r\n\t");
-            enforce!ParserException(lexer.testAndAdvance('>')
-                , "No \">\" character have been found after an \"<\"!");
+            enforce!ParserException(lexer.testAndAdvance('>'),
+                    "No \">\" character have been found after an \"<\"!");
             next.kind = XMLKind.dtdEnd;
             next.content = null;
             insideDTD = false;
@@ -256,13 +259,13 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
         {
             lexer.advanceUntil('[', true);
             // cdata
-            if (lexer.get.length == 9 && equal(lexer.get()[3..$], "CDATA["))
+            if (lexer.get.length == 9 && equal(lexer.get()[3 .. $], "CDATA["))
             {
                 do
                 {
                     lexer.advanceUntil('>', true);
                 }
-                while (!equal(lexer.get()[($-3)..$], "]]>"));
+                while (!equal(lexer.get()[($ - 3) .. $], "]]>"));
                 next.content = fetchContent(9, 3);
                 next.kind = XMLKind.cdata;
             }
@@ -272,11 +275,11 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
                 do
                 {
                     lexer.advanceUntilAny("[>", true);
-                    if (lexer.get()[($-3)..$] == "]]>")
+                    if (lexer.get()[($ - 3) .. $] == "]]>")
                     {
                         count--;
                     }
-                    else if (lexer.get()[($-3)..$] == "<![")
+                    else if (lexer.get()[($ - 3) .. $] == "<![")
                     {
                         count++;
                     }
@@ -293,7 +296,7 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
             {
                 lexer.advanceUntil('>', true);
             }
-            while (!equal(lexer.get()[($-3)..$], "-->"));
+            while (!equal(lexer.get()[($ - 3) .. $], "-->"));
             next.content = fetchContent(4, 3);
             next.kind = XMLKind.comment;
         }
@@ -313,7 +316,7 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
             }
 
             // doctype
-            if (lexer.get.length>= 9 && equal(lexer.get()[2..9], "DOCTYPE"))
+            if (lexer.get.length >= 9 && equal(lexer.get()[2 .. 9], "DOCTYPE"))
             {
                 next.content = fetchContent(9, 1);
                 if (c == 2)
@@ -344,22 +347,22 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
                     }
                 }
                 auto len = lexer.get().length;
-                if (len > 8 && equal(lexer.get()[2..9], "ATTLIST"))
+                if (len > 8 && equal(lexer.get()[2 .. 9], "ATTLIST"))
                 {
                     next.content = fetchContent(9, 1);
                     next.kind = XMLKind.attlistDecl;
                 }
-                else if (len > 8 && equal(lexer.get()[2..9], "ELEMENT"))
+                else if (len > 8 && equal(lexer.get()[2 .. 9], "ELEMENT"))
                 {
                     next.content = fetchContent(9, 1);
                     next.kind = XMLKind.elementDecl;
                 }
-                else if (len > 9 && equal(lexer.get()[2..10], "NOTATION"))
+                else if (len > 9 && equal(lexer.get()[2 .. 10], "NOTATION"))
                 {
                     next.content = fetchContent(10, 1);
                     next.kind = XMLKind.notationDecl;
                 }
-                else if (len > 7 && equal(lexer.get()[2..8], "ENTITY"))
+                else if (len > 7 && equal(lexer.get()[2 .. 8], "ENTITY"))
                 {
                     next.content = fetchContent(8, 1);
                     next.kind = XMLKind.entityDecl;
@@ -387,8 +390,8 @@ struct Parser(L, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhite
 +   Returns:
 +   A `Parser` instance initialized with the given lexer
 +/
-auto parser(Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhitespace, T)(T lexer)
-    if (isLexer!T)
+auto parser(Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhitespace, T)(
+        T lexer) if (isLexer!T)
 {
     auto parser = Parser!(T, preserveWhitespace)();
     //parser.errorHandler = handler;
@@ -397,7 +400,7 @@ auto parser(Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhitespace
 }
 
 import newxml.lexers;
-import std.experimental.allocator.gc_allocator;//import stdx.allocator.gc_allocator;
+import std.experimental.allocator.gc_allocator; //import stdx.allocator.gc_allocator;
 
 /++
 +   Instantiates a parser suitable for the given `InputType`.
@@ -409,10 +412,10 @@ import std.experimental.allocator.gc_allocator;//import stdx.allocator.gc_alloca
 +       .parser!(preserveWhitespace)(handler)
 +   ---
 +/
-auto chooseParser(InputType, Flag!"preserveWhitespace" preserveWhitespace = No.preserveWhitespace)()
+auto chooseParser(InputType, Flag!"preserveWhitespace" preserveWhitespace = No
+        .preserveWhitespace)()
 {
-    return chooseLexer!(InputType)()
-          .parser!(preserveWhitespace)();
+    return chooseLexer!(InputType)().parser!(preserveWhitespace)();
 }
 
 @safe pure unittest

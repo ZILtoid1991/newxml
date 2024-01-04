@@ -42,19 +42,21 @@ import std.typecons : Flag, Yes;
 /**
  * Thrown on lexing errors.
  */
-public class LexerException : Exception {
-    @nogc @safe pure nothrow this(string msg, string file = __FILE__
-            , size_t line = __LINE__, Throwable nextInChain = null)
+public class LexerException : Exception
+{
+    @nogc @safe pure nothrow this(string msg, string file = __FILE__,
+            size_t line = __LINE__, Throwable nextInChain = null)
     {
         super(msg, file, line, nextInChain);
     }
 
-    @nogc @safe pure nothrow this(string msg, Throwable nextInChain
-            , string file = __FILE__, size_t line = __LINE__)
+    @nogc @safe pure nothrow this(string msg, Throwable nextInChain,
+            string file = __FILE__, size_t line = __LINE__)
     {
         super(msg, file, line, nextInChain);
     }
 }
+
 @safe:
 /++
 +   A lexer that takes a sliceable input.
@@ -95,7 +97,7 @@ struct SliceLexer(T)
         pos = 0;
     }
 
-    static if(isForwardRange!T)
+    static if (isForwardRange!T)
     {
         auto save()
         {
@@ -120,7 +122,7 @@ struct SliceLexer(T)
     /// ditto
     CharacterType[] get() const
     {
-        return input[begin..pos];
+        return input[begin .. pos];
     }
 
     /// ditto
@@ -136,7 +138,7 @@ struct SliceLexer(T)
     bool testAndAdvance(char c)
     {
         enforce!LexerException(!empty, "No more characters are found!");
-            //handler();
+        //handler();
         if (input[pos] == c)
         {
             pos++;
@@ -149,13 +151,13 @@ struct SliceLexer(T)
     void advanceUntil(char c, bool included)
     {
         enforce!LexerException(!empty, "No more characters are found!");
-            //handler();
-        auto adv = indexOf(input[pos..$], c);
+        //handler();
+        auto adv = indexOf(input[pos .. $], c);
         if (adv != -1)
         {
             pos += adv;
             enforce!LexerException(!empty, "No more characters are found!");
-                //handler();
+            //handler();
         }
         else
         {
@@ -165,7 +167,7 @@ struct SliceLexer(T)
         if (included)
         {
             enforce!LexerException(!empty, "No more characters are found!");
-                //handler();
+            //handler();
             pos++;
         }
     }
@@ -178,8 +180,7 @@ struct SliceLexer(T)
         ptrdiff_t res;
         while ((res = indexOf(s, input[pos])) == -1)
         {
-            enforce!LexerException(++pos < input.length
-                    , "No more characters are found!");
+            enforce!LexerException(++pos < input.length, "No more characters are found!");
         }
 
         if (included)
@@ -205,8 +206,7 @@ struct SliceLexer(T)
 +   Params:
 +       T           = the InputRange to be used as input for this lexer
 +/
-struct RangeLexer(T)
-    if (isInputRange!T)
+struct RangeLexer(T) if (isInputRange!T)
 {
     //import newxml.appender;
 
@@ -224,7 +224,8 @@ struct RangeLexer(T)
     //private Appender!(CharacterType, Alloc) app;
     private CharacterType[] buffer;
 
-    import std.string: representation;
+    import std.string : representation;
+
     static if (is(typeof(representation!CharacterType(""))))
     {
         private typeof(representation!CharacterType("")) input;
@@ -280,7 +281,7 @@ struct RangeLexer(T)
     /// ditto
     CharacterType[] get() const
     {
-        return buffer;//app.data;
+        return buffer; //app.data;
     }
 
     /// ditto
@@ -295,11 +296,10 @@ struct RangeLexer(T)
     /// ditto
     bool testAndAdvance(char c)
     {
-        enforce!LexerException(!input.empty
-            , "No more characters are found!");//handler();
+        enforce!LexerException(!input.empty, "No more characters are found!"); //handler();
         if (input.front == c)
         {
-            buffer ~= input.front;//app.put(input.front);
+            buffer ~= input.front; //app.put(input.front);
             input.popFront();
             return true;
         }
@@ -309,19 +309,17 @@ struct RangeLexer(T)
     /// ditto
     void advanceUntil(char c, bool included)
     {
-        enforce!LexerException(!input.empty
-            , "No more characters are found!");//handler();
+        enforce!LexerException(!input.empty, "No more characters are found!"); //handler();
         while (input.front != c)
         {
-            buffer ~= input.front;//app.put(input.front);
+            buffer ~= input.front; //app.put(input.front);
             input.popFront();
-            enforce!LexerException(!input.empty
-                , "No more characters are found!");//handler();
+            enforce!LexerException(!input.empty, "No more characters are found!"); //handler();
         }
 
         if (included)
         {
-            buffer ~= input.front;//app.put(input.front);
+            buffer ~= input.front; //app.put(input.front);
             input.popFront();
         }
     }
@@ -329,20 +327,18 @@ struct RangeLexer(T)
     /// ditto
     size_t advanceUntilAny(string s, bool included)
     {
-        enforce!LexerException(!input.empty
-            , "No more characters are found!");//handler();
+        enforce!LexerException(!input.empty, "No more characters are found!"); //handler();
         size_t res;
         while ((res = indexOf(s, input.front)) == -1)
         {
-            buffer ~= input.front;//app.put(input.front);
+            buffer ~= input.front; //app.put(input.front);
             input.popFront;
-            enforce!LexerException(!input.empty
-                , "No more characters are found!");//handler();
+            enforce!LexerException(!input.empty, "No more characters are found!"); //handler();
         }
 
         if (included)
         {
-            buffer ~= input.front;// app.put(input.front);
+            buffer ~= input.front; // app.put(input.front);
             input.popFront;
         }
         return res;
@@ -362,8 +358,7 @@ struct RangeLexer(T)
 +   Params:
 +       T           = the InputRange to be used as input for this lexer
 +/
-struct ForwardLexer(T)
-    if (isForwardRange!T)
+struct ForwardLexer(T) if (isForwardRange!T)
 {
 
     /++
@@ -378,16 +373,17 @@ struct ForwardLexer(T)
     //mixin UsesErrorHandler!ErrorHandler;
 
     private size_t count;
-    private CharacterType[] buffer;//private Appender!(CharacterType, Alloc) app;
+    private CharacterType[] buffer; //private Appender!(CharacterType, Alloc) app;
 
-    import std.string: representation;
+    import std.string : representation;
+
     static if (is(typeof(representation!CharacterType(""))))
     {
         private typeof(representation!CharacterType("")) input;
         private typeof(input) input_start;
         void setSource(T input)
         {
-            buffer.length = 0;//app = typeof(app)(allocator);
+            buffer.length = 0; //app = typeof(app)(allocator);
             this.input = input.representation;
             this.input_start = this.input;
         }
@@ -398,7 +394,7 @@ struct ForwardLexer(T)
         private T input_start;
         void setSource(T input)
         {
-            buffer.length = 0;//app = typeof(app)(allocator);
+            buffer.length = 0; //app = typeof(app)(allocator);
             this.input = input;
             this.input_start = input;
         }
@@ -409,7 +405,7 @@ struct ForwardLexer(T)
         ForwardLexer result;
         result.input = input.save();
         result.input_start = input.save();
-        result.buffer.length = 0;//result.app = typeof(app)(allocator);
+        result.buffer.length = 0; //result.app = typeof(app)(allocator);
         result.count = count;
         return result;
     }
@@ -435,12 +431,13 @@ struct ForwardLexer(T)
     /// ditto
     CharacterType[] get()
     {
-        import std.range: take;
+        import std.range : take;
+
         auto diff = count - buffer.length;
         if (diff)
         {
             buffer.reserve(diff);
-            buffer ~= input_start.take(diff);//app.put(input_start.take(diff));
+            buffer ~= input_start.take(diff); //app.put(input_start.take(diff));
         }
         return buffer;
     }
@@ -458,7 +455,7 @@ struct ForwardLexer(T)
     /// ditto
     bool testAndAdvance(char c)
     {
-        enforce!LexerException(!input.empty , "No data found!");
+        enforce!LexerException(!input.empty, "No data found!");
         if (input.front == c)
         {
             count++;
@@ -471,14 +468,12 @@ struct ForwardLexer(T)
     /// ditto
     void advanceUntil(char c, bool included)
     {
-        enforce!LexerException(!input.empty
-            , "No data found!");
+        enforce!LexerException(!input.empty, "No data found!");
         while (input.front != c)
         {
             count++;
             input.popFront();
-            enforce!LexerException(!input.empty
-                , "No data found!");
+            enforce!LexerException(!input.empty, "No data found!");
         }
         if (included)
         {
@@ -490,15 +485,13 @@ struct ForwardLexer(T)
     /// ditto
     size_t advanceUntilAny(string s, bool included)
     {
-        enforce!LexerException(!input.empty
-            , "No more characters are found!");
+        enforce!LexerException(!input.empty, "No more characters are found!");
         size_t res;
         while ((res = indexOf(s, input.front)) == -1)
         {
             count++;
             input.popFront;
-            enforce!LexerException(!input.empty
-                , "No more characters are found!");
+            enforce!LexerException(!input.empty, "No more characters are found!");
         }
         if (included)
         {
@@ -525,8 +518,7 @@ struct ForwardLexer(T)
 +   Params:
 +       T           = the InputRange to be used as input for this lexer
 +/
-struct BufferedLexer(T)
-    if (isInputRange!T && isArray!(ElementType!T))
+struct BufferedLexer(T) if (isInputRange!T && isArray!(ElementType!T))
 {
     //import newxml.appender;
 
@@ -544,7 +536,7 @@ struct BufferedLexer(T)
     private size_t pos;
     private size_t begin;
 
-    private CharacterType[] outBuf;//private Appender!(CharacterType, Alloc) app;
+    private CharacterType[] outBuf; //private Appender!(CharacterType, Alloc) app;
     private bool onEdge;
 
     private BufferType buffer;
@@ -574,7 +566,7 @@ struct BufferedLexer(T)
             result.buffer = buffer;
             result.pos = pos;
             result.begin = begin;
-            result.outBuf.length = 0;//app = typeof(app)(allocator);
+            result.outBuf.length = 0; //app = typeof(app)(allocator);
             return result;
         }
     }
@@ -603,17 +595,16 @@ struct BufferedLexer(T)
 
     private void advance()
     {
-        enforce!LexerException(!empty
-            , "No more characters are found!");
+        enforce!LexerException(!empty, "No more characters are found!");
         if (pos + 1 >= buffer.length)
         {
             if (onEdge)
             {
-                outBuf ~= buffer[pos];//app.put(buffer[pos]);
+                outBuf ~= buffer[pos]; //app.put(buffer[pos]);
             }
             else
             {
-                outBuf ~= buffer[begin..$];//app.put(buffer[begin..$]);
+                outBuf ~= buffer[begin .. $]; //app.put(buffer[begin..$]);
                 onEdge = true;
             }
             popBuffer;
@@ -622,31 +613,32 @@ struct BufferedLexer(T)
         }
         else if (onEdge)
         {
-            outBuf ~= buffer[pos++];//app.put(buffer[pos++]);
+            outBuf ~= buffer[pos++]; //app.put(buffer[pos++]);
         }
         else
         {
             pos++;
         }
     }
+
     private void advance(ptrdiff_t n)
     {
-        foreach(i; 0..n)
+        foreach (i; 0 .. n)
         {
             advance();
         }
     }
+
     private void advanceNextBuffer()
     {
-        enforce!LexerException(!empty
-            , "No more characters are found!");
+        enforce!LexerException(!empty, "No more characters are found!");
         if (onEdge)
         {
-            outBuf ~= buffer[pos..$]; //app.put(buffer[pos..$]);
+            outBuf ~= buffer[pos .. $]; //app.put(buffer[pos..$]);
         }
         else
         {
-            outBuf ~= buffer[begin..$];//app.put(buffer[begin..$]);
+            outBuf ~= buffer[begin .. $]; //app.put(buffer[begin..$]);
             onEdge = true;
         }
         popBuffer;
@@ -662,17 +654,17 @@ struct BufferedLexer(T)
     {
         if (onEdge)
         {
-            return outBuf;//app.data;
+            return outBuf; //app.data;
         }
         else
         {
             static if (is(typeof(representation!CharacterType(""))))
             {
-                return cast(CharacterType[])buffer[begin..pos];
+                return cast(CharacterType[]) buffer[begin .. pos];
             }
             else
             {
-                return buffer[begin..pos];
+                return buffer[begin .. pos];
             }
         }
     }
@@ -704,7 +696,7 @@ struct BufferedLexer(T)
     {
         enforce!LexerException(!empty, "No data found!");
         ptrdiff_t adv;
-        while ((adv = indexOf(buffer[pos..$], c)) == -1)
+        while ((adv = indexOf(buffer[pos .. $], c)) == -1)
         {
             advanceNextBuffer();
         }
@@ -778,7 +770,7 @@ template lexer()
     }
 }
 
-version(unittest)
+version (unittest)
 {
     struct DumbBufferedReader
     {
@@ -787,16 +779,15 @@ version(unittest)
 
         void popFront() @nogc
         {
-            content = content.length > chunk_size
-                ? content[chunk_size..$]
-                : [];
+            content = content.length > chunk_size ? content[chunk_size .. $] : [
+            ];
         }
+
         string front() const @nogc
         {
-            return content.length >= chunk_size
-                ? content[0..chunk_size]
-                : content[0..$];
+            return content.length >= chunk_size ? content[0 .. chunk_size] : content[0 .. $];
         }
+
         bool empty() const @nogc
         {
             return !content.length;
@@ -855,4 +846,3 @@ unittest
     testLexer!(ForwardLexer!(string))(x => x);
     testLexer!(BufferedLexer!(DumbBufferedReader))(x => DumbBufferedReader(x, 10));
 }
-

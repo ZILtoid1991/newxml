@@ -20,12 +20,8 @@ public import newxml.parser;
 +/
 Document parseXMLString(string input)
 {
-    auto builder =
-             input
-            .lexer
-            .parser
-            .cursor
-            .domBuilder(new domimpl.DOMImplementation());
+    auto builder = input.lexer.parser.cursor.domBuilder(new domimpl
+            .DOMImplementation());
 
     builder.setSource(input);
     builder.buildRecursive();
@@ -33,7 +29,8 @@ Document parseXMLString(string input)
 }
 
 ///
-unittest {
+unittest
+{
     import std.format;
 
     string xml = q"{

@@ -35,8 +35,7 @@ import newxml.domimpl;
 +   This type should not be instantiated directly. Instead, the helper function
 +   `domBuilder` should be used.
 +/
-struct DOMBuilder(T)
-    if (isCursor!T)
+struct DOMBuilder(T) if (isCursor!T)
 {
     import std.traits : ReturnType;
 
@@ -74,22 +73,23 @@ struct DOMBuilder(T)
             {
                 switch (attr.name)
                 {
-                    case "version":
-                        document.xmlVersion = attr.value;
-                        switch (attr.value) {
-                            case "1.1":
-                                cursor.xmlVersion = XMLVersion.XML1_1;
-                                break;
-                            default:
-                                cursor.xmlVersion = XMLVersion.XML1_0;
-                                break;
-                        }
-                        break;
-                    case "standalone":
-                        document.xmlStandalone = attr.value == "yes";
+                case "version":
+                    document.xmlVersion = attr.value;
+                    switch (attr.value)
+                    {
+                    case "1.1":
+                        cursor.xmlVersion = XMLVersion.XML1_1;
                         break;
                     default:
+                        cursor.xmlVersion = XMLVersion.XML1_0;
                         break;
+                    }
+                    break;
+                case "standalone":
+                    document.xmlStandalone = attr.value == "yes";
+                    break;
+                default:
+                    break;
                 }
             }
         }
@@ -208,65 +208,68 @@ struct DOMBuilder(T)
         return next();
     }
 
-    private NodeType createCurrent()
-    // TODO: handling of system (external) entities
+    private NodeType createCurrent() // TODO: handling of system (external) entities
     {
         switch (cursor.kind)
         {
 
             // XMLKind.elementEnd is needed for empty tags: <tag></tag>
-            case XMLKind.elementEnd:
-            case XMLKind.elementStart:
-            case XMLKind.elementEmpty:
-                /* DOMImplementation.Element elem = cursor.prefix.length ?
+        case XMLKind.elementEnd:
+        case XMLKind.elementStart:
+        case XMLKind.elementEmpty:
+            /* DOMImplementation.Element elem = cursor.prefix.length ?
                         document.createElementNS(cursor.prefix, cursor.localName) :
                         document.createElement(cursor.name); */
-                DOMImplementation.Element elem = document.createElement(cursor.name);
-                foreach (attr; cursor.attributes)
-                {
-                    /*if (attr.prefix.length)
+            DOMImplementation.Element elem = document.createElement(cursor.name);
+            foreach (attr; cursor.attributes)
+            {
+                /*if (attr.prefix.length)
                     {
                         elem.setAttributeNS(attr.prefix, attr.localName,
                                 attr.value);
                     }
                     else
                     {*/
-                    elem.setAttribute(attr.name, attr.value);
-                    //}
-                }
-                return elem;
-            case XMLKind.text:
-                return document.createTextNode(cursor.content);
-            case XMLKind.cdata:
-                return document.createCDATASection(cursor.content);
-            case XMLKind.processingInstruction:
-                return document.createProcessingInstruction(cursor.name, cursor.content);
-            case XMLKind.comment:
-                return document.createComment(cursor.content);
-            case XMLKind.dtdStart, XMLKind.dtdEmpty:
-                docType = domImpl.createDocumentType(cursor.name, "", "");
-                document.doctype = docType;
-                return null;
-            case XMLKind.entityDecl:
-                docType.createEntity(cursor.name, cursor.content);
-                cursor.chrEntities[cursor.name] = cursor.content;
-                return null;
-            default:
-                return null;
+                elem.setAttribute(attr.name, attr.value);
+                //}
+            }
+            return elem;
+        case XMLKind.text:
+            return document.createTextNode(cursor.content);
+        case XMLKind.cdata:
+            return document.createCDATASection(cursor.content);
+        case XMLKind.processingInstruction:
+            return document.createProcessingInstruction(cursor.name,
+                    cursor.content);
+        case XMLKind.comment:
+            return document.createComment(cursor.content);
+        case XMLKind.dtdStart, XMLKind.dtdEmpty:
+            docType = domImpl.createDocumentType(cursor.name, "", "");
+            document.doctype = docType;
+            return null;
+        case XMLKind.entityDecl:
+            docType.createEntity(cursor.name, cursor.content);
+            cursor.chrEntities[cursor.name] = cursor.content;
+            return null;
+        default:
+            return null;
         }
     }
 
     /++
     +   Returns the Document being built by this builder.
     +/
-    auto getDocument() { return document; }
+    auto getDocument()
+    {
+        return document;
+    }
 }
 
 /++
 +   Instantiates a suitable `DOMBuilder` on top of the given `cursor` and `DOMImplementation`.
 +/
 auto domBuilder(CursorType)(auto ref CursorType cursor, DOMImplementation domimpl)
-    if (isCursor!CursorType)
+        if (isCursor!CursorType)
 {
     auto res = DOMBuilder!(CursorType)(domimpl);
     res.cursor = cursor;
@@ -284,7 +287,6 @@ unittest
     import newxml.cursor;
     import domimpl = newxml.domimpl;
 
-
     alias DOMImpl = domimpl.DOMImplementation;
 
     string xml = q{
@@ -300,12 +302,7 @@ unittest
     </aaa>
     };
 
-    auto builder =
-         xml
-        .lexer
-        .parser
-        .cursor
-        .domBuilder(new DOMImpl());
+    auto builder = xml.lexer.parser.cursor.domBuilder(new DOMImpl());
 
     builder.setSource(xml);
     builder.buildRecursive;
@@ -316,13 +313,13 @@ unittest
     assert(doc.documentElement.getAttribute("myattr") == "something");
     assert(doc.documentElement.getAttribute("xmlns:myns"));
     assert(doc.documentElement.getAttribute("xmlns:myns") == "something");
-    dom.Element e1 = cast(dom.Element)doc.firstChild;
+    dom.Element e1 = cast(dom.Element) doc.firstChild;
     assert(e1.nodeName == "aaa");
-    dom.Element e2 = cast(dom.Element)e1.firstChild();
+    dom.Element e2 = cast(dom.Element) e1.firstChild();
     assert(e2.nodeName == "myns:bbb");
-    dom.Comment c1 = cast(dom.Comment)e2.firstChild;
+    dom.Comment c1 = cast(dom.Comment) e2.firstChild;
     assert(c1.data == " lol ");
-    dom.Text t1 = cast(dom.Text)e2.lastChild;
+    dom.Text t1 = cast(dom.Text) e2.lastChild;
     //Issue: Extra whitespace isn't dropped between and after words when dropWhiteSpace is enabled in
     //assert(t1.data == "Lots of Text! On multiple lines!", t1.data.transcodeToUTF8);
 
@@ -338,13 +335,7 @@ unittest
     alias DOMImplType = domimpl.DOMImplementation;
 
     auto xml = `<?xml version="1.0" encoding="UTF-8"?><tag></tag>`;
-    auto builder =
-         xml
-        .lexer
-        .parser
-        .cursor
-        .copyingCursor
-        .domBuilder(new DOMImplType());
+    auto builder = xml.lexer.parser.cursor.copyingCursor.domBuilder(new DOMImplType());
 
     builder.setSource(xml);
     builder.buildRecursive;

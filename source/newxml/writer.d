@@ -22,10 +22,12 @@ private string ifCompiles(string code)
 {
     return "static if (__traits(compiles, " ~ code ~ ")) " ~ code ~ ";\n";
 }
+
 private string ifCompilesElse(string code, string fallback)
 {
     return "static if (__traits(compiles, " ~ code ~ ")) " ~ code ~ "; else " ~ fallback ~ ";\n";
 }
+
 private string ifAnyCompiles(string code, string[] codes...)
 {
     if (codes.length == 0)
@@ -34,8 +36,8 @@ private string ifAnyCompiles(string code, string[] codes...)
     }
     else
     {
-        return "static if (__traits(compiles, " ~ code ~ ")) " ~ code ~
-                "; else " ~ ifAnyCompiles(codes[0], codes[1..$]);
+        return "static if (__traits(compiles, " ~ code ~ ")) " ~ code ~ "; else "
+            ~ ifAnyCompiles(codes[0], codes[1 .. $]);
     }
 }
 
@@ -48,12 +50,12 @@ private auto xmlDeclarationAttributes(StringType, Args...)(Args args)
     {
         enforce(args[0] == 10 || args[0] == 11, "Invalid xml version specified");
         StringType versionString = args[0] == 10 ? "1.0" : "1.1";
-        auto args1 = args[1..$];
+        auto args1 = args[1 .. $];
     }
     else static if (is(Args[0] == StringType))
     {
         StringType versionString = args[0];
-        auto args1 = args[1..$];
+        auto args1 = args[1 .. $];
     }
     else
     {
@@ -65,7 +67,7 @@ private auto xmlDeclarationAttributes(StringType, Args...)(Args args)
     static if (is(typeof(args1[0]) == StringType))
     {
         auto encodingString = args1[0];
-        auto args2 = args1[1..$];
+        auto args2 = args1[1 .. $];
     }
     else
     {
@@ -77,7 +79,7 @@ private auto xmlDeclarationAttributes(StringType, Args...)(Args args)
     static if (is(typeof(args2[0]) == bool))
     {
         StringType standaloneString = args2[0] ? "yes" : "no";
-        auto args3 = args2[1..$];
+        auto args3 = args2[1 .. $];
     }
     else
     {
@@ -87,8 +89,8 @@ private auto xmlDeclarationAttributes(StringType, Args...)(Args args)
 
     // catch other erroneous parameters
     static assert(typeof(args3).length == 0,
-                  "Unrecognized attribute type for xml declaration: "
-                  ~ typeof(args3[0]).stringof);
+            "Unrecognized attribute type for xml declaration: " ~ typeof(args3[0])
+                .stringof);
 
     return tuple(versionString, encodingString, standaloneString);
 }
@@ -123,12 +125,19 @@ struct PrettyPrinters
 
         uint indentation;
         enum StringType tab = "\t";
-        void decreaseLevel() { indentation--; }
-        void increaseLevel() { indentation++; }
+        void decreaseLevel()
+        {
+            indentation--;
+        }
+
+        void increaseLevel()
+        {
+            indentation++;
+        }
 
         void beforeNode(Out)(ref Out output)
         {
-            foreach (i; 0..indentation)
+            foreach (i; 0 .. indentation)
             {
                 output ~= tab;
             }
@@ -193,7 +202,7 @@ struct PrettyPrinters
 +       validateTagOrder = If set to `Yes`, then tag order will be validated during writing.
 +/
 struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
-    if(is(_StringType == string) || is(_StringType == wstring) || is(_StringType == dstring))
+        if (is(_StringType == string) || is(_StringType == wstring) || is(_StringType == dstring))
 {
     alias StringType = _StringType;
 
@@ -207,7 +216,8 @@ struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
     }
     else
     {
-        static assert(0, "Invalid pretty printer type for string type " ~ StringType.stringof);
+        static assert(0, "Invalid pretty printer type for string type " ~ StringType
+                .stringof);
     }
 
     StringType output;
@@ -223,20 +233,21 @@ struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
     private template expand(string methodName)
     {
         import std.meta : AliasSeq;
-        alias expand = AliasSeq!(
-            "prettyPrinter." ~ methodName ~ "(output)",
-            "output ~= prettyPrinter." ~ methodName
-        );
+
+        alias expand = AliasSeq!("prettyPrinter." ~ methodName ~ "(output)",
+                "output ~= prettyPrinter." ~ methodName);
     }
+
     private template formatAttribute(string attribute)
     {
         import std.meta : AliasSeq;
+
         alias formatAttribute = AliasSeq!(
-            "prettyPrinter.formatAttribute(output, " ~ attribute ~ ")",
-            "output ~= prettyPrinter.formatAttribute(" ~ attribute ~ ")",
-            "defaultFormatAttribute(" ~ attribute ~ ", prettyPrinter.attributeDelimiter)",
-            "defaultFormatAttribute(" ~ attribute ~ ")"
-        );
+                "prettyPrinter.formatAttribute(output, " ~ attribute ~ ")",
+                "output ~= prettyPrinter.formatAttribute(" ~ attribute ~ ")",
+                "defaultFormatAttribute("
+                ~ attribute ~ ", prettyPrinter.attributeDelimiter)",
+                "defaultFormatAttribute(" ~ attribute ~ ")");
     }
 
     private void defaultFormatAttribute(StringType attribute, StringType delimiter = "'")
@@ -294,6 +305,7 @@ struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
         output ~= "?>";
         mixin(ifAnyCompiles(expand!"afterNode"));
     }
+
     void writeXMLDeclaration(StringType version_, StringType encoding, StringType standalone)
     {
         output ~= "<?xml";
@@ -341,10 +353,7 @@ struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
         output ~= "<!--";
         mixin(ifAnyCompiles(expand!"afterCommentStart"));
 
-        mixin(ifCompilesElse(
-            "prettyPrinter.formatComment(output, comment)",
-            "output ~= comment"
-        ));
+        mixin(ifCompilesElse("prettyPrinter.formatComment(output, comment)", "output ~= comment"));
 
         mixin(ifAnyCompiles(expand!"beforeCommentEnd"));
         output ~= "-->";
@@ -359,10 +368,7 @@ struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
         closeOpenThings;
 
         mixin(ifAnyCompiles(expand!"beforeNode"));
-        mixin(ifCompilesElse(
-            "prettyPrinter.formatText(output, comment)",
-            "output ~= text"
-        ));
+        mixin(ifCompilesElse("prettyPrinter.formatText(output, comment)", "output ~= text"));
         mixin(ifAnyCompiles(expand!"afterNode"));
     }
     /++
@@ -418,13 +424,11 @@ struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
         output ~= tagName;
         startingTag = true;
     }
+
     void closeElement(StringType tagName)
     {
         bool selfClose;
-        mixin(ifCompilesElse(
-            "selfClose = prettyPrinter.selfClosingElements",
-            "selfClose = true"
-        ));
+        mixin(ifCompilesElse("selfClose = prettyPrinter.selfClosingElements", "selfClose = true"));
 
         if (selfClose && startingTag)
         {
@@ -445,6 +449,7 @@ struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
         }
         mixin(ifAnyCompiles(expand!"afterNode"));
     }
+
     void writeAttribute(StringType name, StringType value)
     {
         assert(startingTag, "Cannot write attribute outside element start");
@@ -470,6 +475,7 @@ struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
         mixin(ifAnyCompiles(expand!"afterNode"));
         mixin(ifCompiles("prettyPrinter.increaseLevel"));
     }
+
     void closeDoctype()
     {
         assert(insideDTD);
@@ -480,6 +486,7 @@ struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
         output ~= "]>";
         mixin(ifAnyCompiles(expand!"afterNode"));
     }
+
     void writeDeclaration(StringType decl, StringType content)
     {
         assert(insideDTD);
@@ -501,7 +508,8 @@ struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
     auto writer = Writer!(string)();
 
     writer.writeXMLDeclaration(10, "utf-8", false);
-    assert(writer.output == "<?xml version='1.0' encoding='utf-8' standalone='no'?>", writer.output);
+    assert(writer.output == "<?xml version='1.0' encoding='utf-8' standalone='no'?>",
+            writer.output);
 }
 
 @safe unittest
@@ -523,6 +531,7 @@ struct Writer(_StringType, alias PrettyPrinter = PrettyPrinters.Minimalizer)
     writer.closeElement("elem");
 
     import std.string : lineSplitter;
+
     auto splitter = writer.output.lineSplitter;
 
     assert(splitter.front == "<elem attr1='val1' attr2='val2'>", splitter.front);
@@ -552,63 +561,63 @@ void writeDOM(WriterType)(auto ref WriterType writer, dom.Node node)
     import std.traits : ReturnType;
     import std.conv : to;
     import newxml.faststrings;
+
     alias Document = typeof(node.ownerDocument);
     alias Element = ReturnType!(Document.documentElement);
     alias StringType = writer.StringType;
 
     switch (node.nodeType) with (dom.NodeType)
     {
-        case document:
-            auto doc = cast(Document)node;
-            string xmlVersion = doc.xmlVersion;
-            string xmlEncoding = doc.xmlEncoding;
-            writer.writeXMLDeclaration(xmlVersion
-                    ? xmlVersion.to!StringType()
-                    : null
-                , xmlEncoding
-                    ? xmlEncoding.to!StringType()
-                    : null
-                , doc.xmlStandalone);
-            foreach (child; doc.childNodes)
+    case document:
+        auto doc = cast(Document) node;
+        string xmlVersion = doc.xmlVersion;
+        string xmlEncoding = doc.xmlEncoding;
+        writer.writeXMLDeclaration(xmlVersion
+                ? xmlVersion.to!StringType() : null,
+                xmlEncoding ? xmlEncoding.to!StringType() : null, doc
+                .xmlStandalone);
+        foreach (child; doc.childNodes)
+        {
+            writer.writeDOM(child);
+        }
+        break;
+    case element:
+        auto elem = cast(Element) node;
+        writer.startElement(elem.tagName.to!StringType);
+        if (elem.hasAttributes)
+        {
+            foreach (attr; elem.attributes)
             {
-                writer.writeDOM(child);
+                writer.writeAttribute(attr.nodeName.to!StringType,
+                        xmlEscape(attr.nodeValue.to!StringType));
             }
-            break;
-        case element:
-            auto elem = cast(Element)node;
-            writer.startElement(elem.tagName.to!StringType);
-            if (elem.hasAttributes)
-            {
-                foreach (attr; elem.attributes)
-                {
-                    writer.writeAttribute(attr.nodeName.to!StringType,
-                            xmlEscape(attr.nodeValue.to!StringType));
-                }
-            }
-            foreach (child; elem.childNodes)
-            {
-                writer.writeDOM(child);
-            }
-            writer.closeElement(elem.tagName.to!StringType);
-            break;
-        case text:
-            writer.writeText(xmlEscape(node.nodeValue.to!StringType));
-            break;
-        case cdataSection:
-            writer.writeCDATA(xmlEscape(node.nodeValue.to!StringType));
-            break;
-        case comment:
-            writer.writeComment(node.nodeValue.to!StringType);
-            break;
-        default:
-            break;
+        }
+        foreach (child; elem.childNodes)
+        {
+            writer.writeDOM(child);
+        }
+        writer.closeElement(elem.tagName.to!StringType);
+        break;
+    case text:
+        writer.writeText(xmlEscape(node.nodeValue.to!StringType));
+        break;
+    case cdataSection:
+        writer.writeCDATA(xmlEscape(node.nodeValue.to!StringType));
+        break;
+    case comment:
+        writer.writeComment(node.nodeValue.to!StringType);
+        break;
+    default:
+        break;
     }
 }
 
 @safe unittest
 {
     import newxml.domimpl;
-    Writer!(string, PrettyPrinters.Minimalizer) wrt = Writer!(string)(PrettyPrinters.Minimalizer!string());
+
+    Writer!(string, PrettyPrinters.Minimalizer) wrt = Writer!(string)(
+            PrettyPrinters.Minimalizer!string());
 
     dom.DOMImplementation domimpl = new DOMImplementation;
     dom.Document doc = domimpl.createDocument(null, "doc", null);
@@ -624,8 +633,8 @@ void writeDOM(WriterType)(auto ref WriterType writer, dom.Node node)
     wrt.writeDOM(doc);
 
     assert(wrt.output == "<?xml version='1.0' standalone='no'?><doc><text "
-            ~ "something='other thing'>Some text <b>with</b> markup.</text></doc>"
-            , wrt.output);
+            ~ "something='other thing'>Some text <b>with</b> markup.</text></doc>",
+            wrt.output);
 }
 
 import std.typecons : Flag, No, Yes;
@@ -641,8 +650,8 @@ import std.typecons : Flag, No, Yes;
 +   has to wait for other nodes to be ready (e.g. if the cursor input is generated
 +   programmatically).
 +/
-auto writeCursor(Flag!"useFiber" useFiber = No.useFiber, WriterType, CursorType)
-                (auto ref WriterType writer, auto ref CursorType cursor)
+auto writeCursor(Flag!"useFiber" useFiber = No.useFiber, WriterType, CursorType)(
+        auto ref WriterType writer, auto ref CursorType cursor)
 {
     alias StringType = WriterType.StringType;
     void inspectOneLevel() @safe
@@ -651,87 +660,87 @@ auto writeCursor(Flag!"useFiber" useFiber = No.useFiber, WriterType, CursorType)
         {
             switch (cursor.kind) with (XMLKind)
             {
-                case document:
-                    StringType version_;
-                    StringType encoding;
-                    StringType standalone;
-                    foreach (attr; cursor.attributes)
+            case document:
+                StringType version_;
+                StringType encoding;
+                StringType standalone;
+                foreach (attr; cursor.attributes)
+                {
+                    if (attr.name == "version")
                     {
-                        if (attr.name == "version")
-                        {
-                            version_ = attr.value;
-                        }
-                        else if (attr.name == "encoding")
-                        {
-                            encoding = attr.value;
-                        }
-                        else if (attr.name == "standalone")
-                        {
-                            standalone = attr.value;
-                        }
+                        version_ = attr.value;
                     }
-                    writer.writeXMLDeclaration(version_, encoding, standalone);
-                    if (cursor.enter)
+                    else if (attr.name == "encoding")
                     {
-                        inspectOneLevel();
-                        cursor.exit;
+                        encoding = attr.value;
                     }
-                    break;
-                case dtdEmpty:
-                case dtdStart:
-                    writer.startDoctype(cursor.wholeContent);
-                    if (cursor.enter)
+                    else if (attr.name == "standalone")
                     {
-                        inspectOneLevel();
-                        cursor.exit;
+                        standalone = attr.value;
                     }
-                    writer.closeDoctype();
-                    break;
-                case attlistDecl:
-                    writer.writeDeclaration("ATTLIST", cursor.wholeContent);
-                    break;
-                case elementDecl:
-                    writer.writeDeclaration("ELEMENT", cursor.wholeContent);
-                    break;
-                case entityDecl:
-                    writer.writeDeclaration("ENTITY", cursor.wholeContent);
-                    break;
-                case notationDecl:
-                    writer.writeDeclaration("NOTATION", cursor.wholeContent);
-                    break;
-                case declaration:
-                    writer.writeDeclaration(cursor.name, cursor.content);
-                    break;
-                case text:
-                    writer.writeText(cursor.content);
-                    break;
-                case cdata:
-                    writer.writeCDATA(cursor.content);
-                    break;
-                case comment:
-                    writer.writeComment(cursor.content);
-                    break;
-                case processingInstruction:
-                    writer.writeProcessingInstruction(cursor.name, cursor.content);
-                    break;
-                case elementStart:
-                case elementEmpty:
-                    writer.startElement(cursor.name);
-                    for (auto attrs = cursor.attributes; !attrs.empty; attrs.popFront)
-                    {
-                        auto attr = attrs.front;
-                        writer.writeAttribute(attr.name, attr.value);
-                    }
-                    if (cursor.enter)
-                    {
-                        inspectOneLevel();
-                        cursor.exit;
-                    }
-                    writer.closeElement(cursor.name);
-                    break;
-                default:
-                    break;
-                    //assert(0);
+                }
+                writer.writeXMLDeclaration(version_, encoding, standalone);
+                if (cursor.enter)
+                {
+                    inspectOneLevel();
+                    cursor.exit;
+                }
+                break;
+            case dtdEmpty:
+            case dtdStart:
+                writer.startDoctype(cursor.wholeContent);
+                if (cursor.enter)
+                {
+                    inspectOneLevel();
+                    cursor.exit;
+                }
+                writer.closeDoctype();
+                break;
+            case attlistDecl:
+                writer.writeDeclaration("ATTLIST", cursor.wholeContent);
+                break;
+            case elementDecl:
+                writer.writeDeclaration("ELEMENT", cursor.wholeContent);
+                break;
+            case entityDecl:
+                writer.writeDeclaration("ENTITY", cursor.wholeContent);
+                break;
+            case notationDecl:
+                writer.writeDeclaration("NOTATION", cursor.wholeContent);
+                break;
+            case declaration:
+                writer.writeDeclaration(cursor.name, cursor.content);
+                break;
+            case text:
+                writer.writeText(cursor.content);
+                break;
+            case cdata:
+                writer.writeCDATA(cursor.content);
+                break;
+            case comment:
+                writer.writeComment(cursor.content);
+                break;
+            case processingInstruction:
+                writer.writeProcessingInstruction(cursor.name, cursor.content);
+                break;
+            case elementStart:
+            case elementEmpty:
+                writer.startElement(cursor.name);
+                for (auto attrs = cursor.attributes; !attrs.empty; attrs.popFront)
+                {
+                    auto attr = attrs.front;
+                    writer.writeAttribute(attr.name, attr.value);
+                }
+                if (cursor.enter)
+                {
+                    inspectOneLevel();
+                    cursor.exit;
+                }
+                writer.closeElement(cursor.name);
+                break;
+            default:
+                break;
+                //assert(0);
             }
         }
         while (cursor.next);
@@ -739,7 +748,8 @@ auto writeCursor(Flag!"useFiber" useFiber = No.useFiber, WriterType, CursorType)
 
     static if (useFiber)
     {
-        import core.thread: Fiber;
+        import core.thread : Fiber;
+
         auto fiber = new Fiber(&inspectOneLevel);
         fiber.call;
         return fiber;
@@ -758,15 +768,10 @@ auto writeCursor(Flag!"useFiber" useFiber = No.useFiber, WriterType, CursorType)
     import newxml.lexers;
     import std.typecons : refCounted;
 
-    string xml =
-    "<?xml?>\n" ~
-    "<!DOCTYPE ciaone [\n" ~
-    "\t<!ELEMENT anything here>\n" ~
-    "\t<!ATTLIST no check at all...>\n" ~
-    "\t<!NOTATION dunno what to write>\n" ~
-    "\t<!ENTITY .....>\n" ~
-    "\t<!I_SAID_NO_CHECKS_AT_ALL_BY_DEFAULT>\n" ~
-    "]>\n";
+    string xml = "<?xml?>\n" ~ "<!DOCTYPE ciaone [\n"
+        ~ "\t<!ELEMENT anything here>\n" ~ "\t<!ATTLIST no check at all...>\n"
+        ~ "\t<!NOTATION dunno what to write>\n" ~ "\t<!ENTITY .....>\n"
+        ~ "\t<!I_SAID_NO_CHECKS_AT_ALL_BY_DEFAULT>\n" ~ "]>\n";
 
     auto cursor = xml.lexer.parser.cursor;
     cursor.setSource(xml);
@@ -786,10 +791,12 @@ auto writeCursor(Flag!"useFiber" useFiber = No.useFiber, WriterType, CursorType)
 +   `withValidation`.
 +/
 struct CheckedWriter(WriterType, CursorType = void)
-    if (isWriter!(WriterType) && (is(CursorType == void) ||
-       (isCursor!CursorType && is(WriterType.StringType == CursorType.StringType))))
+        if (isWriter!(WriterType) && (is(CursorType == void)
+            || (isCursor!CursorType
+            && is(WriterType.StringType == CursorType.StringType))))
 {
     import core.thread : Fiber;
+
     private Fiber fiber;
     private bool startingTag = false;
 
@@ -802,7 +809,7 @@ struct CheckedWriter(WriterType, CursorType = void)
     {
         struct Cursor
         {
-            import newxml.cursor: Attribute;
+            import newxml.cursor : Attribute;
             import std.container.array;
 
             alias StringType = WriterType.StringType;
@@ -816,23 +823,28 @@ struct CheckedWriter(WriterType, CursorType = void)
             void _setName(StringType name)
             {
                 import newxml.faststrings;
+
                 _name = name;
                 auto i = name.indexOf(':');
-                colon = (i > 0)
-                    ? i
-                    : 0;
+                colon = (i > 0) ? i : 0;
             }
+
             void _addAttribute(StringType name, StringType value)
             {
                 attrs.insertBack(Attribute!StringType(name, value));
             }
+
             void _setKind(XMLKind kind)
             {
                 _kind = kind;
                 initialized = true;
                 attrs.clear;
             }
-            void _setContent(StringType content) { _content = content; }
+
+            void _setContent(StringType content)
+            {
+                _content = content;
+            }
 
             auto kind()
             {
@@ -843,15 +855,30 @@ struct CheckedWriter(WriterType, CursorType = void)
 
                 return _kind;
             }
-            auto name() { return _name; }
-            auto prefix() { return _name[0..colon]; }
-            auto content() { return _content; }
-            auto attributes() { return attrs[]; }
+
+            auto name()
+            {
+                return _name;
+            }
+
+            auto prefix()
+            {
+                return _name[0 .. colon];
+            }
+
+            auto content()
+            {
+                return _content;
+            }
+
+            auto attributes()
+            {
+                return attrs[];
+            }
+
             StringType localName()
             {
-                return colon
-                    ? _name[colon+1..$]
-                    : [];
+                return colon ? _name[colon + 1 .. $] : [];
             }
 
             bool enter()
@@ -870,28 +897,39 @@ struct CheckedWriter(WriterType, CursorType = void)
                 Fiber.yield;
                 return _kind != XMLKind.elementEnd;
             }
+
             bool next()
             {
                 Fiber.yield;
                 return _kind != XMLKind.elementEnd;
             }
-            void exit() {}
+
+            void exit()
+            {
+            }
+
             bool atBeginning()
             {
                 return !initialized || _kind == XMLKind.document;
             }
-            bool documentEnd() { return false; }
+
+            bool documentEnd()
+            {
+                return false;
+            }
 
             alias InputType = void*;
             StringType wholeContent()
             {
                 enforce(false, "Cannot call wholeContent on this type of cursor");
             }
+
             void setSource(InputType)
             {
                 enforce(false, "Cannot set the source of this type of cursor");
             }
         }
+
         Cursor cursor;
     }
     else
@@ -917,6 +955,7 @@ struct CheckedWriter(WriterType, CursorType = void)
         }
         fiber.call;
     }
+
     void writeXMLDeclaration(StringType version_, StringType encoding, StringType standalone)
     {
         cursor._setKind(XMLKind.document);
@@ -934,6 +973,7 @@ struct CheckedWriter(WriterType, CursorType = void)
         }
         fiber.call;
     }
+
     void writeComment(StringType text)
     {
         if (startingTag)
@@ -945,6 +985,7 @@ struct CheckedWriter(WriterType, CursorType = void)
         cursor._setContent(text);
         fiber.call;
     }
+
     void writeText(StringType text)
     {
         if (startingTag)
@@ -956,6 +997,7 @@ struct CheckedWriter(WriterType, CursorType = void)
         cursor._setContent(text);
         fiber.call;
     }
+
     void writeCDATA(StringType text)
     {
         if (startingTag)
@@ -967,6 +1009,7 @@ struct CheckedWriter(WriterType, CursorType = void)
         cursor._setContent(text);
         fiber.call;
     }
+
     void writeProcessingInstruction(StringType target, StringType data)
     {
         if (startingTag)
@@ -979,6 +1022,7 @@ struct CheckedWriter(WriterType, CursorType = void)
         cursor._setContent(data);
         fiber.call;
     }
+
     void startElement(StringType tag)
     {
         if (startingTag)
@@ -990,6 +1034,7 @@ struct CheckedWriter(WriterType, CursorType = void)
         cursor._setKind(XMLKind.elementStart);
         cursor._setName(tag);
     }
+
     void closeElement(StringType tag)
     {
         if (startingTag)
@@ -1001,6 +1046,7 @@ struct CheckedWriter(WriterType, CursorType = void)
         cursor._setName(tag);
         fiber.call;
     }
+
     void writeAttribute(StringType name, StringType value)
     {
         assert(startingTag);
