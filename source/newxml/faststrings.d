@@ -22,13 +22,12 @@ import newxml.interfaces : XMLException;
 
 package bool checkStringBeforeChr(T, S)(T[] haysack, S[] needle, S before) @nogc @safe pure nothrow
 {
-    for (sizediff_t i ; i < haysack.length ; i++)
+    for (sizediff_t i; i < haysack.length; i++)
     {
         if (haysack[i] == needle[0])
         {
-            return (cast(sizediff_t)(haysack.length) - i > needle.length)
-                ? equal(haysack[i..i + needle.length], needle)
-                : false;
+            return (cast(sizediff_t)(haysack.length) - i > needle.length) ? equal(
+                    haysack[i .. i + needle.length], needle) : false;
         }
         else if (haysack[i] == before)
         {
@@ -37,9 +36,11 @@ package bool checkStringBeforeChr(T, S)(T[] haysack, S[] needle, S before) @nogc
     }
     return false;
 }
-unittest
+
+@safe pure unittest
 {
-    assert(checkStringBeforeChr("extentity SYSTEM \"someexternalentity.file\"", "SYSTEM", '"'));
+    assert(checkStringBeforeChr("extentity SYSTEM \"someexternalentity.file\"", "SYSTEM",
+            '"'));
     assert(!checkStringBeforeChr("extentity SYST", "SYSTEM", '"'));
     assert(!checkStringBeforeChr("intentity \"Some internal entity\"", "SYSTEM", '"'));
 }
@@ -71,6 +72,7 @@ T[] xmlEscape(T)(T[] str)
 void xmlEscapedWrite(Out, T)(ref Out output, T[] str)
 {
     import std.conv : to;
+
     static immutable amp = to!(T[])("&amp;");
     static immutable lt = to!(T[])("&lt;");
     static immutable gt = to!(T[])("&gt;");
@@ -80,7 +82,7 @@ void xmlEscapedWrite(Out, T)(ref Out output, T[] str)
     ptrdiff_t i;
     while ((i = str.indexOfAny("&<>'\"")) >= 0)
     {
-        output ~= str[0..i];
+        output ~= str[0 .. i];
 
         if (str[i] == '&')
         {
@@ -103,12 +105,13 @@ void xmlEscapedWrite(Out, T)(ref Out output, T[] str)
             output ~= quot;
         }
 
-        str = str[i+1..$];
+        str = str[i + 1 .. $];
     }
     output ~= str;
 }
 
-auto xmlPredefinedEntities(T)() {
+auto xmlPredefinedEntities(T)()
+{
     alias STR = T[];
     STR[STR] result;
     result["amp"] = "&";
@@ -120,7 +123,7 @@ auto xmlPredefinedEntities(T)() {
     return result;
 }
 
-import std.typecons: Flag, Yes;
+import std.typecons : Flag, Yes;
 
 /++
 +   Returns a copy of the input string, after unescaping all known entity references.
@@ -137,7 +140,7 @@ T[] xmlUnescape(Flag!"strict" strict = Yes.strict, T, U)(T[] str, U replacements
     {
         //import newxml.appender;
 
-        T[] app;//auto app = Appender!(T, Alloc)(alloc);
+        T[] app; //auto app = Appender!(T, Alloc)(alloc);
         app.reserve(str.length);
 
         app.xmlUnescapedWrite!strict(str, replacements);
@@ -145,13 +148,14 @@ T[] xmlUnescape(Flag!"strict" strict = Yes.strict, T, U)(T[] str, U replacements
     }
     return str;
 }
+
 T[] xmlUnescape(Flag!"strict" strict = Yes.strict, T)(T[] str)
 {
     if (str.indexOf('&') >= 0)
     {
         //import newxml.appender;
 
-        T[] app;//auto app = Appender!(T, Alloc)(alloc);
+        T[] app; //auto app = Appender!(T, Alloc)(alloc);
         app.reserve(str.length);
 
         app.xmlUnescapedWrite!strict(str, xmlPredefinedEntities!T());
@@ -166,15 +170,15 @@ T[] xmlUnescape(Flag!"strict" strict = Yes.strict, T)(T[] str)
 +   The set of known entities can be specified with the last parameter, which must support
 +   the `in` operator (it is treated as an associative array).
 +/
-void xmlUnescapedWrite(Flag!"strict" strict = Yes.strict, Out, T, U)
-                      (ref Out output, T[] str, U replacements)
+void xmlUnescapedWrite(Flag!"strict" strict = Yes.strict, Out, T, U)(
+        ref Out output, T[] str, U replacements)
 {
     ptrdiff_t i;
     while ((i = str.indexOf('&')) >= 0)
     {
-        output ~= str[0..i];
+        output ~= str[0 .. i];
 
-        ptrdiff_t j = str[(i+1)..$].indexOf(';');
+        ptrdiff_t j = str[(i + 1) .. $].indexOf(';');
         static if (strict == Yes.strict)
         {
             enforce!XMLException(j >= 0, "Missing ';' ending XML entity!");
@@ -186,7 +190,7 @@ void xmlUnescapedWrite(Flag!"strict" strict = Yes.strict, Out, T, U)
                 continue;
             }
         }
-        auto ent = str[(i+1)..(i+j+1)];
+        auto ent = str[(i + 1) .. (i + j + 1)];
         static if (strict == Yes.strict)
         {
             enforce!XMLException(ent.length, "Character replacement entity not found!");
@@ -209,11 +213,10 @@ void xmlUnescapedWrite(Flag!"strict" strict = Yes.strict, Out, T, U)
             {
                 static if (strict == Yes.strict)
                 {
-                    enforce!XMLException(ent.length <= 10
-                            , "Number escape value is too large!");
+                    enforce!XMLException(ent.length <= 10, "Number escape value is too large!");
                 }
                 // TODO this should likely be a call to some phobos function
-                foreach(digit; ent[2..$])
+                foreach (digit; ent[2 .. $])
                 {
                     if ('0' <= digit && digit <= '9')
                     {
@@ -241,14 +244,14 @@ void xmlUnescapedWrite(Flag!"strict" strict = Yes.strict, Out, T, U)
                 }
             }
             // decimal number
-            else
+        else
             {
                 static if (strict == Yes.strict)
                 {
                     enforce!XMLException(ent.length <= 12, "Number escape value is too large!");
                 }
                 // TODO this should likely be a call to some phobos function
-                foreach(digit; ent[1..$])
+                foreach (digit; ent[1 .. $])
                 {
                     if ('0' <= digit && digit <= '9')
                     {
@@ -269,11 +272,10 @@ void xmlUnescapedWrite(Flag!"strict" strict = Yes.strict, Out, T, U)
             }
             static if (strict == Yes.strict)
             {
-                enforce!XMLException(num <= 0x10FFFF
-                        , "Number escape value is too large!");
+                enforce!XMLException(num <= 0x10FFFF, "Number escape value is too large!");
             }
 
-            output ~= cast(dchar)num;
+            output ~= cast(dchar) num;
         }
         // named entities
         else
@@ -281,22 +283,21 @@ void xmlUnescapedWrite(Flag!"strict" strict = Yes.strict, Out, T, U)
             auto repl = replacements.get(ent, null);
             static if (strict == Yes.strict)
             {
-                enforce!XMLException(repl
-                        , "Character replacement entity not found!");
+                enforce!XMLException(repl, "Character replacement entity not found!");
             }
             else
             {
                 if (!repl)
                 {
                     output ~= str[i];
-                    str = str[(i+1)..$];
+                    str = str[(i + 1) .. $];
                     continue;
                 }
             }
             output ~= repl;
         }
 
-        str = str[(i+j+2)..$];
+        str = str[(i + j + 2) .. $];
     }
     output ~= str;
 }
@@ -306,21 +307,24 @@ unittest
     //import std.experimental.allocator.mallocator;//import stdx.allocator.mallocator;
     //auto alloc = Mallocator.instance;
     assert(xmlEscape("some standard string"d) == "some standard string"d);
-    assert(xmlEscape("& \"some\" <standard> 'string'") ==
-                     "&amp; &quot;some&quot; &lt;standard&gt; &apos;string&apos;");
-    assert(xmlEscape("<&'>>>\"'\"<&&"w) ==
-                     "&lt;&amp;&apos;&gt;&gt;&gt;&quot;&apos;&quot;&lt;&amp;&amp;"w);
+    assert(xmlEscape("& \"some\" <standard> 'string'")
+            == "&amp; &quot;some&quot; &lt;standard&gt; &apos;string&apos;");
+    assert(xmlEscape("<&'>>>\"'\"<&&"w)
+            == "&lt;&amp;&apos;&gt;&gt;&gt;&quot;&apos;&quot;&lt;&amp;&amp;"w);
 }
 
 unittest
 {
     import std.exception : assertThrown;
+
     assert(xmlUnescape("some standard string"d) == "some standard string"d);
     assert(xmlUnescape("some s&#116;range&#x20;string") == "some strange string");
-    assert(xmlUnescape("&amp; &quot;some&quot; &lt;standard&gt; &apos;string&apos;")
-                       == "& \"some\" <standard> 'string'");
-    assert(xmlUnescape("&lt;&amp;&apos;&gt;&gt;&gt;&quot;&apos;&quot;&lt;&amp;&amp;"w)
-                       == "<&'>>>\"'\"<&&"w);
+    assert(xmlUnescape(
+            "&amp; &quot;some&quot; &lt;standard&gt; &apos;string&apos;")
+            == "& \"some\" <standard> 'string'");
+    assert(xmlUnescape(
+            "&lt;&amp;&apos;&gt;&gt;&gt;&quot;&apos;&quot;&lt;&amp;&amp;"w)
+            == "<&'>>>\"'\"<&&"w);
     assert(xmlUnescape("Illegal markup (&lt;% ... %&gt;)") == "Illegal markup (<% ... %>)");
     assertThrown!XMLException(xmlUnescape("Fa&#xFF000000F6;il"));
     assertThrown!XMLException(xmlUnescape("Fa&#68000000000;il"));

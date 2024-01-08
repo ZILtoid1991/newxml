@@ -16,7 +16,7 @@ import std.path;
 import std.stdio: write, writeln;
 import std.utf: UTFException;
 
-auto indexes = 
+auto indexes =
 [
     "tests/sun/sun-valid.xml",
     "tests/sun/sun-error.xml",
@@ -44,7 +44,7 @@ struct Results
 {
     int[string] totals;
     int[string] wrong;
-    
+
     static Results opCall()
     {
         Results result;
@@ -52,7 +52,7 @@ struct Results
         result.wrong = ["valid": 0, "linted":0, "invalid": 0, "not-wf": 0, "error": 0];
         return result;
     }
-    
+
     void opOpAssign(string op)(Results other)
     {
         static if (op == "+")
@@ -106,7 +106,7 @@ Results handleTestcases(T)(string directory, ref T cursor, int depth)
                 if (att.name == "PROFILE")
                     write(" -- ", att.value);
             writeln();
-            
+
             if (cursor.enter())
             {
                 results += handleTestcases(directory, cursor, depth + 1);
@@ -127,7 +127,7 @@ Results handleTestcases(T)(string directory, ref T cursor, int depth)
 Results handleTest(T)(string directory, ref T cursor, int depth)
 {
     auto result = Results();
-    
+
     string file, kind;
     foreach (att; cursor.attributes)
         if (att.name == "ENTITIES" && att.value != "none")
@@ -139,9 +139,9 @@ Results handleTest(T)(string directory, ref T cursor, int depth)
             kind = att.value;
         else if (att.name == "URI")
             file = att.value;
-    
+
     result.totals[kind]++;
-    
+
     bool passed = true, linted = false, linted_ok = false;
     try
     {
@@ -193,7 +193,7 @@ Results handleTest(T)(string directory, ref T cursor, int depth)
             }
         }
     }
-    
+
     return result;
 }
 
@@ -218,22 +218,22 @@ void uselessCallback(CursorError err)
 +/
 void main()
 {
-    auto cursor = 
+    auto cursor =
          chooseLexer!string
         .parser
         .cursor(); // If an index is not well-formed, just tell us but continue parsing
-    
+
     auto results = Results();
     foreach (i, index; indexes)
     {
         writeln(i, " -- ", index);
-        
+
         cursor.setSource(readText(index));
         cursor.enter();
-        
+
         results += handleTestcases(dirName(index), cursor, 1);
     }
-    
+
     printResults(results, 0);
     writeln();
 }
@@ -249,7 +249,7 @@ bool parseFile(string filename, ref bool lint)
                 inspectOneLevel(cursor);
                 cursor.exit();
             }
-            
+
         }
         while (cursor.next());
     }+/
@@ -265,7 +265,7 @@ bool parseFile(string filename, ref bool lint)
         {
             auto raw = read(filename);
             auto bytes = cast(ubyte[])raw;
-        
+
             if(bytes.length > 1 && bytes[0] == 0xFF && bytes[1] == 0xFE)
             {
                 auto shorts = cast(ushort[])raw;
@@ -279,28 +279,28 @@ bool parseFile(string filename, ref bool lint)
             throw new MyException("AAAAHHHHH");
         }
     }
-    
+
     auto something = parseXMLString(text);
 
     //auto cursor = text.lexer.parser.cursor; // lots of tests do not have an xml declaration
 
     //auto dombuilder = domBuilder(cursor, new domimpl.DOMImplementation);
-    
+
     //cursor.setSource(text);
-    
+
     //lint = false;
     /+foreach (attr; cursor.attributes)
         if (attr.name == "version" && attr.value == "1.0")
             lint = true;+/
-    
+
     //dombuilder.build;
     //inspectOneLevel(cursor);
-    
+
     /+if (lint)
     {
         import std.process, std.stdio, std.array;
         import newxml.writer;
-    
+
         lint = false;
         bool result = false;
         auto xmllint = executeShell("xmllint --pretty 2 --c14n11 " ~ filename ~ " > linted_input.xml");
@@ -313,12 +313,12 @@ bool parseFile(string filename, ref bool lint)
                 auto writer = Writer!(string)();
                 writer.writeDOM(dombuilder.getDocument);
                 file.write(writer.output);
-                
+
                 //writer.setSink(ltw);
                 //writer.writeCursor(cursor);
 
             }
-            
+
             xmllint = executeShell("xmllint --pretty 2 --c14n11 output.xml > linted_output.xml");
             if (xmllint.status == 0)
             {

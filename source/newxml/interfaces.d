@@ -131,25 +131,23 @@ import std.traits;
 +/
 template isLexer(L)
 {
-    enum bool isLexer = is(typeof(
-    (inout int = 0)
-    {
-        alias C = L.CharacterType;
+    enum bool isLexer = is(typeof((inout int = 0) {
+                alias C = L.CharacterType;
 
-        L lexer;
-        char c;
-        bool b;
-        string s;
-        C[] cs;
+                L lexer;
+                char c;
+                bool b;
+                string s;
+                C[] cs;
 
-        b = lexer.empty;
-        lexer.start();
-        cs = lexer.get();
-        b = lexer.testAndAdvance(c);
-        lexer.advanceUntil(c, b);
-        lexer.advanceUntilAny(s, b);
-        lexer.dropWhile(s);
-    }));
+                b = lexer.empty;
+                lexer.start();
+                cs = lexer.get();
+                b = lexer.testAndAdvance(c);
+                lexer.advanceUntil(c, b);
+                lexer.advanceUntilAny(s, b);
+                lexer.dropWhile(s);
+            }));
 }
 
 /++
@@ -177,12 +175,10 @@ template isLexer(L)
 +/
 template isSaveableLexer(L)
 {
-    enum bool isSaveableLexer = isLexer!L && is(typeof(
-    (inout int = 0)
-    {
-        L lexer1;
-        L lexer2 = lexer1.save();
-    }));
+    enum bool isSaveableLexer = isLexer!L && is(typeof((inout int = 0) {
+                L lexer1;
+                L lexer2 = lexer1.save();
+            }));
 }
 
 // LEVEL 2: PARSERS
@@ -274,8 +270,9 @@ enum XMLKind
 +/
 template isLowLevelParser(P)
 {
-    enum bool isLowLevelParser = isInputRange!P && is(typeof(ElementType!P.kind) == XMLKind)
-                                 && is(typeof(ElementType!P.content) == P.CharacterType[]);
+    enum bool isLowLevelParser = isInputRange!P
+        && is(typeof(ElementType!P.kind) == XMLKind)
+        && is(typeof(ElementType!P.content) == P.CharacterType[]);
 }
 
 /++
@@ -417,32 +414,29 @@ template isSaveableLowLevelParser(P)
 +/
 template isCursor(CursorType)
 {
-    enum bool isCursor = is(typeof(
-    (inout int = 0)
-    {
-        alias S = CursorType.StringType;
+    enum bool isCursor = is(typeof((inout int = 0) {
+                alias S = CursorType.StringType;
 
-        CursorType cursor;
-        bool b;
+                CursorType cursor;
+                bool b;
 
-        b = cursor.atBeginning;
-        b = cursor.documentEnd;
-        b = cursor.next;
-        b = cursor.enter;
-        cursor.exit;
-        XMLKind kind = cursor.kind;
-        auto s = cursor.name;
-        s = cursor.localName;
-        s = cursor.prefix;
-        s = cursor.content;
-        s = cursor.wholeContent;
-        auto attrs = cursor.attributes;
-        s = attrs.front.prefix;
-        s = attrs.front.localName;
-        s = attrs.front.name;
-        s = attrs.front.value;
-    }
-    ));
+                b = cursor.atBeginning;
+                b = cursor.documentEnd;
+                b = cursor.next;
+                b = cursor.enter;
+                cursor.exit;
+                XMLKind kind = cursor.kind;
+                auto s = cursor.name;
+                s = cursor.localName;
+                s = cursor.prefix;
+                s = cursor.content;
+                s = cursor.wholeContent;
+                auto attrs = cursor.attributes;
+                s = attrs.front.prefix;
+                s = attrs.front.localName;
+                s = attrs.front.name;
+                s = attrs.front.value;
+            }));
 }
 
 /++
@@ -470,12 +464,10 @@ template isCursor(CursorType)
 +/
 template isSaveableCursor(CursorType)
 {
-    enum bool isSaveableCursor = isCursor!CursorType && is(typeof(
-    (inout int = 0)
-    {
-        CursorType cursor1;
-        CursorType cursor2 = cursor1.save();
-    }));
+    enum bool isSaveableCursor = isCursor!CursorType && is(typeof((inout int = 0) {
+                CursorType cursor1;
+                CursorType cursor2 = cursor1.save();
+            }));
 }
 
 // WRITERS
@@ -484,39 +476,35 @@ template isSaveableCursor(CursorType)
  +/
 template isWriter(WriterType)
 {
-    enum bool isWriter = is(typeof(
-    (inout int = 0)
-    {
-        alias StringType = WriterType.StringType;
+    enum bool isWriter = is(typeof((inout int = 0) {
+                alias StringType = WriterType.StringType;
 
-        WriterType writer;
-        StringType s;
+                WriterType writer;
+                StringType s;
 
-        writer.writeXMLDeclaration(10, s, true);
-        writer.writeComment(s);
-        writer.writeText(s);
-        writer.writeCDATA(s);
-        writer.writeProcessingInstruction(s, s);
-        writer.startElement(s);
-        writer.closeElement(s);
-        writer.writeAttribute(s, s);
-    }));
+                writer.writeXMLDeclaration(10, s, true);
+                writer.writeComment(s);
+                writer.writeText(s);
+                writer.writeCDATA(s);
+                writer.writeProcessingInstruction(s, s);
+                writer.startElement(s);
+                writer.closeElement(s);
+                writer.writeAttribute(s, s);
+            }));
 }
 
 // COMMON
 
 template needSource(T)
 {
-    enum bool needSource = is(typeof(
-    (inout int = 0)
-    {
-        alias InputType = T.InputType;
+    enum bool needSource = is(typeof((inout int = 0) {
+                alias InputType = T.InputType;
 
-        T component;
-        InputType input;
+                T component;
+                InputType input;
 
-        component.setSource(input);
-    }));
+                component.setSource(input);
+            }));
 }
 
 /++
@@ -525,13 +513,14 @@ template needSource(T)
 +/
 class XMLException : Exception
 {
-    @nogc @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__,
-            Throwable nextInChain = null)
+    @nogc @safe pure nothrow this(string msg, string file = __FILE__,
+            size_t line = __LINE__, Throwable nextInChain = null)
     {
         super(msg, file, line, nextInChain);
     }
 
-    @nogc @safe pure nothrow this(string msg, Throwable nextInChain, string file = __FILE__, size_t line = __LINE__)
+    @nogc @safe pure nothrow this(string msg, Throwable nextInChain,
+            string file = __FILE__, size_t line = __LINE__)
     {
         super(msg, file, line, nextInChain);
     }
@@ -540,7 +529,8 @@ class XMLException : Exception
 /**
  * Defines the document's XML version.
  */
-enum XMLVersion {
+enum XMLVersion
+{
     XML1_0,
     XML1_1,
 }

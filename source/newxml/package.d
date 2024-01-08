@@ -3,7 +3,6 @@ module newxml;
 public import newxml.dom;
 public import domimpl = newxml.domimpl;
 public import newxml.domparser;
-public import newxml.domstring;
 public import newxml.sax;
 public import newxml.writer;
 public import newxml.cursor;
@@ -21,12 +20,8 @@ public import newxml.parser;
 +/
 Document parseXMLString(string input)
 {
-    auto builder =
-             input
-            .lexer
-            .parser
-            .cursor
-            .domBuilder(new domimpl.DOMImplementation());
+    auto builder = input.lexer.parser.cursor.domBuilder(new domimpl
+            .DOMImplementation());
 
     builder.setSource(input);
     builder.buildRecursive();
@@ -34,7 +29,8 @@ Document parseXMLString(string input)
 }
 
 ///
-unittest {
+unittest
+{
     import std.format;
 
     string xml = q"{
@@ -49,5 +45,5 @@ unittest {
 
     Document doc = parseXMLString(xml);
     assert(doc !is null);
-    assert(doc.doctype.entities.getNamedItem(new DOMString("myent")).nodeValue == "replacement text");
+    assert(doc.doctype.entities.getNamedItem("myent").nodeValue == "replacement text");
 }
