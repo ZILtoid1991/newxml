@@ -1,3 +1,5 @@
+**Notice: Project moved to the following link:** https://codeberg.org/ZILtoid1991/newxml
+
 # newxml
 XML library for D with DOM compatibility. Based on the never finished experimental.xml library.
 
